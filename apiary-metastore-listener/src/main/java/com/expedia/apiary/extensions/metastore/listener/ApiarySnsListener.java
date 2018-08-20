@@ -123,12 +123,10 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     json.put("dbName", table.getDbName());
     json.put("tableName", table.getTableName());
     if (oldtable != null) {
-      // TODO = discuss - can we change the case on this to be consistent? i.e. "oldTableName"
-      json.put("oldtableName", oldtable.getTableName());
+      json.put("oldTableName", oldtable.getTableName());
     }
     if (partition != null) {
-      // TODO = discuss - can we change the case on this to be consistent? i.e. "partition"
-      json.put("Partition", partition.getValues());
+      json.put("partition", partition.getValues());
     }
     if (oldpartition != null) {
       json.put("oldPartition", oldpartition.getValues());
@@ -138,7 +136,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     PublishRequest publishRequest = new PublishRequest(TOPIC_ARN, msg);
     log.error(publishRequest.getTopicArn());
     PublishResult publishResult = snsClient.publish(publishRequest);
-    // TODO: check on size of message and truncation etc
+    // TODO: check on size of message and truncation etc (this can come later if/when we add more)
     log.debug("Published SNS Message - " + publishResult.getMessageId());
   }
 }
