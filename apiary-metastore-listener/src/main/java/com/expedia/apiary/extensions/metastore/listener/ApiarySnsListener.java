@@ -49,11 +49,16 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   public ApiarySnsListener(Configuration config) {
     super(config);
-    log.debug("ApiarySnsListener created ");
-
     // create a new SNS client and set endpoint
     snsClient = new AmazonSNSClient();
     snsClient.setRegion(RegionUtils.getRegion(System.getenv("AWS_REGION")));
+    log.debug("ApiarySnsListener created ");
+  }
+
+  ApiarySnsListener(Configuration config, AmazonSNSClient snsClient) {
+    super(config);
+    this.snsClient = snsClient;
+    log.debug("ApiarySnsListener created ");
   }
 
   @Override
@@ -118,11 +123,11 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     json.put("dbName", table.getDbName());
     json.put("tableName", table.getTableName());
     if (oldtable != null) {
-      //TODO = discuss - can we change the case on this to be consistent? i.e. "oldTableName"
+      // TODO = discuss - can we change the case on this to be consistent? i.e. "oldTableName"
       json.put("oldtableName", oldtable.getTableName());
     }
     if (partition != null) {
-      //TODO = discuss - can we change the case on this to be consistent? i.e. "partition"
+      // TODO = discuss - can we change the case on this to be consistent? i.e. "partition"
       json.put("Partition", partition.getValues());
     }
     if (oldpartition != null) {
@@ -131,8 +136,9 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     String msg = json.toString();
 
     PublishRequest publishRequest = new PublishRequest(TOPIC_ARN, msg);
+    log.error(publishRequest.getTopicArn());
     PublishResult publishResult = snsClient.publish(publishRequest);
-    //TODO: check on size of message and truncation etc
+    // TODO: check on size of message and truncation etc
     log.debug("Published SNS Message - " + publishResult.getMessageId());
   }
 }
