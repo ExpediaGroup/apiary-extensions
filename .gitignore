@@ -1,0 +1,27 @@
+# Eclipse files
+.classpath
+.settings
+.project
+.springBeans
+
+# Checkstyle and findbugs eclipse plugins
+*/.checkstyle
+*/.fbExcludeFilterFile
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Netbeans files
+nbactions.xml
+
+# Maven target folder
+target/
+
+# Any left over .svn folders
+.svn/
+
+# MAC stuff
+.DS_Store
+

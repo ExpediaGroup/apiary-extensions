@@ -1,0 +1,62 @@
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.hotels</groupId>
+    <artifactId>hotels-oss-parent</artifactId>
+    <version>2.3.3</version>
+  </parent>
+
+  <groupId>com.expedia.apiary</groupId>
+  <artifactId>apiary-extensions-parent</artifactId>
+  <description>Various extensions to Apiary that provide additional, optional functionality</description>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Apiary Extensions Parent</name>
+  <inceptionYear>2018</inceptionYear>
+
+  <scm>
+    <connection>scm:git:git@github.com:ExpediaInc/apiary-extensions.git</connection>
+    <developerConnection>scm:git:git@github.com:ExpediaInc/apiary-extensions.git</developerConnection>
+    <url>https://github.com/ExpediaInc/apiary-extensions</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <properties>
+    <aws-java-sdk.version>1.11.333</aws-java-sdk.version>
+    <jdk.version>1.8</jdk.version>
+    <hive.version>2.3.3</hive.version>
+    <junit.version>4.12</junit.version>
+    <mockito.version>2.21.0</mockito.version>
+    <slf4j.version>1.7.25</slf4j.version>
+  </properties>
+
+  <modules>
+    <module>apiary-metastore-listener</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+</project>
