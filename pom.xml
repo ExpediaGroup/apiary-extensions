@@ -30,6 +30,7 @@
     <hive.version>2.3.3</hive.version>
     <junit.version>4.12</junit.version>
     <mockito.version>2.21.0</mockito.version>
+    <shade.prefix>${project.groupId}.shaded</shade.prefix>
     <slf4j.version>1.7.25</slf4j.version>
   </properties>
 
