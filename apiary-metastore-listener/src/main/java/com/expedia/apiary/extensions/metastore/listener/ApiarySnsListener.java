@@ -119,6 +119,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     throws MetaException {
 
     JSONObject json = new JSONObject();
+    //TODO: add a "protocolVersion" like we do for circus-train
     json.put("eventType", event_type);
     json.put("dbName", table.getDbName());
     json.put("tableName", table.getTableName());
