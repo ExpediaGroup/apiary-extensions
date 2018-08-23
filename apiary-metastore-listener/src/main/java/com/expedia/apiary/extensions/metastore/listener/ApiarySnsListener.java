@@ -32,8 +32,8 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.regions.RegionUtils;
-import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 
@@ -45,17 +45,15 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
 
   private static final String TOPIC_ARN = System.getenv("SNS_ARN");
-  private AmazonSNSClient snsClient;
+  private AmazonSNS snsClient;
 
   public ApiarySnsListener(Configuration config) {
     super(config);
-    // create a new SNS client and set endpoint
-    snsClient = new AmazonSNSClient();
-    snsClient.setRegion(RegionUtils.getRegion(System.getenv("AWS_REGION")));
+    snsClient = AmazonSNSClientBuilder.defaultClient();
     log.debug("ApiarySnsListener created ");
   }
 
-  ApiarySnsListener(Configuration config, AmazonSNSClient snsClient) {
+  ApiarySnsListener(Configuration config, AmazonSNS snsClient) {
     super(config);
     this.snsClient = snsClient;
     log.debug("ApiarySnsListener created ");
