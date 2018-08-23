@@ -13,7 +13,7 @@ The SNS listener can be configured by setting the following System Environment v
 
 |Environment Variable|Required|Description|
 |----|----|----|
-SNS_ARN|Yes| Sets the regional endpoint for the SNS client's service calls.
+SNS_ARN|Yes| Sets the SNS topic ARN to which messages will be sent.
 
 ## JSON Messages
 The following table describes all the fields that may be present in the JSON message that is sent to the SNS 
