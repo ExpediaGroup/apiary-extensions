@@ -22,6 +22,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static com.expedia.apiary.extensions.metastore.listener.ApiarySnsListener.PROTOCOL_VERSION;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -74,7 +76,8 @@ public class ApiarySnsListenerTest {
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(),
-        is("{\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
+        is("{\"protocolVersion\":\"" + PROTOCOL_VERSION
+            + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
   }
 
   // TODO: tests for other onXxx() methods
