@@ -36,7 +36,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 
@@ -44,7 +44,7 @@ import com.amazonaws.services.sns.model.PublishResult;
 public class ApiarySnsListenerTest {
 
   @Mock
-  private AmazonSNSClient snsClient;
+  private AmazonSNS snsClient;
   @Mock
   private Configuration configuration;
   @Mock
