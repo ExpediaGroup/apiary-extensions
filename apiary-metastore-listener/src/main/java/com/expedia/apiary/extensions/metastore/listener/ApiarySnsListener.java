@@ -45,12 +45,16 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
 
   private static final String TOPIC_ARN = System.getenv("SNS_ARN");
+  final static String PROTOCOL_VERSION = "1.0";
+
+  private final String protocolVersion = PROTOCOL_VERSION;
   private AmazonSNSClient snsClient;
 
   public ApiarySnsListener(Configuration config) {
     super(config);
     // create a new SNS client and set endpoint
     snsClient = new AmazonSNSClient();
+    // TODO: we should probably set a default region rather than require this
     snsClient.setRegion(RegionUtils.getRegion(System.getenv("AWS_REGION")));
     log.debug("ApiarySnsListener created ");
   }
@@ -116,10 +120,10 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   }
 
   private void publishEvent(String event_type, Table table, Table oldtable, Partition partition, Partition oldpartition)
-    throws MetaException {
+      throws MetaException {
 
     JSONObject json = new JSONObject();
-    //TODO: add a "protocolVersion" like we do for circus-train
+    json.put("protocolVersion", protocolVersion);
     json.put("eventType", event_type);
     json.put("dbName", table.getDbName());
     json.put("tableName", table.getTableName());
