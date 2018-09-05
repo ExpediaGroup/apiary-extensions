@@ -108,15 +108,17 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       publishEvent(EventType.DROP_PARTITION, event.getTable(), null, partitions.next(), null);
     }
   }
-  
+
   @Override
   public void onInsert(InsertEvent event) throws MetaException {
     if (event.getStatus() == false) {
       return;
     }
-    //TODO: or should this be ALTER_PARTITION? or do we need a new INSERT event type?
-    //TODO: we don't have a partition here, but we do have partition key values, do we want these? (if so will need another method below)
-    //publishEvent(EventType.ALTER_TABLE, event.getTable(), null, event.getPartitionKeyValues());
+    // TODO: should the event type we send through for this be ALTER_PARTITION? or do we need a new
+    // INSERT event type?
+    // TODO: we don't have a partition available in the InsertEvent here, but we do have partition
+    // key values, do we want these? (if so will need another method below)
+    // publishEvent(EventType.???, event.getTable(), null, event.getPartitionKeyValues());
   }
 
   @Override
@@ -128,7 +130,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   }
 
   private void publishEvent(EventType eventType, Table table, Table oldtable, Partition partition, Partition oldpartition)
-    throws MetaException {
+      throws MetaException {
     JSONObject json = new JSONObject();
     json.put("protocolVersion", protocolVersion);
     json.put("eventType", eventType.toString());
