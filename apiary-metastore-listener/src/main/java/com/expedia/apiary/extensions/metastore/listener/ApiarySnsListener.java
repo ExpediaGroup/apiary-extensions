@@ -28,6 +28,7 @@ import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
+import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +59,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   ApiarySnsListener(Configuration config, AmazonSNSClient snsClient) {
     super(config);
     this.snsClient = snsClient;
-    log.debug("ApiarySnsListener created ");
+    log.debug("ApiarySnsListener created");
   }
 
   @Override
@@ -66,7 +67,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent("CREATE_TABLE", event.getTable(), null, null, null);
+    publishEvent(EventType.CREATE_TABLE, event.getTable(), null, null, null);
   }
 
   @Override
@@ -74,7 +75,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent("DROP_TABLE", event.getTable(), null, null, null);
+    publishEvent(EventType.DROP_TABLE, event.getTable(), null, null, null);
   }
 
   @Override
@@ -82,7 +83,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent("ALTER_TABLE", event.getNewTable(), event.getOldTable(), null, null);
+    publishEvent(EventType.ALTER_TABLE, event.getNewTable(), event.getOldTable(), null, null);
   }
 
   @Override
@@ -92,7 +93,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     }
     Iterator<Partition> partitions = event.getPartitionIterator();
     while (partitions.hasNext()) {
-      publishEvent("ADD_PARTITION", event.getTable(), null, partitions.next(), null);
+      publishEvent(EventType.ADD_PARTITION, event.getTable(), null, partitions.next(), null);
     }
   }
 
@@ -103,8 +104,18 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     }
     Iterator<Partition> partitions = event.getPartitionIterator();
     while (partitions.hasNext()) {
-      publishEvent("DROP_PARTITION", event.getTable(), null, partitions.next(), null);
+      publishEvent(EventType.DROP_PARTITION, event.getTable(), null, partitions.next(), null);
     }
+  }
+  
+  @Override
+  public void onInsert(InsertEvent event) throws MetaException {
+    if (event.getStatus() == false) {
+      return;
+    }
+    //TODO: or should this be ALTER_PARTITION? or do we need a new INSERT event type?
+    //TODO: we don't have a partition here, but we do have partition key values, do we want these? (if so will need another method below)
+    //publishEvent(EventType.ALTER_TABLE, event.getTable(), null, event.getPartitionKeyValues());
   }
 
   @Override
@@ -112,15 +123,15 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent("ALTER_PARTITION", event.getTable(), null, event.getNewPartition(), event.getOldPartition());
+    publishEvent(EventType.ALTER_PARTITION, event.getTable(), null, event.getNewPartition(), event.getOldPartition());
   }
 
-  private void publishEvent(String event_type, Table table, Table oldtable, Partition partition, Partition oldpartition)
+  private void publishEvent(EventType eventType, Table table, Table oldtable, Partition partition, Partition oldpartition)
     throws MetaException {
 
     JSONObject json = new JSONObject();
     //TODO: add a "protocolVersion" like we do for circus-train
-    json.put("eventType", event_type);
+    json.put("eventType", eventType.toString());
     json.put("dbName", table.getDbName());
     json.put("tableName", table.getTableName());
     if (oldtable != null) {
