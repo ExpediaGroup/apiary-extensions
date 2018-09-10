@@ -16,6 +16,8 @@
 package com.expedia.apiary.extensions.metastore.listener;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -29,6 +31,7 @@ import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +97,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     }
     Iterator<Partition> partitions = event.getPartitionIterator();
     while (partitions.hasNext()) {
+      // TODO: do we want to have a separate event for each partition or one event with all of them?
       publishEvent(EventType.ADD_PARTITION, event.getTable(), null, partitions.next(), null);
     }
   }
@@ -105,6 +109,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     }
     Iterator<Partition> partitions = event.getPartitionIterator();
     while (partitions.hasNext()) {
+      // TODO: do we want to have a separate event for each partition or one event with all of them?
       publishEvent(EventType.DROP_PARTITION, event.getTable(), null, partitions.next(), null);
     }
   }
@@ -114,12 +119,11 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    // TODO: should the event type we send through for this be ALTER_PARTITION? or do we need a new
-    // INSERT event type?
-    // TODO: we don't have a partition available in the InsertEvent here, but we do have partition
-    // key values, do we want these? (if so will need another method below)
-    // publishEvent(EventType.???, event.getTable(), null, event.getPartitionKeyValues());
+    publishEvent(EventType.INSERT, event.getDb(), event.getTable(), event.getPartitionKeyValues(),
+        event.getFiles(), event.getFileChecksums());
   }
+
+
 
   @Override
   public void onAlterPartition(AlterPartitionEvent event) throws MetaException {
@@ -131,11 +135,8 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private void publishEvent(EventType eventType, Table table, Table oldtable, Partition partition, Partition oldpartition)
       throws MetaException {
-    JSONObject json = new JSONObject();
-    json.put("protocolVersion", protocolVersion);
-    json.put("eventType", eventType.toString());
-    json.put("dbName", table.getDbName());
-    json.put("tableName", table.getTableName());
+    JSONObject json = createBaseMessage(eventType, table.getDbName(), table.getTableName());
+    
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
     }
@@ -145,8 +146,35 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (oldpartition != null) {
       json.put("oldPartition", oldpartition.getValues());
     }
-    String msg = json.toString();
+    
+    sendMessage(json);
+  }
 
+  private void publishEvent(EventType eventType, String dbName, String tableName,
+      Map<String, String> partitionKeyValues, List<String> files, List<String> fileChecksums) {
+    JSONObject json = createBaseMessage(eventType, dbName, tableName);
+   
+    JSONArray filesArray = new JSONArray(files);
+    json.put("files", filesArray);
+    JSONArray fileChecksumsArray = new JSONArray(fileChecksums);
+    json.put("fileChecksums", fileChecksumsArray);
+    JSONObject partitionKeyValuesObject = new JSONObject(partitionKeyValues);
+    json.put("partitionKeyValues", partitionKeyValuesObject);
+
+    sendMessage(json);
+  }
+
+  private JSONObject createBaseMessage(EventType eventType, String dbName, String tableName) {
+    JSONObject json = new JSONObject();
+    json.put("protocolVersion", protocolVersion);
+    json.put("eventType", eventType.toString());
+    json.put("dbName", dbName);
+    json.put("tableName", tableName);
+    return json;
+  }
+
+  private void sendMessage(JSONObject json) {
+    String msg = json.toString();
     PublishRequest publishRequest = new PublishRequest(TOPIC_ARN, msg);
     log.error(publishRequest.getTopicArn());
     PublishResult publishResult = snsClient.publish(publishRequest);
