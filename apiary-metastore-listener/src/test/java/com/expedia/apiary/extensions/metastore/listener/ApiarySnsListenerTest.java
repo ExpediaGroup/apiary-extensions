@@ -106,7 +106,8 @@ public class ApiarySnsListenerTest {
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\"" + PROTOCOL_VERSION
-        + "\",\"eventType\":\"INSERT\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"files\":[\"file:/a/b.txt\",\"file:/a/c.txt\"],\"fileChecksums\":[\"123\",\"456\"],\"partitionKeyValues\":{\"load_date\":\"2013-03-24\",\"variant_code\":\"EN\"}}"));
+        + "\",\"eventType\":\"INSERT\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"files\":[\"file:/a/b.txt\",\"file:/a/c.txt\"],"
+        + "\"fileChecksums\":[\"123\",\"456\"],\"partitionKeyValues\":{\"load_date\":\"2013-03-24\",\"variant_code\":\"EN\"}}"));
   }
 
   // TODO: tests for other onXxx() methods
