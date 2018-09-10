@@ -105,7 +105,6 @@ public class ApiarySnsListenerTest {
     snsListener.onInsert(event);
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
-    System.out.println(publishRequest.getMessage());
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\"" + PROTOCOL_VERSION
         + "\",\"eventType\":\"INSERT\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"files\":[\"file:/a/b.txt\",\"file:/a/c.txt\"],\"fileChecksums\":[\"123\",\"456\"],\"partitionKeyValues\":{\"load_date\":\"2013-03-24\",\"variant_code\":\"EN\"}}"));
   }
