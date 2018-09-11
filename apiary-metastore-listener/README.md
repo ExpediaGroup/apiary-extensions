@@ -40,6 +40,19 @@ The following shows an example JSON message representing a "CREATE_TABLE" event:
       "dbName":"some_db",
       "tableName":"some_table"
 	}
+	
+#### Insert
+The following shows an example JSON message representing an "INSERT" event:
+
+    {
+      "protocolVersion":"1.0",
+      "eventType":"INSERT",
+      "dbName":"some_db",
+      "tableName":"some_table",
+      "files":["file:/a/b.txt","file:/a/c.txt"],
+      "fileChecksums":["123","456"],
+      "partitionKeyValues":{"load_date":"2013-03-24","variant_code":"EN"}
+    }
 
 # Legal
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).

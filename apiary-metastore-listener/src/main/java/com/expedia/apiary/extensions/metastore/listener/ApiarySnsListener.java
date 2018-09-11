@@ -16,6 +16,8 @@
 package com.expedia.apiary.extensions.metastore.listener;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -28,6 +30,8 @@ import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
+import org.apache.hadoop.hive.metastore.events.InsertEvent;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +63,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   ApiarySnsListener(Configuration config, AmazonSNS snsClient) {
     super(config);
     this.snsClient = snsClient;
-    log.debug("ApiarySnsListener created ");
+    log.debug("ApiarySnsListener created");
   }
 
   @Override
@@ -67,7 +71,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent("CREATE_TABLE", event.getTable(), null, null, null);
+    publishEvent(EventType.CREATE_TABLE, event.getTable(), null, null, null);
   }
 
   @Override
@@ -75,7 +79,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent("DROP_TABLE", event.getTable(), null, null, null);
+    publishEvent(EventType.DROP_TABLE, event.getTable(), null, null, null);
   }
 
   @Override
@@ -83,7 +87,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent("ALTER_TABLE", event.getNewTable(), event.getOldTable(), null, null);
+    publishEvent(EventType.ALTER_TABLE, event.getNewTable(), event.getOldTable(), null, null);
   }
 
   @Override
@@ -93,7 +97,8 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     }
     Iterator<Partition> partitions = event.getPartitionIterator();
     while (partitions.hasNext()) {
-      publishEvent("ADD_PARTITION", event.getTable(), null, partitions.next(), null);
+      // TODO: do we want to have a separate event for each partition or one event with all of them?
+      publishEvent(EventType.ADD_PARTITION, event.getTable(), null, partitions.next(), null);
     }
   }
 
@@ -104,26 +109,34 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     }
     Iterator<Partition> partitions = event.getPartitionIterator();
     while (partitions.hasNext()) {
-      publishEvent("DROP_PARTITION", event.getTable(), null, partitions.next(), null);
+      // TODO: do we want to have a separate event for each partition or one event with all of them?
+      publishEvent(EventType.DROP_PARTITION, event.getTable(), null, partitions.next(), null);
     }
   }
+
+  @Override
+  public void onInsert(InsertEvent event) throws MetaException {
+    if (event.getStatus() == false) {
+      return;
+    }
+    publishEvent(EventType.INSERT, event.getDb(), event.getTable(), event.getPartitionKeyValues(),
+        event.getFiles(), event.getFileChecksums());
+  }
+
+
 
   @Override
   public void onAlterPartition(AlterPartitionEvent event) throws MetaException {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent("ALTER_PARTITION", event.getTable(), null, event.getNewPartition(), event.getOldPartition());
+    publishEvent(EventType.ALTER_PARTITION, event.getTable(), null, event.getNewPartition(), event.getOldPartition());
   }
 
-  private void publishEvent(String event_type, Table table, Table oldtable, Partition partition, Partition oldpartition)
+  private void publishEvent(EventType eventType, Table table, Table oldtable, Partition partition, Partition oldpartition)
       throws MetaException {
-
-    JSONObject json = new JSONObject();
-    json.put("protocolVersion", protocolVersion);
-    json.put("eventType", event_type);
-    json.put("dbName", table.getDbName());
-    json.put("tableName", table.getTableName());
+    JSONObject json = createBaseMessage(eventType, table.getDbName(), table.getTableName());
+    
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
     }
@@ -133,8 +146,35 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (oldpartition != null) {
       json.put("oldPartition", oldpartition.getValues());
     }
-    String msg = json.toString();
+    
+    sendMessage(json);
+  }
 
+  private void publishEvent(EventType eventType, String dbName, String tableName,
+      Map<String, String> partitionKeyValues, List<String> files, List<String> fileChecksums) {
+    JSONObject json = createBaseMessage(eventType, dbName, tableName);
+   
+    JSONArray filesArray = new JSONArray(files);
+    json.put("files", filesArray);
+    JSONArray fileChecksumsArray = new JSONArray(fileChecksums);
+    json.put("fileChecksums", fileChecksumsArray);
+    JSONObject partitionKeyValuesObject = new JSONObject(partitionKeyValues);
+    json.put("partitionKeyValues", partitionKeyValuesObject);
+
+    sendMessage(json);
+  }
+
+  private JSONObject createBaseMessage(EventType eventType, String dbName, String tableName) {
+    JSONObject json = new JSONObject();
+    json.put("protocolVersion", protocolVersion);
+    json.put("eventType", eventType.toString());
+    json.put("dbName", dbName);
+    json.put("tableName", tableName);
+    return json;
+  }
+
+  private void sendMessage(JSONObject json) {
+    String msg = json.toString();
     PublishRequest publishRequest = new PublishRequest(TOPIC_ARN, msg);
     log.error(publishRequest.getTopicArn());
     PublishResult publishResult = snsClient.publish(publishRequest);

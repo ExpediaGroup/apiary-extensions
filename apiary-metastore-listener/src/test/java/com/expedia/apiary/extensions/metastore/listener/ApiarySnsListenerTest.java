@@ -24,10 +24,16 @@ import static org.mockito.Mockito.when;
 
 import static com.expedia.apiary.extensions.metastore.listener.ApiarySnsListener.PROTOCOL_VERSION;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
+import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,6 +84,30 @@ public class ApiarySnsListenerTest {
     assertThat(publishRequest.getMessage(),
         is("{\"protocolVersion\":\"" + PROTOCOL_VERSION
             + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
+  }
+
+  @Test
+  public void onInsert() throws MetaException {
+    InsertEvent event = mock(InsertEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(tableName);
+    when(event.getDb()).thenReturn(dbName);
+    List<String> files = Arrays.asList("file:/a/b.txt", "file:/a/c.txt");
+    when(event.getFiles()).thenReturn(files);
+    List<String> fileChecksums = Arrays.asList("123", "456");
+    when(event.getFileChecksums()).thenReturn(fileChecksums);
+
+    Map<String, String> partitionKeyValues = new HashMap<>();
+    partitionKeyValues.put("load_date", "2013-03-24");
+    partitionKeyValues.put("variant_code", "EN");
+    when(event.getPartitionKeyValues()).thenReturn(partitionKeyValues);
+
+    snsListener.onInsert(event);
+    verify(snsClient).publish(requestCaptor.capture());
+    PublishRequest publishRequest = requestCaptor.getValue();
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\"" + PROTOCOL_VERSION
+        + "\",\"eventType\":\"INSERT\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"files\":[\"file:/a/b.txt\",\"file:/a/c.txt\"],"
+        + "\"fileChecksums\":[\"123\",\"456\"],\"partitionKeyValues\":{\"load_date\":\"2013-03-24\",\"variant_code\":\"EN\"}}"));
   }
 
   // TODO: tests for other onXxx() methods
