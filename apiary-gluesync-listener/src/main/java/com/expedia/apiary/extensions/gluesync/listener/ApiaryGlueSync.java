@@ -61,6 +61,8 @@ import com.amazonaws.services.glue.model.CreatePartitionRequest;
 import com.amazonaws.services.glue.model.UpdatePartitionRequest;
 import com.amazonaws.services.glue.model.DeletePartitionRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ApiaryGlueSync extends MetaStoreEventListener  {
 
@@ -292,7 +294,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener  {
             final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             return dateFormat.parse(lastAccessTime.toString());
         } catch (Exception e) {
-	        log.debug(e);
+	        log.debug(e.toString());
         }
         return null;
     }
