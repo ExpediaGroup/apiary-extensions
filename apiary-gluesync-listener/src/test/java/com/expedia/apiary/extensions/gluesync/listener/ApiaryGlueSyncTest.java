@@ -22,14 +22,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.SerDeInfo;
-import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.apache.hadoop.hive.metastore.api.Order;
-import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.Order;
+import org.apache.hadoop.hive.metastore.api.SerDeInfo;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,20 +43,9 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashMap;
-import java.util.stream.Collectors;
-
 import com.amazonaws.services.glue.AWSGlue;
-import com.amazonaws.services.glue.AWSGlueClientBuilder;
-import com.amazonaws.services.glue.model.EntityNotFoundException;
-import com.amazonaws.services.glue.model.GetDatabaseRequest;
-
-import com.amazonaws.services.glue.model.GetTableRequest;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.CreateTableResult;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryGlueSyncTest {
@@ -71,13 +65,13 @@ public class ApiaryGlueSyncTest {
   private String dbName = "some_db";
   private String[] colNames = { "col1", "col2", "col3" };
   private String[] partNames = { "part1", "part2" };
-  
+
   private String gluePrefix = "test_";
   private ApiaryGlueSync glueSync;
 
   @Before
   public void setup() {
-    glueSync = new ApiaryGlueSync(configuration, glueClient,gluePrefix);
+    glueSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix);
     when(glueClient.createTable(any(CreateTableRequest.class))).thenReturn(createTableResult);
   }
 
@@ -94,7 +88,7 @@ public class ApiaryGlueSyncTest {
 
     List<FieldSchema> fields = new ArrayList<FieldSchema>();
     for (int i = 0; i < colNames.length; ++i) {
-        fields.add(new FieldSchema(colNames[i], "string", ""));
+      fields.add(new FieldSchema(colNames[i], "string", ""));
     }
     sd.setCols(fields);
     sd.setInputFormat("org.apache.hadoop.mapred.TextInputFormat");
@@ -107,7 +101,7 @@ public class ApiaryGlueSyncTest {
 
     List<FieldSchema> partitions = new ArrayList<FieldSchema>();
     for (int i = 0; i < partNames.length; ++i) {
-        partitions.add(new FieldSchema(partNames[i], "string", ""));
+      partitions.add(new FieldSchema(partNames[i], "string", ""));
     }
     table.setPartitionKeys(partitions);
 
@@ -118,12 +112,21 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).createTable(requestCaptor.capture());
     CreateTableRequest createTableRequest = requestCaptor.getValue();
 
-    assertThat(createTableRequest.getDatabaseName(),is(gluePrefix+dbName));
-    assertThat(createTableRequest.getTableInput().getName(),is(tableName));
-    assertThat(createTableRequest.getTableInput().getPartitionKeys().stream().map(p -> p.getName()).collect(Collectors.toList()),
-        is(partitions.stream().map(p -> p.getName()).collect(Collectors.toList())));
-    assertThat(createTableRequest.getTableInput().getStorageDescriptor().getColumns().stream().map(p -> p.getName()).collect(Collectors.toList()),
-        is(fields.stream().map(p -> p.getName()).collect(Collectors.toList())));
+    assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    assertThat(createTableRequest.getTableInput().getName(), is(tableName));
+    assertThat(createTableRequest
+        .getTableInput()
+        .getPartitionKeys()
+        .stream()
+        .map(p -> p.getName())
+        .collect(Collectors.toList()), is(partitions.stream().map(p -> p.getName()).collect(Collectors.toList())));
+    assertThat(createTableRequest
+        .getTableInput()
+        .getStorageDescriptor()
+        .getColumns()
+        .stream()
+        .map(p -> p.getName())
+        .collect(Collectors.toList()), is(fields.stream().map(p -> p.getName()).collect(Collectors.toList())));
   }
 
   // TODO: tests for other onXxx() methods
