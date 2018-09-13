@@ -35,6 +35,7 @@
 
   <modules>
     <module>apiary-metastore-listener</module>
+    <module>apiary-gluesync-listener</module>
   </modules>
 
   <dependencyManagement>
