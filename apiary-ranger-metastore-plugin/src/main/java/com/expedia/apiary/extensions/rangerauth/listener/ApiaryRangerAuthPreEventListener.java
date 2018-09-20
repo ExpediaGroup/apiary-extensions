@@ -101,8 +101,7 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
     }
     catch(Exception ex)
     {
-        log.debug("unable to read username", ex);
-        throw new InvalidOperationException("unable to read username.");
+        throw new InvalidOperationException("unable to read username."+ex);
     }
 
     String operationName = null;
