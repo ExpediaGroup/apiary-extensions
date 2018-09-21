@@ -15,86 +15,59 @@
  */
 package com.expedia.apiary.extensions.rangerauth.listener;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.Order;
-import org.apache.hadoop.hive.metastore.api.SerDeInfo;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
-import org.apache.hadoop.hive.metastore.events.PreEventContext;
 import org.apache.hadoop.hive.metastore.events.PreCreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.PreEventContext.PreEventType;
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
-import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-
-
-
-import org.apache.ranger.plugin.service.RangerBasePlugin;
-import org.apache.ranger.plugin.audit.RangerDefaultAuditHandler;
-import org.apache.ranger.plugin.policyengine.RangerAccessResourceImpl;
-import org.apache.ranger.plugin.policyengine.RangerAccessRequestImpl;
-import org.apache.ranger.plugin.policyengine.RangerAccessResult;
-
 import org.apache.hadoop.security.UserGroupInformation;
-
+import org.apache.ranger.plugin.service.RangerBasePlugin;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryRangerAuthPreEventListenerTest {
 
-    private RangerBasePlugin plugin;
+  private RangerBasePlugin plugin;
 
-    @Mock
-    private Configuration configuration;
+  @Mock
+  private Configuration configuration;
 
-    private String tableName = "some_table";
-    private String dbName = "rangerauthz";
-    private String userName = "bob";
+  private String tableName = "some_table";
+  private String dbName = "rangerauthz";
+  private String userName = "bob";
 
-    private ApiaryRangerAuthPreEventListener rangerAuth;
+  private ApiaryRangerAuthPreEventListener rangerAuth;
 
-    @Before
-    public void setup() throws HiveException {
-        plugin = new RangerBasePlugin("hive","metastore");
-        plugin.init();
-        rangerAuth = new ApiaryRangerAuthPreEventListener(configuration,plugin);
-	}
+  @Before
+  public void setup() throws HiveException {
+    plugin = new RangerBasePlugin("hive", "metastore");
+    plugin.init();
+    rangerAuth = new ApiaryRangerAuthPreEventListener(configuration, plugin);
+  }
 
-    @Test
-    public void onEvent() throws MetaException, NoSuchObjectException, InvalidOperationException {
-        PreCreateTableEvent context = mock(PreCreateTableEvent.class);
-        when(context.getEventType()).thenReturn(PreEventType.CREATE_TABLE);
+  @Test
+  public void onEvent() throws MetaException, NoSuchObjectException, InvalidOperationException {
+    PreCreateTableEvent context = mock(PreCreateTableEvent.class);
+    when(context.getEventType()).thenReturn(PreEventType.CREATE_TABLE);
 
-        Table table = new Table();
-        table.setTableName(tableName);
-        table.setDbName(dbName);
-        when(context.getTable()).thenReturn(table);
+    Table table = new Table();
+    table.setTableName(tableName);
+    table.setDbName(dbName);
+    when(context.getTable()).thenReturn(table);
 
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(userName);
-        UserGroupInformation.setLoginUser(ugi);
+    UserGroupInformation ugi = UserGroupInformation.createRemoteUser(userName);
+    UserGroupInformation.setLoginUser(ugi);
 
-        rangerAuth.onEvent(context);
-    }
+    rangerAuth.onEvent(context);
+  }
 }

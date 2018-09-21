@@ -27,7 +27,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.hive.shims.Utils;
 import com.google.common.collect.Sets;
 
-
 import org.apache.hadoop.hive.metastore.MetaStorePreEventListener;
 
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -60,9 +59,21 @@ import org.apache.ranger.plugin.policyengine.RangerAccessResourceImpl;
 import org.apache.ranger.plugin.policyengine.RangerAccessRequestImpl;
 import org.apache.ranger.plugin.policyengine.RangerAccessResult;
 
-
-enum HiveAccessType { NONE, CREATE, ALTER, DROP, INDEX, LOCK, SELECT, UPDATE, USE, READ, WRITE, ALL, ADMIN };
-
+enum HiveAccessType {
+  NONE,
+  CREATE,
+  ALTER,
+  DROP,
+  INDEX,
+  LOCK,
+  SELECT,
+  UPDATE,
+  USE,
+  READ,
+  WRITE,
+  ALL,
+  ADMIN
+};
 
 /**
  * A MetaStorePreEventListener to authorize using ranger.
@@ -72,17 +83,17 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryRangerAuthPreEventListener.class);
 
-  private static RangerBasePlugin plugin = null;
+  private RangerBasePlugin plugin = null;
 
   public ApiaryRangerAuthPreEventListener(Configuration config) throws HiveException {
     super(config);
-    plugin = new RangerBasePlugin("hive","metastore");
+    plugin = new RangerBasePlugin("hive", "metastore");
     plugin.init();
     plugin.setResultProcessor(new RangerDefaultAuditHandler());
     log.debug("ApiaryRangerAuthPreEventListener created");
   }
 
-  public ApiaryRangerAuthPreEventListener(Configuration config,RangerBasePlugin plugin) throws HiveException {
+  public ApiaryRangerAuthPreEventListener(Configuration config, RangerBasePlugin plugin) throws HiveException {
     super(config);
     this.plugin = plugin;
     log.debug("ApiaryRangerAuthPreEventListener created");
@@ -95,11 +106,11 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
     Set<String> groups = null;
 
     try {
-        UserGroupInformation ugi = Utils.getUGI();
-        user = ugi.getUserName();
-        groups = Sets.newHashSet(ugi.getGroupNames());
+      UserGroupInformation ugi = Utils.getUGI();
+      user = ugi.getUserName();
+      groups = Sets.newHashSet(ugi.getGroupNames());
     } catch (Exception e) {
-        throw new InvalidOperationException("Unable to read username.", e);
+      throw new InvalidOperationException("Unable to read username: " + e);
     }
 
     String operationName = null;
@@ -111,114 +122,117 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
     RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
 
     switch (context.getEventType()) {
-        case CREATE_TABLE:
-            table = ((PreCreateTableEvent) context).getTable();
-            operationName = HiveOperationType.CREATETABLE.name();
-            accessType = HiveAccessType.CREATE;
-            resource.setValue("database",table.getDbName());
-            resource.setValue("table",table.getTableName());
-            break;
-        case DROP_TABLE:
-            table = ((PreDropTableEvent) context).getTable();
-            operationName = HiveOperationType.DROPTABLE.name();
-            accessType = HiveAccessType.DROP;
-            resource.setValue("database",table.getDbName());
-            resource.setValue("table",table.getTableName());
-            break;
-        case ALTER_TABLE:
-            table = ((PreAlterTableEvent) context).getOldTable();
-            operationName = "ALTERTABLE";
-            accessType = HiveAccessType.ALTER;
-            resource.setValue("database",table.getDbName());
-            resource.setValue("table",table.getTableName());
-            break;
-        case READ_TABLE:
-            table = ((PreReadTableEvent) context).getTable();
-            operationName = HiveOperationType.QUERY.name();
-            accessType = HiveAccessType.SELECT;
-            resource.setValue("database",table.getDbName());
-            resource.setValue("table",table.getTableName());
-            break;
-        case ADD_PARTITION:
-            table = ((PreAddPartitionEvent) context).getTable();
-            operationName = "ADDPARTITION";
-            accessType = HiveAccessType.ALTER;
-            resource.setValue("database",table.getDbName());
-            resource.setValue("table",table.getTableName());
-            break;
-        case DROP_PARTITION:
-            table = ((PreDropPartitionEvent) context).getTable();
-            operationName = "DROPPARTITION";
-            accessType = HiveAccessType.ALTER;
-            resource.setValue("database",table.getDbName());
-            resource.setValue("table",table.getTableName());
-            break;
-        case ALTER_PARTITION:
-            databaseName = ((PreAlterPartitionEvent) context).getDbName();
-            tableName = ((PreAlterPartitionEvent) context).getTableName();
-            accessType = HiveAccessType.ALTER;
-            operationName = "ALTERPARTITION";
-            resource.setValue("database",databaseName);
-            resource.setValue("table",tableName);
-            break;
-        case ADD_INDEX:
-            databaseName = ((PreAddIndexEvent) context).getIndex().getDbName();
-            tableName = ((PreAddIndexEvent) context).getIndex().getOrigTableName();
-            operationName = "ADDINDEX";
-            accessType = HiveAccessType.CREATE;
-            resource.setValue("database",databaseName);
-            resource.setValue("table",tableName);
-            break;
-        case DROP_INDEX:
-            operationName = "DROPINDEX";
-            accessType = HiveAccessType.DROP;
-            databaseName = ((PreDropIndexEvent) context).getIndex().getDbName();
-            tableName = ((PreDropIndexEvent) context).getIndex().getOrigTableName();
-            resource.setValue("database",databaseName);
-            resource.setValue("table",tableName);
-            break;
-        case ALTER_INDEX:
-            operationName = "ALTERINDEX";
-            accessType = HiveAccessType.ALTER;
-            databaseName = ((PreAlterIndexEvent) context).getOldIndex().getDbName();
-            tableName = ((PreAlterIndexEvent) context).getOldIndex().getOrigTableName();
-            resource.setValue("database",databaseName);
-            resource.setValue("table",tableName);
-            break;
-        case READ_DATABASE:
-            db = ((PreReadDatabaseEvent) context).getDatabase();
-            operationName = HiveOperationType.QUERY.name();
-            accessType = HiveAccessType.SELECT;
-            resource.setValue("database",db.getName());
-            break;
-        case CREATE_DATABASE:
-            db = ((PreCreateDatabaseEvent) context).getDatabase();
-            operationName = HiveOperationType.CREATEDATABASE.name();
-            accessType = HiveAccessType.CREATE;
-            resource.setValue("database",db.getName());
-            break;
-        case DROP_DATABASE:
-            db = ((PreDropDatabaseEvent) context).getDatabase();
-            operationName = HiveOperationType.DROPDATABASE.name();
-            accessType = HiveAccessType.DROP;
-            resource.setValue("database",db.getName());
-            break;
-        default:
-            return;
+    case CREATE_TABLE:
+      table = ((PreCreateTableEvent) context).getTable();
+      operationName = HiveOperationType.CREATETABLE.name();
+      accessType = HiveAccessType.CREATE;
+      resource.setValue("database", table.getDbName());
+      resource.setValue("table", table.getTableName());
+      break;
+    case DROP_TABLE:
+      table = ((PreDropTableEvent) context).getTable();
+      operationName = HiveOperationType.DROPTABLE.name();
+      accessType = HiveAccessType.DROP;
+      resource.setValue("database", table.getDbName());
+      resource.setValue("table", table.getTableName());
+      break;
+    case ALTER_TABLE:
+      table = ((PreAlterTableEvent) context).getOldTable();
+      operationName = "ALTERTABLE";
+      accessType = HiveAccessType.ALTER;
+      resource.setValue("database", table.getDbName());
+      resource.setValue("table", table.getTableName());
+      break;
+    case READ_TABLE:
+      table = ((PreReadTableEvent) context).getTable();
+      operationName = HiveOperationType.QUERY.name();
+      accessType = HiveAccessType.SELECT;
+      resource.setValue("database", table.getDbName());
+      resource.setValue("table", table.getTableName());
+      break;
+    case ADD_PARTITION:
+      table = ((PreAddPartitionEvent) context).getTable();
+      operationName = "ADDPARTITION";
+      accessType = HiveAccessType.ALTER;
+      resource.setValue("database", table.getDbName());
+      resource.setValue("table", table.getTableName());
+      break;
+    case DROP_PARTITION:
+      table = ((PreDropPartitionEvent) context).getTable();
+      operationName = "DROPPARTITION";
+      accessType = HiveAccessType.ALTER;
+      resource.setValue("database", table.getDbName());
+      resource.setValue("table", table.getTableName());
+      break;
+    case ALTER_PARTITION:
+      databaseName = ((PreAlterPartitionEvent) context).getDbName();
+      tableName = ((PreAlterPartitionEvent) context).getTableName();
+      accessType = HiveAccessType.ALTER;
+      operationName = "ALTERPARTITION";
+      resource.setValue("database", databaseName);
+      resource.setValue("table", tableName);
+      break;
+    case ADD_INDEX:
+      databaseName = ((PreAddIndexEvent) context).getIndex().getDbName();
+      tableName = ((PreAddIndexEvent) context).getIndex().getOrigTableName();
+      operationName = "ADDINDEX";
+      accessType = HiveAccessType.CREATE;
+      resource.setValue("database", databaseName);
+      resource.setValue("table", tableName);
+      break;
+    case DROP_INDEX:
+      operationName = "DROPINDEX";
+      accessType = HiveAccessType.DROP;
+      databaseName = ((PreDropIndexEvent) context).getIndex().getDbName();
+      tableName = ((PreDropIndexEvent) context).getIndex().getOrigTableName();
+      resource.setValue("database", databaseName);
+      resource.setValue("table", tableName);
+      break;
+    case ALTER_INDEX:
+      operationName = "ALTERINDEX";
+      accessType = HiveAccessType.ALTER;
+      databaseName = ((PreAlterIndexEvent) context).getOldIndex().getDbName();
+      tableName = ((PreAlterIndexEvent) context).getOldIndex().getOrigTableName();
+      resource.setValue("database", databaseName);
+      resource.setValue("table", tableName);
+      break;
+    case READ_DATABASE:
+      db = ((PreReadDatabaseEvent) context).getDatabase();
+      operationName = HiveOperationType.QUERY.name();
+      accessType = HiveAccessType.SELECT;
+      resource.setValue("database", db.getName());
+      break;
+    case CREATE_DATABASE:
+      db = ((PreCreateDatabaseEvent) context).getDatabase();
+      operationName = HiveOperationType.CREATEDATABASE.name();
+      accessType = HiveAccessType.CREATE;
+      resource.setValue("database", db.getName());
+      break;
+    case DROP_DATABASE:
+      db = ((PreDropDatabaseEvent) context).getDatabase();
+      operationName = HiveOperationType.DROPDATABASE.name();
+      accessType = HiveAccessType.DROP;
+      resource.setValue("database", db.getName());
+      break;
+    default:
+      return;
     }
 
     resource.setServiceDef(plugin.getServiceDef());
-    RangerAccessRequestImpl request = new RangerAccessRequestImpl(resource,accessType.name().toLowerCase(),user,groups);
+    RangerAccessRequestImpl request = new RangerAccessRequestImpl(resource, accessType.name().toLowerCase(), user,
+        groups);
     request.setAccessTime(new Date());
     request.setAction(operationName);
 
     RangerAccessResult result = plugin.isAccessAllowed(request);
-    if(result == null) {
+    if (result == null) {
       throw new InvalidOperationException("Permission denied: unable to evaluate ranger policy");
     }
     if (!result.getIsAllowed()) {
       String path = resource.getAsString();
-      throw new InvalidOperationException(String.format("Permission denied: user [%s] does not have [%s] privilege on [%s]", user, accessType.name().toLowerCase(), path));
+      throw new InvalidOperationException(String
+          .format("Permission denied: user [%s] does not have [%s] privilege on [%s]", user,
+              accessType.name().toLowerCase(), path));
     }
 
   }
