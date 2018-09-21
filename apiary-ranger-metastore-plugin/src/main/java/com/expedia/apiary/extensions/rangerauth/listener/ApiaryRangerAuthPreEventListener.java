@@ -79,7 +79,7 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
     plugin = new RangerBasePlugin("hive","metastore");
     plugin.init();
     plugin.setResultProcessor(new RangerDefaultAuditHandler());
-    log.debug(" ApiaryRangerAuthPreEventListener created ");
+    log.debug("ApiaryRangerAuthPreEventListener created");
   }
 
   public ApiaryRangerAuthPreEventListener(Configuration config,RangerBasePlugin plugin) throws HiveException {
@@ -94,14 +94,12 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
     String user = null;
     Set<String> groups = null;
 
-    try{
+    try {
         UserGroupInformation ugi = Utils.getUGI();
         user = ugi.getUserName();
         groups = Sets.newHashSet(ugi.getGroupNames());
-    }
-    catch(Exception ex)
-    {
-        throw new InvalidOperationException("unable to read username."+ex);
+    } catch (Exception e) {
+        throw new InvalidOperationException("Unable to read username.", e);
     }
 
     String operationName = null;
@@ -215,13 +213,12 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
     request.setAction(operationName);
 
     RangerAccessResult result = plugin.isAccessAllowed(request);
-    if(result == null)
-    {
-         throw new InvalidOperationException("Permission denied: unable to evaluate ranger policy");
+    if(result == null) {
+      throw new InvalidOperationException("Permission denied: unable to evaluate ranger policy");
     }
     if (!result.getIsAllowed()) {
-         String path = resource.getAsString();
-         throw new InvalidOperationException(String.format("Permission denied: user [%s] does not have [%s] privilege on [%s]", user, accessType.name().toLowerCase(), path));
+      String path = resource.getAsString();
+      throw new InvalidOperationException(String.format("Permission denied: user [%s] does not have [%s] privilege on [%s]", user, accessType.name().toLowerCase(), path));
     }
 
   }
