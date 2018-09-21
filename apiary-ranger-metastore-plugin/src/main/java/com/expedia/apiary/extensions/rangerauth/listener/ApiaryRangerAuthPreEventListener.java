@@ -76,9 +76,8 @@ enum HiveAccessType {
 };
 
 /**
- * A MetaStorePreEventListener to authorize using ranger.
+ * A MetaStorePreEventListener to authorize using Ranger.
  */
-
 public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryRangerAuthPreEventListener.class);
@@ -110,7 +109,7 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
       user = ugi.getUserName();
       groups = Sets.newHashSet(ugi.getGroupNames());
     } catch (Exception e) {
-      throw new InvalidOperationException("Unable to read username: " + e);
+      throw new InvalidOperationException("Unable to read user/group information: " + e);
     }
 
     String operationName = null;
