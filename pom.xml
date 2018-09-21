@@ -27,6 +27,7 @@
     <aws-java-sdk.version>1.11.333</aws-java-sdk.version>
     <jdk.version>1.8</jdk.version>
     <hive.version>2.3.3</hive.version>
+    <ranger.version>1.1.0</ranger.version>
     <junit.version>4.12</junit.version>
     <mockito.version>2.21.0</mockito.version>
     <shade.prefix>${project.groupId}.shaded</shade.prefix>
@@ -36,6 +37,7 @@
   <modules>
     <module>apiary-metastore-listener</module>
     <module>apiary-gluesync-listener</module>
+    <module>apiary-ranger-metastore-plugin</module>
   </modules>
 
   <dependencyManagement>
