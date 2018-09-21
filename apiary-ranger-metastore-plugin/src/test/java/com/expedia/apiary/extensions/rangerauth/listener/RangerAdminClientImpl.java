@@ -28,6 +28,12 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+/* This class is based on 
+ * 
+ * https://github.com/apache/ranger/blob/master/hive-agent/src/test/java/org/apache/ranger/services/hive/RangerAdminClientImpl.java
+ * 
+ * See the NOTICE file distributed with this work for additional information regarding copyright ownership.
+*/
 /**
  * A test implementation of the RangerAdminClient interface that just reads policies in from a file and returns them
  */
