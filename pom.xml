@@ -38,6 +38,7 @@
     <module>apiary-metastore-listener</module>
     <module>apiary-gluesync-listener</module>
     <module>apiary-ranger-metastore-plugin</module>
+    <module>apiary-metastore-metrics</module>
   </modules>
 
   <dependencyManagement>
