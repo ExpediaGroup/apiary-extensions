@@ -4,11 +4,11 @@
 The metrics reporter is an optional Apiary component which, if enabled, will push metastore metrics to cloudwatch.
 
 ## Installation
-The reporter can be activated by placing its jar file on the Hive metastore classpath and configuring Hive accordingly. For Apiary 
+The metrics reporter can be activated by placing its jar file on the Hive metastore classpath and configuring Hive accordingly. For Apiary 
 this is done in [apiary-metastore-docker](https://github.com/ExpediaInc/apiary-metastore-docker). 
 
 ## Configuration
-The cloudwatch reporter can be configured by setting the following System Environment variables:
+The metrics reporter can be configured by setting the following System Environment variables:
 
 |Environment Variable|Required|Description|
 |----|----|----|
