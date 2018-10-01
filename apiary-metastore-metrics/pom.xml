@@ -9,7 +9,7 @@
 
   <artifactId>apiary-metastore-metrics</artifactId>
   <name>Apiary Metastore Metrics</name>
-  <description>Codahale reporter to send Hive Metastore metrics to cloudwatch</description>
+  <description>Codahale reporter to send Hive Metastore metrics to CloudWatch</description>
 
   <dependencies>
     <dependency>
