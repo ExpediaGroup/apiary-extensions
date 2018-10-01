@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * TODO: this class won't be needed with hive 3.0.0 as it supports new property hive.service.metrics.codahale.reporter.classes 
+ * https://cwiki.apache.org/confluence/display/Hive/Configuration+Properties#ConfigurationProperties-Metrics
+ */
+
 package com.expedia.apiary.extensions.metastore.metrics;
 
 import com.codahale.metrics.ConsoleReporter;
@@ -52,6 +58,7 @@ import org.apache.hadoop.metrics2.lib.DefaultMetricsSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -71,17 +78,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.hadoop.hive.common.metrics.metrics2.MetricsReporting;
 import org.apache.hadoop.hive.common.metrics.metrics2.MetricVariableRatioGauge;
-
-import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchClientBuilder;
-import com.amazonaws.services.cloudwatch.model.MetricDatum;
-import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
-import com.amazonaws.services.cloudwatch.model.PutMetricDataResult;
-import com.amazonaws.services.cloudwatch.model.StandardUnit;
-import com.amazonaws.services.cloudwatch.model.Dimension;
-
-import java.util.SortedMap; 
-
 
 /**
  * Codahale-backed Metrics implementation.
@@ -200,6 +196,21 @@ public class CodahaleMetrics implements org.apache.hadoop.hive.common.metrics.co
     registerAll("threads", new ThreadStatesGaugeSet());
     registerAll("classLoading", new ClassLoadingGaugeSet());
 
+    //Metrics reporter
+    Set<MetricsReporting> finalReporterList = new HashSet<MetricsReporting>();
+    List<String> metricsReporterNames = Lists.newArrayList(
+      Splitter.on(",").trimResults().omitEmptyStrings().split(conf.getVar(HiveConf.ConfVars.HIVE_METRICS_REPORTER)));
+
+    if(metricsReporterNames != null) {
+      for (String metricsReportingName : metricsReporterNames) {
+        try {
+          MetricsReporting reporter = MetricsReporting.valueOf(metricsReportingName.trim().toUpperCase());
+          finalReporterList.add(reporter);
+        } catch (IllegalArgumentException e) {
+          LOGGER.warn("Metrics reporter skipped due to invalid configured reporter: " + metricsReportingName);
+        }
+      }
+    }
     initCloudwatchReporting();
   }
 
@@ -380,52 +391,106 @@ public class CodahaleMetrics implements org.apache.hadoop.hive.common.metrics.co
   }
 
   private void initCloudwatchReporting() {
-    final CloudwatchReporter cloudwatchReporter = new CloudwatchReporter();
+    final CloudwatchReporter cloudwatchReporter = new CloudwatchReporter(metricRegistry);
     cloudwatchReporter.start();
     reporters.add(cloudwatchReporter);
   }
 
-  class CloudwatchReporter implements Closeable {
+  /**
+   * Should be only called once to initialize the reporters
+   */
+  private void initReporting(Set<MetricsReporting> reportingSet) {
+    for (MetricsReporting reporting : reportingSet) {
+      switch(reporting) {
+        case CONSOLE:
+          final ConsoleReporter consoleReporter = ConsoleReporter.forRegistry(metricRegistry)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .build();
+          consoleReporter.start(1, TimeUnit.SECONDS);
+          reporters.add(consoleReporter);
+          break;
+        case JMX:
+          final JmxReporter jmxReporter = JmxReporter.forRegistry(metricRegistry)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .build();
+          jmxReporter.start();
+          reporters.add(jmxReporter);
+          break;
+        case JSON_FILE:
+          final JsonFileReporter jsonFileReporter = new JsonFileReporter();
+          jsonFileReporter.start();
+          reporters.add(jsonFileReporter);
+          break;
+        case HADOOP2:
+          String applicationName = conf.get(HiveConf.ConfVars.HIVE_METRICS_HADOOP2_COMPONENT_NAME.varname);
+          long reportingInterval = HiveConf.toTime(
+              conf.get(HiveConf.ConfVars.HIVE_METRICS_HADOOP2_INTERVAL.varname),
+              TimeUnit.SECONDS, TimeUnit.SECONDS);
+          final HadoopMetrics2Reporter metrics2Reporter = HadoopMetrics2Reporter.forRegistry(metricRegistry)
+              .convertRatesTo(TimeUnit.SECONDS)
+              .convertDurationsTo(TimeUnit.MILLISECONDS)
+              .build(DefaultMetricsSystem.initialize(applicationName), // The application-level name
+                  applicationName, // Component name
+                  applicationName, // Component description
+                  "General"); // Name for each metric record
+          metrics2Reporter.start(reportingInterval, TimeUnit.SECONDS);
+          break;
+      }
+    }
+  }
+
+  class JsonFileReporter implements Closeable {
     private ObjectMapper jsonMapper = null;
     private java.util.Timer timer = null;
-    private AmazonCloudWatch cw = null;
 
     public void start() {
-      this.cw = AmazonCloudWatchClientBuilder.defaultClient();
+      this.jsonMapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.MILLISECONDS, TimeUnit.MILLISECONDS, false));
       this.timer = new java.util.Timer(true);
+
+      long time = conf.getTimeVar(HiveConf.ConfVars.HIVE_METRICS_JSON_FILE_INTERVAL, TimeUnit.MILLISECONDS);
+      final String pathString = conf.getVar(HiveConf.ConfVars.HIVE_METRICS_JSON_FILE_LOCATION);
 
       timer.schedule(new TimerTask() {
         @Override
         public void run() {
-            String namespace = System.getenv("CLOUDWATCH_NAMESPACE");
-            Dimension dimension = new Dimension().withName("ecsTaskId") .withValue(System.getenv("ECS_TASK_ID"));
-            //all interested metrics are gauges so only writing those to cloudwatch
-            for (Map.Entry<String,Gauge> entry : metricRegistry.getGauges().entrySet()) {
-                try 
-                {
-                    String metricName = entry.getKey();
-                    Double metricValue;
-                    if(entry.getValue().getValue() instanceof Long)
-                    {
-                        metricValue = ((Long)(entry.getValue().getValue())).doubleValue();
-                    }
-                    else if(entry.getValue().getValue() instanceof Integer)
-                    {
-                        metricValue = ((Integer)(entry.getValue().getValue())).doubleValue();
-                    }
-                    else
-                    {
-                        metricValue = (double)entry.getValue().getValue();
-                    }
-                    MetricDatum datum = new MetricDatum().withMetricName(metricName).withUnit(StandardUnit.None).withValue(metricValue).withDimensions(dimension);
-                    PutMetricDataRequest request = new PutMetricDataRequest().withNamespace(namespace) .withMetricData(datum);
-                    PutMetricDataResult response = cw.putMetricData(request);
-                } catch (Exception e) {
-                    //ignore threads.deadlocks collection
-                }
+          BufferedWriter bw = null;
+          try {
+            String json = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(metricRegistry);
+            Path tmpPath = new Path(pathString + ".tmp");
+            URI tmpPathURI = tmpPath.toUri();
+            FileSystem fs = null;
+            if (tmpPathURI.getScheme() == null && tmpPathURI.getAuthority() == null) {
+              //default local
+              fs = FileSystem.getLocal(conf);
+            } else {
+              fs = FileSystem.get(tmpPathURI, conf);
             }
+            fs.delete(tmpPath, true);
+            bw = new BufferedWriter(new OutputStreamWriter(fs.create(tmpPath, true)));
+            bw.write(json);
+            bw.close();
+            fs.setPermission(tmpPath, FsPermission.createImmutable((short) 0644));
+
+            Path path = new Path(pathString);
+            fs.rename(tmpPath, path);
+            fs.setPermission(path, FsPermission.createImmutable((short) 0644));
+          } catch (Exception e) {
+            LOGGER.warn("Error writing JSON Metrics to file", e);
+          } finally {
+            try {
+              if (bw != null) {
+                bw.close();
+              }
+            } catch (IOException e) {
+              //Ignore.
+            }
+          }
+
+
         }
-      }, 0, 60000); //write to cloudwatch every minute
+      }, 0, time);
     }
 
     @Override
@@ -435,5 +500,4 @@ public class CodahaleMetrics implements org.apache.hadoop.hive.common.metrics.co
       }
     }
   }
-
 }
