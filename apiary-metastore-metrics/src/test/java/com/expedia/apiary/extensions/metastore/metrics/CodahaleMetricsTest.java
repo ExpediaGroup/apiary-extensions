@@ -15,8 +15,9 @@
  */
 
 /**
+ * Contains code from the Apache Hive project, specifically:
  * copied from https://github.com/apache/hive/blob/branch-2.3/common/src/test/org/apache/hadoop/hive/common/metrics/metrics2/TestCodahaleMetrics.java
- * removed testFileReporting
+ * removed testFileReporting(), added some code to set System Environment Variables
  */
 package com.expedia.apiary.extensions.metastore.metrics;
 
@@ -33,7 +34,9 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -50,10 +53,16 @@ import static org.junit.Assert.assertTrue;
  */
 public class CodahaleMetricsTest {
 
+  @Rule
+  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
+
   public static MetricRegistry metricRegistry;
 
   @Before
   public void before() throws Exception {
+    environmentVariables.set("CLOUDWATCH_NAMESPACE", "some-cloud-watch-namespace");
+    environmentVariables.set("ECS_TASK_ID", "some-task-id");
+
     HiveConf conf = new HiveConf();
 
     conf.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY, "local");

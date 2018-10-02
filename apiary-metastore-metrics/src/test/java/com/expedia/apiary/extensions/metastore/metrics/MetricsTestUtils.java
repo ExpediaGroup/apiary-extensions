@@ -15,9 +15,9 @@
  */
 
 /**
- * copied from: https://github.com/apache/hive/blob/branch-2.3/common/src/test/org/apache/hadoop/hive/common/metrics/MetricsTestUtils.java
+ * Contains code from the Apache Hive project, specifically: 
+ * https://github.com/apache/hive/blob/branch-2.3/common/src/test/org/apache/hadoop/hive/common/metrics/MetricsTestUtils.java
  */
-
 package com.expedia.apiary.extensions.metastore.metrics;
 
 import com.codahale.metrics.Meter;

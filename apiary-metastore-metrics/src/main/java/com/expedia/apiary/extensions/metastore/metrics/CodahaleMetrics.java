@@ -15,13 +15,13 @@
  */
 
 /**
- * copied from https://github.com/apache/hive/blob/branch-2.3/common/src/java/org/apache/hadoop/hive/common/metrics/metrics2/CodahaleMetrics.java
- * replaced initReporting with initCloudwatchReporting
+ * Contains code from the Apache Hive project, specifically 
+ *    https://github.com/apache/hive/blob/branch-2.3/common/src/java/org/apache/hadoop/hive/common/metrics/metrics2/CodahaleMetrics.java
+ * The initReporting() method has been replaced with initCloudwatchReporting() in order to modify the types of Metrics that are output.
  *
- * TODO: this class won't be needed with hive 3.0.0 as it supports new property hive.service.metrics.codahale.reporter.classes 
+ * TODO: This class won't be needed with Hive 3.0.0 as it supports a new property "hive.service.metrics.codahale.reporter.classes" 
  * https://cwiki.apache.org/confluence/display/Hive/Configuration+Properties#ConfigurationProperties-Metrics
  */
-
 package com.expedia.apiary.extensions.metastore.metrics;
 
 import com.codahale.metrics.ConsoleReporter;
