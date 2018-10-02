@@ -43,7 +43,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Unit test for new Metrics subsystem.
  */
-public class TestCodahaleMetrics {
+public class CodahaleMetricsTest {
 
   public static MetricRegistry metricRegistry;
 
