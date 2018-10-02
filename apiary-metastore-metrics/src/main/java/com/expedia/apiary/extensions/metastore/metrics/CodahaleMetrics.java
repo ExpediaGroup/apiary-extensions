@@ -15,6 +15,9 @@
  */
 
 /**
+ * copied from https://github.com/apache/hive/blob/branch-2.3/common/src/java/org/apache/hadoop/hive/common/metrics/metrics2/CodahaleMetrics.java
+ * replaced initReporting with initCloudwatchReporting
+ *
  * TODO: this class won't be needed with hive 3.0.0 as it supports new property hive.service.metrics.codahale.reporter.classes 
  * https://cwiki.apache.org/confluence/display/Hive/Configuration+Properties#ConfigurationProperties-Metrics
  */
@@ -211,6 +214,7 @@ public class CodahaleMetrics implements org.apache.hadoop.hive.common.metrics.co
         }
       }
     }
+    //removed initReporting from original source and added initCloudwatchReporting
     initCloudwatchReporting();
   }
 

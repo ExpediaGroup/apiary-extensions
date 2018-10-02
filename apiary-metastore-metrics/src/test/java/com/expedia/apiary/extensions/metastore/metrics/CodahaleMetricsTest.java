@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * copied from https://github.com/apache/hive/blob/branch-2.3/common/src/test/org/apache/hadoop/hive/common/metrics/metrics2/TestCodahaleMetrics.java
+ * removed testFileReporting
+ */
 package com.expedia.apiary.extensions.metastore.metrics;
 
 import com.codahale.metrics.Counter;
