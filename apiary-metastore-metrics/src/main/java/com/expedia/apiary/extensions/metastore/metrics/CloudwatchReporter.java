@@ -64,27 +64,21 @@ class CloudwatchReporter implements Closeable {
             Dimension dimension = new Dimension().withName("ecsTaskId").withValue(taskId);
             //all interested metrics are gauges so only writing those to cloudwatch
             for (Map.Entry<String,Gauge> entry : metricRegistry.getGauges().entrySet()) {
-                try
+                String metricName = entry.getKey();
+                Double metricValue = null;
+                if(entry.getValue().getValue() instanceof Long)
                 {
-                    String metricName = entry.getKey();
-                    Double metricValue;
-                    if(entry.getValue().getValue() instanceof Long)
-                    {
-                        metricValue = ((Long)(entry.getValue().getValue())).doubleValue();
-                    }
-                    else if(entry.getValue().getValue() instanceof Integer)
-                    {
-                        metricValue = ((Integer)(entry.getValue().getValue())).doubleValue();
-                    }
-                    else
-                    {
-                        metricValue = (double)entry.getValue().getValue();
-                    }
+                    metricValue = ((Long)(entry.getValue().getValue())).doubleValue();
+                }
+                else if(entry.getValue().getValue() instanceof Integer)
+                {
+                    metricValue = ((Integer)(entry.getValue().getValue())).doubleValue();
+                }
+                if(metricValue != null)
+                {
                     MetricDatum datum = new MetricDatum().withMetricName(metricName).withUnit(StandardUnit.None).withValue(metricValue).withDimensions(dimension);
                     PutMetricDataRequest request = new PutMetricDataRequest().withNamespace(namespace) .withMetricData(datum);
                     PutMetricDataResult response = cloudWatch.putMetricData(request);
-                } catch (Exception e) {
-                    //ignore threads.deadlocks collection
                 }
             }
         }
