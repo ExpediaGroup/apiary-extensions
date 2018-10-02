@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [TBD] - TBD
 ### Added
 - `apiary-gluesync-listener` sub-module.
+- `apiary-metastore-metrics` sub-module.
+- `apiary-ranger-metastore-plugin` sub-module.
 
 ## [0.1.0] - 2018-09-11
 ### Changed
