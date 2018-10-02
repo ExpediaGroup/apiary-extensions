@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.util.TimerTask;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
 
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClientBuilder;
@@ -37,18 +38,17 @@ import com.amazonaws.services.cloudwatch.model.Dimension;
  */
 
 class CloudwatchReporter implements Closeable {
-    private java.util.Timer timer = null;
-    private AmazonCloudWatch cw = null;
+    private Timer timer = null;
+    private AmazonCloudWatch cloudWatch = null;
     private MetricRegistry metricRegistry;
 
     public CloudwatchReporter(MetricRegistry metricRegistry) {
         this.metricRegistry=metricRegistry;
+        this.cloudWatch = AmazonCloudWatchClientBuilder.defaultClient();
+        this.timer = new Timer(true);
     }
 
     public void start() {
-      this.cw = AmazonCloudWatchClientBuilder.defaultClient();
-      this.timer = new java.util.Timer(true);
-
       timer.schedule(new TimerTask() {
         @Override
         public void run() {
@@ -74,7 +74,7 @@ class CloudwatchReporter implements Closeable {
                     }
                     MetricDatum datum = new MetricDatum().withMetricName(metricName).withUnit(StandardUnit.None).withValue(metricValue).withDimensions(dimension);
                     PutMetricDataRequest request = new PutMetricDataRequest().withNamespace(namespace) .withMetricData(datum);
-                    PutMetricDataResult response = cw.putMetricData(request);
+                    PutMetricDataResult response = cloudWatch.putMetricData(request);
                 } catch (Exception e) {
                     //ignore threads.deadlocks collection
                 }
