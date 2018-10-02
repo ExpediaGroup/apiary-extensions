@@ -42,18 +42,26 @@ class CloudwatchReporter implements Closeable {
     private AmazonCloudWatch cloudWatch = null;
     private MetricRegistry metricRegistry;
 
+    private String namespace = null;
+    private String taskId = null;
+
     public CloudwatchReporter(MetricRegistry metricRegistry) {
         this.metricRegistry=metricRegistry;
         this.cloudWatch = AmazonCloudWatchClientBuilder.defaultClient();
         this.timer = new Timer(true);
+
+        this.namespace = System.getenv("CLOUDWATCH_NAMESPACE");
+        if(namespace==null||namespace.equals("")) throw new IllegalArgumentException("CLOUDWATCH_NAMESPACE System envrionment variable not defined");
+
+        this.taskId = System.getenv("ECS_TASK_ID");
+        if(taskId==null||taskId.equals("")) throw new IllegalArgumentException("ECS_TASK_ID System envrionment variable not defined");
     }
 
     public void start() {
       timer.schedule(new TimerTask() {
         @Override
         public void run() {
-            String namespace = System.getenv("CLOUDWATCH_NAMESPACE");
-            Dimension dimension = new Dimension().withName("ecsTaskId") .withValue(System.getenv("ECS_TASK_ID"));
+            Dimension dimension = new Dimension().withName("ecsTaskId").withValue(taskId);
             //all interested metrics are gauges so only writing those to cloudwatch
             for (Map.Entry<String,Gauge> entry : metricRegistry.getGauges().entrySet()) {
                 try
