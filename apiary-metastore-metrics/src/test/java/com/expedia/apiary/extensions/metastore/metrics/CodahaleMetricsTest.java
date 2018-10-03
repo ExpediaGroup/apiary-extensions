@@ -21,11 +21,13 @@
  */
 package com.expedia.apiary.extensions.metastore.metrics;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.junit.Assert.assertTrue;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 //import org.apache.hadoop.hive.common.metrics.MetricsTestUtils;
 import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
@@ -38,15 +40,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertTrue;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 
 /**
  * Unit test for new Metrics subsystem.
@@ -62,6 +58,7 @@ public class CodahaleMetricsTest {
   public void before() throws Exception {
     environmentVariables.set("CLOUDWATCH_NAMESPACE", "some-cloud-watch-namespace");
     environmentVariables.set("ECS_TASK_ID", "some-task-id");
+    environmentVariables.set("AWS_REGION", "us-west-2");
 
     HiveConf conf = new HiveConf();
 
@@ -106,7 +103,6 @@ public class CodahaleMetricsTest {
     int threads = 4;
     ExecutorService executorService = Executors.newFixedThreadPool(threads);
     for (int i=0; i< threads; i++) {
-      final int n = i;
       executorService.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
