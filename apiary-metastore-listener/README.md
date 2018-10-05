@@ -35,10 +35,10 @@ topic:
 The following shows an example JSON message representing a "CREATE_TABLE" event:
 
 	{
-      "protocolVersion":"1.0",
-      "eventType":"CREATE_TABLE",
-      "dbName":"some_db",
-      "tableName":"some_table"
+       "protocolVersion":"1.0",
+       "eventType":"CREATE_TABLE",
+       "dbName":"some_db",
+       "tableName":"some_table"
 	}
 	
 #### Insert
@@ -52,6 +52,61 @@ The following shows an example JSON message representing an "INSERT" event:
       "files":["file:/a/b.txt","file:/a/c.txt"],
       "fileChecksums":["123","456"],
       "partitionKeyValues":{"load_date":"2013-03-24","variant_code":"EN"}
+    }
+    
+#### Alter Table
+The following shows an example JSON message representing an "ALTER_TABLE" event:
+
+    {
+      "protocolVersion":"1.0",
+      "eventType":"ALTER_TABLE",
+      "dbName":"some_db",
+      "tableName":"new_some_table",
+      "oldTableName":"some_table"
+    }
+
+#### Drop Table
+The following shows an example JSON message representing an "DROP_TABLE" event:
+
+    {
+      "protocolVersion":"1.0",
+      "eventType":"DROP_TABLE",
+      "dbName":"some_db",
+      "tableName":"some_table"
+    }
+    
+#### Add Partition
+The following shows an example JSON message representing an "ADD_PARTITION" event:
+
+    {
+      "protocolVersion":"1.0",
+      "eventType":"ADD_PARTITION",
+      "dbName":"some_db",
+      "tableName":"some_table",
+      "partition":"[col_1, col_2, col_3]"
+    }
+
+#### Drop Partition
+The following shows an example JSON message representing an "DROP_PARTITION" event:
+
+    {
+      "protocolVersion":"1.0"
+      "eventType":"DROP_PARTITION",
+      "dbName":"some_db",
+      "tableName":"some_table",
+      "partition":"[col_1, col_2, col_3]"
+    }
+
+#### Alter Partition
+The following shows an example JSON message representing an "ALTER_PARTITION" event:
+
+    {
+      "protocolVersion":"1.0",
+      "eventType":"ALTER_PARTITION",
+      "dbName":"some_db",
+      "tableName":"some_table",
+      "partition":"[col_1,col_2]",
+      "oldPartition":"[col_1,col_2,col_3]"
     }
 
 # Legal
