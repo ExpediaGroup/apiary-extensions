@@ -35,10 +35,10 @@ topic:
 The following shows an example JSON message representing a "CREATE_TABLE" event:
 
 	{
-       "protocolVersion":"1.0",
-       "eventType":"CREATE_TABLE",
-       "dbName":"some_db",
-       "tableName":"some_table"
+      "protocolVersion":"1.0",
+      "eventType":"CREATE_TABLE",
+      "dbName":"some_db",
+      "tableName":"some_table"
 	}
 	
 #### Insert
