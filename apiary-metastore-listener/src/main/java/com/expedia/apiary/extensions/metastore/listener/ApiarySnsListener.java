@@ -42,7 +42,10 @@ import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 
 /**
- * TODO: add some high level javadoc
+ * <p>
+ * A simple Hive Metastore Event Listener which spits out Event Information in JSON format to SNS Topic specified
+ * through ${SNS_ARN} environment variable.
+ * </p>
  */
 public class ApiarySnsListener extends MetaStoreEventListener {
 
