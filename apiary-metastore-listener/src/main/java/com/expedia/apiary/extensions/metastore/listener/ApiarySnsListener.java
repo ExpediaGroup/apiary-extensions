@@ -42,7 +42,10 @@ import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 
 /**
- * TODO: add some high level javadoc
+ * <p>
+ * A simple Hive Metastore Event Listener which spits out Event Information in JSON format to SNS Topic specified
+ * through ${SNS_ARN} environment variable.
+ * </p>
  */
 public class ApiarySnsListener extends MetaStoreEventListener {
 
@@ -52,7 +55,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   final static String PROTOCOL_VERSION = "1.0";
   private final String protocolVersion = PROTOCOL_VERSION;
 
-  private AmazonSNS snsClient;
+  private final AmazonSNS snsClient;
 
   public ApiarySnsListener(Configuration config) {
     super(config);
@@ -119,11 +122,9 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent(EventType.INSERT, event.getDb(), event.getTable(), event.getPartitionKeyValues(),
-        event.getFiles(), event.getFileChecksums());
+    publishEvent(EventType.INSERT, event.getDb(), event.getTable(), event.getPartitionKeyValues(), event.getFiles(),
+        event.getFileChecksums());
   }
-
-
 
   @Override
   public void onAlterPartition(AlterPartitionEvent event) throws MetaException {
@@ -133,10 +134,15 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     publishEvent(EventType.ALTER_PARTITION, event.getTable(), null, event.getNewPartition(), event.getOldPartition());
   }
 
-  private void publishEvent(EventType eventType, Table table, Table oldtable, Partition partition, Partition oldpartition)
-      throws MetaException {
+  private void publishEvent(
+      EventType eventType,
+      Table table,
+      Table oldtable,
+      Partition partition,
+      Partition oldpartition)
+    throws MetaException {
     JSONObject json = createBaseMessage(eventType, table.getDbName(), table.getTableName());
-    
+
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
     }
@@ -146,14 +152,19 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (oldpartition != null) {
       json.put("oldPartition", oldpartition.getValues());
     }
-    
+
     sendMessage(json);
   }
 
-  private void publishEvent(EventType eventType, String dbName, String tableName,
-      Map<String, String> partitionKeyValues, List<String> files, List<String> fileChecksums) {
+  private void publishEvent(
+      EventType eventType,
+      String dbName,
+      String tableName,
+      Map<String, String> partitionKeyValues,
+      List<String> files,
+      List<String> fileChecksums) {
     JSONObject json = createBaseMessage(eventType, dbName, tableName);
-   
+
     JSONArray filesArray = new JSONArray(files);
     json.put("files", filesArray);
     JSONArray fileChecksumsArray = new JSONArray(fileChecksums);
