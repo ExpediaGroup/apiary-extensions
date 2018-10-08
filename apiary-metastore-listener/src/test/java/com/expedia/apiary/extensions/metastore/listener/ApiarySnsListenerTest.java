@@ -195,7 +195,6 @@ public class ApiarySnsListenerTest {
 
   @Test
   public void onAlterPartition() throws MetaException {
-
     Table table = new Table();
     table.setTableName(TABLE_NAME);
     table.setDbName(DB_NAME);
@@ -219,12 +218,10 @@ public class ApiarySnsListenerTest {
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
         + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partition\":\"[col_1, col_2]\",\"oldPartition\":\"[col_1, col_2, col_3]\"}"));
-
   }
 
   @Test
   public void onAlterTable() throws MetaException {
-
     Table oldTable = new Table();
     oldTable.setTableName(TABLE_NAME);
     oldTable.setDbName(DB_NAME);
@@ -245,7 +242,6 @@ public class ApiarySnsListenerTest {
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
         + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"oldTableName\":\"some_table\"}"));
-
   }
 
   // TODO: test for setting ARN via environment variable
