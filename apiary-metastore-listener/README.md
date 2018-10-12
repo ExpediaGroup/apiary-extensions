@@ -83,7 +83,7 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "eventType": "ADD_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "partition": "[col_1, col_2, col_3]"
+      "partition": ["col_1", "col_2", "col_3"]
     }
 
 #### Drop Partition
@@ -94,7 +94,7 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "eventType": "DROP_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "partition": "[col_1, col_2, col_3]"
+      "partition": ["col_1", "col_2", "col_3"]
     }
 
 #### Alter Partition
@@ -105,8 +105,8 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "eventType": "ALTER_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "partition": "[col_1,col_2]",
-      "oldPartition": "[col_1,col_2,col_3]"
+      "partition": ["col_1","col_2"],
+      "oldPartition": ["col_1", "col_2", "col_3"]
     }
 
 # Legal

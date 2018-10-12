@@ -147,10 +147,12 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       json.put("oldTableName", oldtable.getTableName());
     }
     if (partition != null) {
-      json.put("partition", partition.getValues());
+      JSONArray partitionValuesArray = new JSONArray(partition.getValues());
+      json.put("partition", partitionValuesArray);
     }
     if (oldpartition != null) {
-      json.put("oldPartition", oldpartition.getValues());
+      JSONArray partitionValuesArray = new JSONArray(oldpartition.getValues());
+      json.put("oldPartition", partitionValuesArray);
     }
 
     sendMessage(json);
