@@ -144,7 +144,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partition\":\"[col_1, col_2, col_3]\"}"));
+        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partition\":[\"col_1\",\"col_2\",\"col_3\"]}"));
   }
 
   @Test
@@ -170,7 +170,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partition\":\"[col_1, col_2, col_3]\"}"));
+        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partition\":[\"col_1\",\"col_2\",\"col_3\"]}"));
   }
 
   @Test
@@ -217,7 +217,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partition\":\"[col_1, col_2]\",\"oldPartition\":\"[col_1, col_2, col_3]\"}"));
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partition\":[\"col_1\",\"col_2\"],\"oldPartition\":[\"col_1\",\"col_2\",\"col_3\"]}"));
   }
 
   @Test
