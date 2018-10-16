@@ -15,9 +15,12 @@
  */
 package com.expedia.apiary.extensions.metastore.listener;
 
+import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREURIS;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -122,8 +125,8 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent(EventType.INSERT, event.getDb(), event.getTable(), event.getPartitionKeyValues(), event.getFiles(),
-        event.getFileChecksums());
+    publishInsertEvent(EventType.INSERT, event.getDb(), event.getTable(), event.getPartitionKeyValues(),
+        event.getFiles(), event.getFileChecksums());
   }
 
   @Override
@@ -141,31 +144,42 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       Partition partition,
       Partition oldpartition)
     throws MetaException {
-    JSONObject json = createBaseMessage(eventType, table.getDbName(), table.getTableName());
+    String sourceMetastoreUris = table.getParameters().get(METASTOREURIS.varname);
+
+    JSONObject json = createBaseMessage(eventType, table.getDbName(), table.getTableName(), sourceMetastoreUris);
 
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
     }
     if (partition != null) {
       JSONArray partitionValuesArray = new JSONArray(partition.getValues());
-      json.put("partition", partitionValuesArray);
+      JSONArray partitionKeysArray = new JSONArray(
+          table.getPartitionKeys().stream().map(f -> f.getName()).collect(Collectors.toList()));
+
+      json.put("partitionKeys", partitionKeysArray);
+      json.put("partitionValues", partitionValuesArray);
     }
     if (oldpartition != null) {
       JSONArray partitionValuesArray = new JSONArray(oldpartition.getValues());
-      json.put("oldPartition", partitionValuesArray);
+      json.put("oldPartitionValues", partitionValuesArray);
     }
 
     sendMessage(json);
   }
 
-  private void publishEvent(
+  private void publishInsertEvent(
       EventType eventType,
       String dbName,
       String tableName,
       Map<String, String> partitionKeyValues,
       List<String> files,
       List<String> fileChecksums) {
-    JSONObject json = createBaseMessage(eventType, dbName, tableName);
+
+    JSONObject json = new JSONObject();
+    json.put("protocolVersion", protocolVersion);
+    json.put("eventType", eventType.toString());
+    json.put("dbName", dbName);
+    json.put("tableName", tableName);
 
     JSONArray filesArray = new JSONArray(files);
     json.put("files", filesArray);
@@ -177,12 +191,17 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     sendMessage(json);
   }
 
-  private JSONObject createBaseMessage(EventType eventType, String dbName, String tableName) {
+  private JSONObject createBaseMessage(
+      EventType eventType,
+      String dbName,
+      String tableName,
+      String sourceMetastoreUris) {
     JSONObject json = new JSONObject();
     json.put("protocolVersion", protocolVersion);
     json.put("eventType", eventType.toString());
     json.put("dbName", dbName);
     json.put("tableName", tableName);
+    json.put("sourceMetastoreUris", sourceMetastoreUris);
     return json;
   }
 
