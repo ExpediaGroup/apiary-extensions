@@ -26,7 +26,6 @@ import static com.expedia.apiary.extensions.metastore.listener.ApiarySnsListener
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
-import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
@@ -94,6 +92,7 @@ public class ApiarySnsListenerTest {
     table.setTableName(TABLE_NAME);
     table.setDbName(DB_NAME);
     table.setPartitionKeys(partitionKeys);
+
   }
 
   @Test
@@ -144,8 +143,7 @@ public class ApiarySnsListenerTest {
 
     List<Partition> partitions = new ArrayList<>();
     partitions
-        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, getStorageDescriptor(partitionKeys),
-            ImmutableMap.of()));
+        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, new StorageDescriptor(), ImmutableMap.of()));
 
     when(event.getPartitionIterator()).thenReturn(partitions.iterator());
 
@@ -155,7 +153,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"Column_2\":\"String\",\"Column_1\":\"String\",\"Column_3\":\"String\"},\"partitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
+        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":[\"Column_1\",\"Column_2\",\"Column_3\"],\"partitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
   }
 
   @Test
@@ -166,8 +164,7 @@ public class ApiarySnsListenerTest {
 
     List<Partition> partitions = new ArrayList<>();
     partitions
-        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, getStorageDescriptor(partitionKeys),
-            ImmutableMap.of()));
+        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, new StorageDescriptor(), ImmutableMap.of()));
 
     when(event.getPartitionIterator()).thenReturn(partitions.iterator());
 
@@ -177,7 +174,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"Column_2\":\"String\",\"Column_1\":\"String\",\"Column_3\":\"String\"},\"partitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
+        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":[\"Column_1\",\"Column_2\",\"Column_3\"],\"partitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
   }
 
   @Test
@@ -202,10 +199,10 @@ public class ApiarySnsListenerTest {
     when(event.getStatus()).thenReturn(true);
     when(event.getTable()).thenReturn(table);
 
-    Partition oldPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
-        getStorageDescriptor(partitionKeys), ImmutableMap.of());
+    Partition oldPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, new StorageDescriptor(),
+        ImmutableMap.of());
     Partition newPartition = new Partition(Arrays.asList("col_1", "col_2"), DB_NAME, TABLE_NAME, 0, 0,
-        getStorageDescriptor(partitionKeys), ImmutableMap.of());
+        new StorageDescriptor(), ImmutableMap.of());
 
     when(event.getOldPartition()).thenReturn(oldPartition);
     when(event.getNewPartition()).thenReturn(newPartition);
@@ -216,7 +213,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"Column_2\":\"String\",\"Column_1\":\"String\",\"Column_3\":\"String\"},\"partitionValues\":[\"col_1\",\"col_2\"],\"oldPartitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":[\"Column_1\",\"Column_2\",\"Column_3\"],\"partitionValues\":[\"col_1\",\"col_2\"],\"oldPartitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
   }
 
   @Test
@@ -239,9 +236,5 @@ public class ApiarySnsListenerTest {
         + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"oldTableName\":\"some_table\"}"));
   }
 
-  private StorageDescriptor getStorageDescriptor(List<FieldSchema> partitionKeys) {
-    return new StorageDescriptor(partitionKeys, "s3://test_location", "ORC", "ORC", false, 2, new SerDeInfo(),
-        Collections.emptyList(), Collections.emptyList(), Collections.emptyMap());
-  }
   // TODO: test for setting ARN via environment variable
 }

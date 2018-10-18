@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -150,10 +149,10 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     }
     if (partition != null) {
       JSONArray partitionValuesArray = new JSONArray(partition.getValues());
-      JSONObject partitionKeys = new JSONObject(
-          partition.getSd().getCols().stream().collect(Collectors.toMap(FieldSchema::getName, FieldSchema::getType)));
+      JSONArray partitionKeysArray = new JSONArray(
+          table.getPartitionKeys().stream().map(f -> f.getName()).collect(Collectors.toList()));
 
-      json.put("partitionKeys", partitionKeys);
+      json.put("partitionKeys", partitionKeysArray);
       json.put("partitionValues", partitionValuesArray);
     }
     if (oldpartition != null) {
@@ -172,8 +171,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       List<String> files,
       List<String> fileChecksums) {
 
-    JSONObject json = new JSONObject();
-    json = createBaseMessage(eventType, dbName, tableName);
+    JSONObject json = createBaseMessage(eventType, dbName, tableName);
 
     JSONArray filesArray = new JSONArray(files);
     json.put("files", filesArray);

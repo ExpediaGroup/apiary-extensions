@@ -38,8 +38,7 @@ The following shows an example JSON message representing a "CREATE_TABLE" event:
       "protocolVersion": "1.0",
       "eventType": "CREATE_TABLE",
       "dbName": "some_db",
-      "tableName": "some_table",
-      "sourceMetastoreUris": "thrift://remote_host:9883"
+      "tableName": "some_table"
 	}
 	
 #### Insert
@@ -63,7 +62,6 @@ The following shows an example JSON message representing an "ALTER_TABLE" event:
       "eventType": "ALTER_TABLE",
       "dbName": "some_db",
       "tableName": "new_some_table",
-      "sourceMetastoreUris": "thrift://remote_host:9883",
       "oldTableName": "some_table"
     }
 
@@ -75,7 +73,6 @@ The following shows an example JSON message representing a "DROP_TABLE" event:
       "eventType": "DROP_TABLE",
       "dbName": "some_db",
       "tableName": "some_table"
-      "sourceMetastoreUris": "thrift://remote_host:9883"
     }
     
 #### Add Partition
@@ -86,7 +83,6 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "eventType": "ADD_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "sourceMetastoreUris": "thrift://remote_host:9883",
       "partitionKeys": {"Column_2":"String", "Column_1":"String", "Column_3":"String"},
       "partitionValues": ["val_1", "val_2", "val_3"],
     }
@@ -99,7 +95,6 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "eventType": "DROP_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "sourceMetastoreUris": "thrift://remote_host:9883",
       "partitionKeys": ["col_1", "col_2", "col_3"],
       "partitionValues": ["val_1", "val_2", "val_3"]
     }
@@ -112,7 +107,6 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "eventType": "ALTER_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "sourceMetastoreUris": "thrift://remote_host:9883",
       "partitionKeys": ["col_1","col_2"],
       "partitionValues": ["val_1", "val_2", "val_3"],
       "oldPartitionValues": ["val_4", "val_5", "val_6"]
