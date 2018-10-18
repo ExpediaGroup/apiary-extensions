@@ -15,8 +15,6 @@
  */
 package com.expedia.apiary.extensions.metastore.listener;
 
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREURIS;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +22,7 @@ import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -144,19 +143,17 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       Partition partition,
       Partition oldpartition)
     throws MetaException {
-    String sourceMetastoreUris = table.getParameters().get(METASTOREURIS.varname);
-
-    JSONObject json = createBaseMessage(eventType, table.getDbName(), table.getTableName(), sourceMetastoreUris);
+    JSONObject json = createBaseMessage(eventType, table.getDbName(), table.getTableName());
 
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
     }
     if (partition != null) {
       JSONArray partitionValuesArray = new JSONArray(partition.getValues());
-      JSONArray partitionKeysArray = new JSONArray(
-          table.getPartitionKeys().stream().map(f -> f.getName()).collect(Collectors.toList()));
+      JSONObject partitionKeys = new JSONObject(
+          partition.getSd().getCols().stream().collect(Collectors.toMap(FieldSchema::getName, FieldSchema::getType)));
 
-      json.put("partitionKeys", partitionKeysArray);
+      json.put("partitionKeys", partitionKeys);
       json.put("partitionValues", partitionValuesArray);
     }
     if (oldpartition != null) {
@@ -176,10 +173,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       List<String> fileChecksums) {
 
     JSONObject json = new JSONObject();
-    json.put("protocolVersion", protocolVersion);
-    json.put("eventType", eventType.toString());
-    json.put("dbName", dbName);
-    json.put("tableName", tableName);
+    json = createBaseMessage(eventType, dbName, tableName);
 
     JSONArray filesArray = new JSONArray(files);
     json.put("files", filesArray);
@@ -191,17 +185,12 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     sendMessage(json);
   }
 
-  private JSONObject createBaseMessage(
-      EventType eventType,
-      String dbName,
-      String tableName,
-      String sourceMetastoreUris) {
+  private JSONObject createBaseMessage(EventType eventType, String dbName, String tableName) {
     JSONObject json = new JSONObject();
     json.put("protocolVersion", protocolVersion);
     json.put("eventType", eventType.toString());
     json.put("dbName", dbName);
     json.put("tableName", tableName);
-    json.put("sourceMetastoreUris", sourceMetastoreUris);
     return json;
   }
 

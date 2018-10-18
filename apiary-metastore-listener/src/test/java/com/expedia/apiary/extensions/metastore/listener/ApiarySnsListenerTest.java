@@ -15,7 +15,6 @@
  */
 package com.expedia.apiary.extensions.metastore.listener;
 
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREURIS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +26,7 @@ import static com.expedia.apiary.extensions.metastore.listener.ApiarySnsListener
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +34,8 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
@@ -72,12 +72,10 @@ public class ApiarySnsListenerTest {
   @Captor
   private ArgumentCaptor<PublishRequest> requestCaptor;
 
-  private Table table;
+  private final Table table = new Table();
   private static final String TABLE_NAME = "some_table";
   private static final String DB_NAME = "some_db";
-  private static final String SOURCE_METASTORE_URIS = "thrift://remote_host:9883";
   private static final List<String> PARTITION_VALUES = ImmutableList.of("value_1", "value_2", "value_3");
-  private static final List<String> PARTITION_COLUMNS = ImmutableList.of("Column_1", "Column_2", "Column_3");
 
   private List<FieldSchema> partitionKeys;
   private ApiarySnsListener snsListener;
@@ -93,12 +91,9 @@ public class ApiarySnsListenerTest {
 
     partitionKeys = ImmutableList.of(partitionColumn1, partitionColumn2, partitionColumn3);
 
-    table = new Table();
     table.setTableName(TABLE_NAME);
     table.setDbName(DB_NAME);
-    table.putToParameters(METASTOREURIS.varname, SOURCE_METASTORE_URIS);
     table.setPartitionKeys(partitionKeys);
-
   }
 
   @Test
@@ -110,13 +105,14 @@ public class ApiarySnsListenerTest {
     snsListener.onCreateTable(event);
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
-    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
-        + PROTOCOL_VERSION
-        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"sourceMetastoreUris\":\"thrift://remote_host:9883\"}"));
+    assertThat(publishRequest.getMessage(),
+        is("{\"protocolVersion\":\""
+            + PROTOCOL_VERSION
+            + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
   }
 
   @Test
-  public void onInsert() throws MetaException, NoSuchObjectException {
+  public void onInsert() throws MetaException {
     InsertEvent event = mock(InsertEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getTable()).thenReturn(TABLE_NAME);
@@ -148,7 +144,8 @@ public class ApiarySnsListenerTest {
 
     List<Partition> partitions = new ArrayList<>();
     partitions
-        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, new StorageDescriptor(), ImmutableMap.of()));
+        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, getStorageDescriptor(partitionKeys),
+            ImmutableMap.of()));
 
     when(event.getPartitionIterator()).thenReturn(partitions.iterator());
 
@@ -158,7 +155,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"sourceMetastoreUris\":\"thrift://remote_host:9883\",\"partitionKeys\":[\"Column_1\",\"Column_2\",\"Column_3\"],\"partitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
+        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"Column_2\":\"String\",\"Column_1\":\"String\",\"Column_3\":\"String\"},\"partitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
   }
 
   @Test
@@ -169,7 +166,8 @@ public class ApiarySnsListenerTest {
 
     List<Partition> partitions = new ArrayList<>();
     partitions
-        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, new StorageDescriptor(), ImmutableMap.of()));
+        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, getStorageDescriptor(partitionKeys),
+            ImmutableMap.of()));
 
     when(event.getPartitionIterator()).thenReturn(partitions.iterator());
 
@@ -179,7 +177,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"sourceMetastoreUris\":\"thrift://remote_host:9883\",\"partitionKeys\":[\"Column_1\",\"Column_2\",\"Column_3\"],\"partitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
+        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"Column_2\":\"String\",\"Column_1\":\"String\",\"Column_3\":\"String\"},\"partitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
   }
 
   @Test
@@ -192,9 +190,10 @@ public class ApiarySnsListenerTest {
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
 
-    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
-        + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"sourceMetastoreUris\":\"thrift://remote_host:9883\"}"));
+    assertThat(publishRequest.getMessage(),
+        is("{\"protocolVersion\":\""
+            + PROTOCOL_VERSION
+            + "\",\"eventType\":\"DROP_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
   }
 
   @Test
@@ -203,10 +202,10 @@ public class ApiarySnsListenerTest {
     when(event.getStatus()).thenReturn(true);
     when(event.getTable()).thenReturn(table);
 
-    Partition oldPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, new StorageDescriptor(),
-        ImmutableMap.of());
+    Partition oldPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+        getStorageDescriptor(partitionKeys), ImmutableMap.of());
     Partition newPartition = new Partition(Arrays.asList("col_1", "col_2"), DB_NAME, TABLE_NAME, 0, 0,
-        new StorageDescriptor(), ImmutableMap.of());
+        getStorageDescriptor(partitionKeys), ImmutableMap.of());
 
     when(event.getOldPartition()).thenReturn(oldPartition);
     when(event.getNewPartition()).thenReturn(newPartition);
@@ -217,7 +216,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"sourceMetastoreUris\":\"thrift://remote_host:9883\",\"partitionKeys\":[\"Column_1\",\"Column_2\",\"Column_3\"],\"partitionValues\":[\"col_1\",\"col_2\"],\"oldPartitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"Column_2\":\"String\",\"Column_1\":\"String\",\"Column_3\":\"String\"},\"partitionValues\":[\"col_1\",\"col_2\"],\"oldPartitionValues\":[\"value_1\",\"value_2\",\"value_3\"]}"));
   }
 
   @Test
@@ -225,7 +224,6 @@ public class ApiarySnsListenerTest {
     Table newTable = new Table();
     newTable.setTableName("new_" + TABLE_NAME);
     newTable.setDbName(DB_NAME);
-    newTable.putToParameters(METASTOREURIS.varname, SOURCE_METASTORE_URIS);
 
     AlterTableEvent event = mock(AlterTableEvent.class);
     when(event.getStatus()).thenReturn(true);
@@ -238,8 +236,12 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"sourceMetastoreUris\":\"thrift://remote_host:9883\",\"oldTableName\":\"some_table\"}"));
+        + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"oldTableName\":\"some_table\"}"));
   }
 
+  private StorageDescriptor getStorageDescriptor(List<FieldSchema> partitionKeys) {
+    return new StorageDescriptor(partitionKeys, "s3://test_location", "ORC", "ORC", false, 2, new SerDeInfo(),
+        Collections.emptyList(), Collections.emptyList(), Collections.emptyMap());
+  }
   // TODO: test for setting ARN via environment variable
 }

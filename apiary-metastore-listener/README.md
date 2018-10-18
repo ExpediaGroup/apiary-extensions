@@ -87,7 +87,7 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "dbName": "some_db",
       "tableName": "some_table",
       "sourceMetastoreUris": "thrift://remote_host:9883",
-      "partitionKeys": ["col_1", "col_2", "col_3"],
+      "partitionKeys": {"Column_2":"String", "Column_1":"String", "Column_3":"String"},
       "partitionValues": ["val_1", "val_2", "val_3"],
     }
 
