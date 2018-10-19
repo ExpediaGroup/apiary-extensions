@@ -175,8 +175,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       List<String> files,
       List<String> fileChecksums) {
 
-    JSONObject json = new JSONObject();
-    json = createBaseMessage(eventType, dbName, tableName);
+    JSONObject json = createBaseMessage(eventType, dbName, tableName);
 
     JSONArray filesArray = new JSONArray(files);
     json.put("files", filesArray);
