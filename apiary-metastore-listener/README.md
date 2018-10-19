@@ -83,8 +83,8 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "eventType": "ADD_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "partitionKeys": {"Column_2":"String", "Column_1":"String", "Column_3":"String"},
-      "partitionValues": ["val_1", "val_2", "val_3"],
+      "partitionKeys": {"column_1":"String", "column_2":"Integer", "column_3":"String"},
+      "partitionValues": ["value_1","1000","value_2"]
     }
 
 #### Drop Partition
@@ -95,8 +95,8 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "eventType": "DROP_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "partitionKeys": ["col_1", "col_2", "col_3"],
-      "partitionValues": ["val_1", "val_2", "val_3"]
+      "partitionKeys": {"column_1":"String", "column_2":"Integer", "column_3":"String"},
+      "partitionValues": ["value_1","1000","value_2"]
     }
 
 #### Alter Partition
@@ -107,9 +107,9 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "eventType": "ALTER_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "partitionKeys": ["col_1","col_2"],
-      "partitionValues": ["val_1", "val_2", "val_3"],
-      "oldPartitionValues": ["val_4", "val_5", "val_6"]
+      "partitionKeys": {"column_1":"String", "column_2":"Integer", "column_3":"String"},
+      "partitionValues": ["value_3","2000\","value_4"],
+      "oldPartitionValues": ["value_1","1000","value_2"]
     }
 
 # Legal

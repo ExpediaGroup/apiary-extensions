@@ -16,12 +16,13 @@
 package com.expedia.apiary.extensions.metastore.listener;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -149,10 +150,13 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     }
     if (partition != null) {
       JSONArray partitionValuesArray = new JSONArray(partition.getValues());
-      JSONArray partitionKeysArray = new JSONArray(
-          table.getPartitionKeys().stream().map(f -> f.getName()).collect(Collectors.toList()));
+      Map<String, String> partitionKeysMap = new LinkedHashMap<>();
+      for (FieldSchema fieldSchema : partition.getSd().getCols()) {
+        partitionKeysMap.put(fieldSchema.getName(), fieldSchema.getType());
+      }
 
-      json.put("partitionKeys", partitionKeysArray);
+      JSONObject partitionKeys = new JSONObject(partitionKeysMap);
+      json.put("partitionKeys", partitionKeys);
       json.put("partitionValues", partitionValuesArray);
     }
     if (oldpartition != null) {
@@ -171,7 +175,8 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       List<String> files,
       List<String> fileChecksums) {
 
-    JSONObject json = createBaseMessage(eventType, dbName, tableName);
+    JSONObject json = new JSONObject();
+    json = createBaseMessage(eventType, dbName, tableName);
 
     JSONArray filesArray = new JSONArray(files);
     json.put("files", filesArray);
