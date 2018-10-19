@@ -150,7 +150,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     }
     if (partition != null) {
       JSONArray partitionValuesArray = new JSONArray(partition.getValues());
-      Map<String, String> partitionKeysMap = new LinkedHashMap<>();
+      LinkedHashMap<String, String> partitionKeysMap = new LinkedHashMap<>();
       for (FieldSchema fieldSchema : partition.getSd().getCols()) {
         partitionKeysMap.put(fieldSchema.getName(), fieldSchema.getType());
       }

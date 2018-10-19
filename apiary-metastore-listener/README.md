@@ -88,7 +88,7 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "tableName": "some_table",
       "partitionKeys": {
           "column_1": "string",
-          "column_2": "integer",
+          "column_2": "int",
           "column_3": "string"
        },
       "partitionValues": ["value_1","1000","value_2"]
@@ -104,7 +104,7 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "tableName": "some_table",
       "partitionKeys": {
           "column_1": "string",
-          "column_2": "integer",
+          "column_2": "int",
           "column_3": "string"
        },
       "partitionValues": ["value_1","1000","value_2"]
@@ -120,10 +120,10 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "tableName": "some_table",
       "partitionKeys": {
           "column_1": "string",
-          "column_2": "integer",
+          "column_2": "int",
           "column_3": "string"
        },
-      "partitionValues": ["value_3","2000\","value_4"],
+      "partitionValues": ["value_3","2000","value_4"],
       "oldPartitionValues": ["value_1","1000","value_2"]
     }
 

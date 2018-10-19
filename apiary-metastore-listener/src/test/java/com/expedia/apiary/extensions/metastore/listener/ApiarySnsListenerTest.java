@@ -87,7 +87,7 @@ public class ApiarySnsListenerTest {
     when(snsClient.publish(any(PublishRequest.class))).thenReturn(publishResult);
 
     FieldSchema partitionColumn1 = new FieldSchema("column_1", "string", "");
-    FieldSchema partitionColumn2 = new FieldSchema("column_2", "integer", "");
+    FieldSchema partitionColumn2 = new FieldSchema("column_2", "int", "");
     FieldSchema partitionColumn3 = new FieldSchema("column_3", "string", "");
 
     partitionKeys = ImmutableList.of(partitionColumn1, partitionColumn2, partitionColumn3);
@@ -145,7 +145,7 @@ public class ApiarySnsListenerTest {
 
     List<Partition> partitions = new ArrayList<>();
     partitions
-        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, getStorageDescriptor(partitionKeys),
+        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, createStorageDescriptor(partitionKeys),
             ImmutableMap.of()));
 
     when(event.getPartitionIterator()).thenReturn(partitions.iterator());
@@ -156,7 +156,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"integer\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
   }
 
   @Test
@@ -167,7 +167,7 @@ public class ApiarySnsListenerTest {
 
     List<Partition> partitions = new ArrayList<>();
     partitions
-        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, getStorageDescriptor(partitionKeys),
+        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, createStorageDescriptor(partitionKeys),
             ImmutableMap.of()));
 
     when(event.getPartitionIterator()).thenReturn(partitions.iterator());
@@ -178,7 +178,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"integer\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
   }
 
   @Test
@@ -204,9 +204,9 @@ public class ApiarySnsListenerTest {
     when(event.getTable()).thenReturn(table);
 
     Partition oldPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
-        getStorageDescriptor(partitionKeys), ImmutableMap.of());
+        createStorageDescriptor(partitionKeys), ImmutableMap.of());
     Partition newPartition = new Partition(NEW_PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
-        getStorageDescriptor(partitionKeys), ImmutableMap.of());
+        createStorageDescriptor(partitionKeys), ImmutableMap.of());
 
     when(event.getOldPartition()).thenReturn(oldPartition);
     when(event.getNewPartition()).thenReturn(newPartition);
@@ -217,7 +217,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"integer\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
   }
 
   @Test
@@ -240,7 +240,7 @@ public class ApiarySnsListenerTest {
         + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"oldTableName\":\"some_table\"}"));
   }
 
-  private StorageDescriptor getStorageDescriptor(List<FieldSchema> partitionKeys) {
+  private StorageDescriptor createStorageDescriptor(List<FieldSchema> partitionKeys) {
     return new StorageDescriptor(partitionKeys, "s3://test_location", "ORC", "ORC", false, 2, new SerDeInfo(),
         Collections.emptyList(), Collections.emptyList(), Collections.emptyMap());
   }
