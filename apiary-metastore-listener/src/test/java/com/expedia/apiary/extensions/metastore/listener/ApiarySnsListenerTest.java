@@ -86,9 +86,9 @@ public class ApiarySnsListenerTest {
     snsListener = new ApiarySnsListener(configuration, snsClient);
     when(snsClient.publish(any(PublishRequest.class))).thenReturn(publishResult);
 
-    FieldSchema partitionColumn1 = new FieldSchema("column_1", "String", "");
-    FieldSchema partitionColumn2 = new FieldSchema("column_2", "Integer", "");
-    FieldSchema partitionColumn3 = new FieldSchema("column_3", "String", "");
+    FieldSchema partitionColumn1 = new FieldSchema("column_1", "string", "");
+    FieldSchema partitionColumn2 = new FieldSchema("column_2", "integer", "");
+    FieldSchema partitionColumn3 = new FieldSchema("column_3", "string", "");
 
     partitionKeys = ImmutableList.of(partitionColumn1, partitionColumn2, partitionColumn3);
 
@@ -156,7 +156,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"String\",\"column_2\":\"Integer\",\"column_3\":\"String\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"integer\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
   }
 
   @Test
@@ -178,7 +178,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"String\",\"column_2\":\"Integer\",\"column_3\":\"String\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"integer\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
   }
 
   @Test
@@ -217,7 +217,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"String\",\"column_2\":\"Integer\",\"column_3\":\"String\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"integer\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
   }
 
   @Test

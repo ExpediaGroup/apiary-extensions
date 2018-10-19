@@ -51,7 +51,10 @@ The following shows an example JSON message representing an "INSERT" event:
       "tableName": "some_table",
       "files": ["file:/a/b.txt","file:/a/c.txt"],
       "fileChecksums": ["123","456"],
-      "partitionKeyValues": {"load_date": "2013-03-24","variant_code": "EN"}
+      "partitionKeyValues": {
+          "load_date": "2013-03-24",
+          "variant_code": "EN"
+       }
     }
     
 #### Alter Table
@@ -83,7 +86,11 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "eventType": "ADD_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "partitionKeys": {"column_1":"String", "column_2":"Integer", "column_3":"String"},
+      "partitionKeys": {
+          "column_1": "string",
+          "column_2": "integer",
+          "column_3": "string"
+       },
       "partitionValues": ["value_1","1000","value_2"]
     }
 
@@ -95,7 +102,11 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "eventType": "DROP_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "partitionKeys": {"column_1":"String", "column_2":"Integer", "column_3":"String"},
+      "partitionKeys": {
+          "column_1": "string",
+          "column_2": "integer",
+          "column_3": "string"
+       },
       "partitionValues": ["value_1","1000","value_2"]
     }
 
@@ -107,7 +118,11 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "eventType": "ALTER_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
-      "partitionKeys": {"column_1":"String", "column_2":"Integer", "column_3":"String"},
+      "partitionKeys": {
+          "column_1": "string",
+          "column_2": "integer",
+          "column_3": "string"
+       },
       "partitionValues": ["value_3","2000\","value_4"],
       "oldPartitionValues": ["value_1","1000","value_2"]
     }
