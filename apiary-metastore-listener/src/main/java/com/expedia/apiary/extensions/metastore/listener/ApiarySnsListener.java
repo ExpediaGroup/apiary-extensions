@@ -149,7 +149,6 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       json.put("oldTableName", oldtable.getTableName());
     }
     if (partition != null) {
-      JSONArray partitionValuesArray = new JSONArray(partition.getValues());
       LinkedHashMap<String, String> partitionKeysMap = new LinkedHashMap<>();
       for (FieldSchema fieldSchema : partition.getSd().getCols()) {
         partitionKeysMap.put(fieldSchema.getName(), fieldSchema.getType());
@@ -157,6 +156,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
       JSONObject partitionKeys = new JSONObject(partitionKeysMap);
       json.put("partitionKeys", partitionKeys);
+      JSONArray partitionValuesArray = new JSONArray(partition.getValues());
       json.put("partitionValues", partitionValuesArray);
     }
     if (oldpartition != null) {
@@ -174,7 +174,6 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       Map<String, String> partitionKeyValues,
       List<String> files,
       List<String> fileChecksums) {
-
     JSONObject json = createBaseMessage(eventType, dbName, tableName);
 
     JSONArray filesArray = new JSONArray(files);

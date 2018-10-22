@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - TBD
+### Added
+- Partition Keys with Data types added to the JSON Events from ApiarySNSListener .
+
 ## [0.3.0] - TBD
 ### Fixed
 - JSON Events from ApiarySNSListener now marshals list as a JSONArray.
