@@ -53,7 +53,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
 
-  private static final String TOPIC_ARN = "arn:aws:sns:us-west-2:440407435941:abhimanyu-sns-test";
+  private static final String TOPIC_ARN = System.getenv("SNS_ARN");
   final static String PROTOCOL_VERSION = "1.0";
   private final String protocolVersion = PROTOCOL_VERSION;
 
@@ -188,7 +188,6 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private JSONObject createBaseMessage(EventType eventType, String dbName, String tableName) {
     JSONObject json = new JSONObject();
-
     json.put("protocolVersion", protocolVersion);
     json.put("eventType", eventType.toString());
     json.put("dbName", dbName);
@@ -199,7 +198,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   private void sendMessage(JSONObject json) {
     String msg = json.toString();
     PublishRequest publishRequest = new PublishRequest(TOPIC_ARN, msg);
-    log.error(publishRequest.getTopicArn());
+    log.debug(String.format("Sending Message: {} to {}", msg, TOPIC_ARN));
     PublishResult publishResult = snsClient.publish(publishRequest);
     // TODO: check on size of message and truncation etc (this can come later if/when we add more)
     log.debug("Published SNS Message - " + publishResult.getMessageId());
