@@ -53,7 +53,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
 
-  private static final String TOPIC_ARN = System.getenv("SNS_ARN");
+  private static final String TOPIC_ARN = "arn:aws:sns:us-west-2:440407435941:abhimanyu-sns-test";
   final static String PROTOCOL_VERSION = "1.0";
   private final String protocolVersion = PROTOCOL_VERSION;
 
@@ -150,7 +150,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     }
     if (partition != null) {
       LinkedHashMap<String, String> partitionKeysMap = new LinkedHashMap<>();
-      for (FieldSchema fieldSchema : partition.getSd().getCols()) {
+      for (FieldSchema fieldSchema : table.getPartitionKeys()) {
         partitionKeysMap.put(fieldSchema.getName(), fieldSchema.getType());
       }
 
@@ -188,6 +188,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private JSONObject createBaseMessage(EventType eventType, String dbName, String tableName) {
     JSONObject json = new JSONObject();
+
     json.put("protocolVersion", protocolVersion);
     json.put("eventType", eventType.toString());
     json.put("dbName", dbName);
