@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - Partition Keys with Data types added to the JSON Events from ApiarySNSListener.
 
 ### Changed
-- `partition` is renamed to `partitionValues` in the JSON Events from ApiarySNSListener.
+- `partition` is renamed to `partitionValues` and `oldPartition` to `oldPartitionValues` in the JSON Events from ApiarySNSListener.
 
 ### Fixed
 - JSON Events from ApiarySNSListener now marshals list as a JSONArray.
