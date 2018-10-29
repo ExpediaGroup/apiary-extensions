@@ -16,11 +16,13 @@
 package com.expedia.apiary.extensions.metastore.listener;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -122,8 +124,8 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishEvent(EventType.INSERT, event.getDb(), event.getTable(), event.getPartitionKeyValues(), event.getFiles(),
-        event.getFileChecksums());
+    publishInsertEvent(EventType.INSERT, event.getDb(), event.getTable(), event.getPartitionKeyValues(),
+        event.getFiles(), event.getFileChecksums());
   }
 
   @Override
@@ -147,18 +149,25 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       json.put("oldTableName", oldtable.getTableName());
     }
     if (partition != null) {
+      LinkedHashMap<String, String> partitionKeysMap = new LinkedHashMap<>();
+      for (FieldSchema fieldSchema : table.getPartitionKeys()) {
+        partitionKeysMap.put(fieldSchema.getName(), fieldSchema.getType());
+      }
+
+      JSONObject partitionKeys = new JSONObject(partitionKeysMap);
+      json.put("partitionKeys", partitionKeys);
       JSONArray partitionValuesArray = new JSONArray(partition.getValues());
-      json.put("partition", partitionValuesArray);
+      json.put("partitionValues", partitionValuesArray);
     }
     if (oldpartition != null) {
       JSONArray partitionValuesArray = new JSONArray(oldpartition.getValues());
-      json.put("oldPartition", partitionValuesArray);
+      json.put("oldPartitionValues", partitionValuesArray);
     }
 
     sendMessage(json);
   }
 
-  private void publishEvent(
+  private void publishInsertEvent(
       EventType eventType,
       String dbName,
       String tableName,
@@ -189,7 +198,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   private void sendMessage(JSONObject json) {
     String msg = json.toString();
     PublishRequest publishRequest = new PublishRequest(TOPIC_ARN, msg);
-    log.error(publishRequest.getTopicArn());
+    log.debug(String.format("Sending Message: {} to {}", msg, TOPIC_ARN));
     PublishResult publishResult = snsClient.publish(publishRequest);
     // TODO: check on size of message and truncation etc (this can come later if/when we add more)
     log.debug("Published SNS Message - " + publishResult.getMessageId());
