@@ -19,23 +19,20 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
-import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.Database;
-import org.apache.hadoop.hive.metastore.events.PreReadTableEvent;
-import org.apache.hadoop.hive.metastore.events.PreCreateTableEvent;
-import org.apache.hadoop.hive.metastore.events.PreReadDatabaseEvent;
+import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.PreCreateDatabaseEvent;
+import org.apache.hadoop.hive.metastore.events.PreCreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.PreEventContext.PreEventType;
+import org.apache.hadoop.hive.metastore.events.PreReadDatabaseEvent;
+import org.apache.hadoop.hive.metastore.events.PreReadTableEvent;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.Rule;
-import org.junit.runner.RunWith;
+import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -49,87 +46,116 @@ public class ApiaryReadOnlyAuthPreEventListenerTest {
   private Configuration configuration;
 
   private String tableName = "some_table";
-  private String databaseName = "some_table";
+  private String unauthorizedDatabaseName = "some_db";
+  private String authorizedDatabaseName1 = "db1";
+  private String authorizedDatabaseName2 = "db2";
 
-  private ApiaryReadOnlyAuthPreEventListener readOnlyAuth;
+  private ApiaryReadOnlyAuthPreEventListener listener;
 
   @Before
   public void setup() throws HiveException {
-    environmentVariables.set("SHARED_HIVE_DB_NAMES", "db1,db2");
+    environmentVariables.set("SHARED_HIVE_DB_NAMES",
+        authorizedDatabaseName1 + "," + authorizedDatabaseName2);
 
-    readOnlyAuth = new ApiaryReadOnlyAuthPreEventListener(configuration);
-  }
-
-  @Test(expected = InvalidOperationException.class)
-  public void onReadTableEvent1() throws MetaException, NoSuchObjectException, InvalidOperationException {
-    PreReadTableEvent context = mock(PreReadTableEvent.class);
-    when(context.getEventType()).thenReturn(PreEventType.READ_TABLE);
-
-    Table table = new Table();
-    table.setTableName(tableName);
-    table.setDbName(databaseName);
-    when(context.getTable()).thenReturn(table);
-
-    readOnlyAuth.onEvent(context);
+    listener = new ApiaryReadOnlyAuthPreEventListener(configuration);
   }
 
   @Test
-  public void onReadTableEvent2() throws MetaException, NoSuchObjectException, InvalidOperationException {
+  public void onReadTableEventAuthorized() throws Exception {
     PreReadTableEvent context = mock(PreReadTableEvent.class);
     when(context.getEventType()).thenReturn(PreEventType.READ_TABLE);
 
     Table table = new Table();
     table.setTableName(tableName);
-    table.setDbName("db1");
+    table.setDbName(authorizedDatabaseName1);
     when(context.getTable()).thenReturn(table);
 
-    readOnlyAuth.onEvent(context);
+    listener.onEvent(context);
   }
 
   @Test(expected = InvalidOperationException.class)
-  public void onCreateTableEvent() throws MetaException, NoSuchObjectException, InvalidOperationException {
+  public void onReadTableEventUnauthorized() throws Exception {
+    PreReadTableEvent context = mock(PreReadTableEvent.class);
+    when(context.getEventType()).thenReturn(PreEventType.READ_TABLE);
+
+    Table table = new Table();
+    table.setTableName(tableName);
+    table.setDbName(unauthorizedDatabaseName);
+    when(context.getTable()).thenReturn(table);
+
+    listener.onEvent(context);
+  }
+
+  @Test
+  public void onReadDatabaseEventAuthorized() throws Exception {
+    PreReadDatabaseEvent context = mock(PreReadDatabaseEvent.class);
+    when(context.getEventType()).thenReturn(PreEventType.READ_DATABASE);
+
+    Database db = new Database();
+    db.setName(authorizedDatabaseName2);
+    when(context.getDatabase()).thenReturn(db);
+
+    listener.onEvent(context);
+  }
+
+  @Test(expected = InvalidOperationException.class)
+  public void onReadDatabaseEventUnauthorized() throws Exception {
+    PreReadDatabaseEvent context = mock(PreReadDatabaseEvent.class);
+    when(context.getEventType()).thenReturn(PreEventType.READ_DATABASE);
+
+    Database db = new Database();
+    db.setName(unauthorizedDatabaseName);
+    when(context.getDatabase()).thenReturn(db);
+
+    listener.onEvent(context);
+  }
+
+  @Test(expected = InvalidOperationException.class)
+  public void onCreateTableEvent() throws Exception {
     PreCreateTableEvent context = mock(PreCreateTableEvent.class);
     when(context.getEventType()).thenReturn(PreEventType.CREATE_TABLE);
 
     Table table = new Table();
     table.setTableName(tableName);
-    table.setDbName(databaseName);
+    table.setDbName(authorizedDatabaseName1);
 
-    readOnlyAuth.onEvent(context);
+    listener.onEvent(context);
   }
 
   @Test(expected = InvalidOperationException.class)
-  public void onReadDatabaseEvent1() throws MetaException, NoSuchObjectException, InvalidOperationException {
-    PreReadDatabaseEvent context = mock(PreReadDatabaseEvent.class);
-    when(context.getEventType()).thenReturn(PreEventType.READ_DATABASE);
-
-    Database db = new Database();
-    db.setName(databaseName);
-    when(context.getDatabase()).thenReturn(db);
-
-    readOnlyAuth.onEvent(context);
-  }
-
-  @Test
-  public void onReadDatabaseEvent2() throws MetaException, NoSuchObjectException, InvalidOperationException {
-    PreReadDatabaseEvent context = mock(PreReadDatabaseEvent.class);
-    when(context.getEventType()).thenReturn(PreEventType.READ_DATABASE);
-
-    Database db = new Database();
-    db.setName("db2");
-    when(context.getDatabase()).thenReturn(db);
-
-    readOnlyAuth.onEvent(context);
-  }
-
-  @Test(expected = InvalidOperationException.class)
-  public void onCreateDatabaseEvent() throws MetaException, NoSuchObjectException, InvalidOperationException {
+  public void onCreateDatabaseEvent() throws Exception {
     PreCreateDatabaseEvent context = mock(PreCreateDatabaseEvent.class);
     when(context.getEventType()).thenReturn(PreEventType.CREATE_DATABASE);
 
     Database db = new Database();
-    db.setName(databaseName);
+    db.setName(authorizedDatabaseName1);
 
-    readOnlyAuth.onEvent(context);
+    listener.onEvent(context);
+  }
+
+  @Test
+  public void dbListWithSpaceSeparators() throws Exception {
+    environmentVariables.set("SHARED_HIVE_DB_NAMES",
+        authorizedDatabaseName1 + "  ,   " + authorizedDatabaseName2);
+    listener = new ApiaryReadOnlyAuthPreEventListener(configuration);
+
+    PreReadDatabaseEvent context = mock(PreReadDatabaseEvent.class);
+    when(context.getEventType()).thenReturn(PreEventType.READ_DATABASE);
+    Database db = new Database();
+    db.setName(authorizedDatabaseName2);
+    when(context.getDatabase()).thenReturn(db);
+    listener.onEvent(context);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void nullDbList() throws HiveException {
+    environmentVariables.set("SHARED_HIVE_DB_NAMES", null);
+    listener = new ApiaryReadOnlyAuthPreEventListener(configuration);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyDbList() throws HiveException {
+    environmentVariables.set("SHARED_HIVE_DB_NAMES", "");
+    listener = new ApiaryReadOnlyAuthPreEventListener(configuration);
   }
 }
