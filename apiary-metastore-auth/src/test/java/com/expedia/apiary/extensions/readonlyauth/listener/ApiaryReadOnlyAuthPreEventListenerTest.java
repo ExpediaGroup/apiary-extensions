@@ -134,7 +134,7 @@ public class ApiaryReadOnlyAuthPreEventListenerTest {
   }
 
   @Test
-  public void dbListWithSpaceSeparators() throws Exception {
+  public void dbListTrimmed() throws Exception {
     environmentVariables.set("SHARED_HIVE_DB_NAMES",
         authorizedDatabaseName1 + "  ,   " + authorizedDatabaseName2);
     listener = new ApiaryReadOnlyAuthPreEventListener(configuration);

@@ -91,10 +91,7 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
   }
 
   private boolean isAllowedDatabase(String dbName) {
-    if (sharedDatabases.contains(dbName)) {
-      return true;
-    }
-    return false;
+    return sharedDatabases.contains(dbName);
   }
 
 }
