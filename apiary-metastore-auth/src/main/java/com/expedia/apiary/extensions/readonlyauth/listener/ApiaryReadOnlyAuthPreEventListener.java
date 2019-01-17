@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Expedia Inc.
+ * Copyright (C) 2018-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.expedia.apiary.extensions.readonlyauth.listener;
 
 import java.util.Arrays;
@@ -68,7 +67,7 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
     case READ_TABLE:
       Table table = ((PreReadTableEvent) context).getTable();
       databaseName = table.getDbName();
-      if (!isAllowedDatabase(databaseName)) {
+      if (!sharedDatabases.contains(databaseName)) {
         throw new InvalidOperationException(
             databaseName + " database is not in allowed list: " + sharedDatabases);
       }
@@ -77,7 +76,7 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
     case READ_DATABASE:
       Database db = ((PreReadDatabaseEvent) context).getDatabase();
       databaseName = db.getName();
-      if (!isAllowedDatabase(databaseName)) {
+      if (!sharedDatabases.contains(databaseName)) {
         throw new InvalidOperationException(
             databaseName + " database is not in allowed list:" + sharedDatabases);
       }
@@ -88,10 +87,6 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
           context.getEventType() + " is disabled from read-only metastores.");
     }
 
-  }
-
-  private boolean isAllowedDatabase(String dbName) {
-    return sharedDatabases.contains(dbName);
   }
 
 }
