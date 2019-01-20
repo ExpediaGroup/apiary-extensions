@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Expedia Inc.
+ * Copyright (C) 2018-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ public class ApiaryReadOnlyAuthPreEventListenerTest {
   @Mock
   private Configuration configuration;
 
+  private static final String whitelistEnvironmentVariable = "HIVE_DB_WHITELIST";
+
   private String tableName = "some_table";
   private String unauthorizedDatabaseName = "some_db";
   private String authorizedDatabaseName1 = "db1";
@@ -54,7 +56,7 @@ public class ApiaryReadOnlyAuthPreEventListenerTest {
 
   @Before
   public void setup() throws HiveException {
-    environmentVariables.set("SHARED_HIVE_DB_NAMES",
+    environmentVariables.set(whitelistEnvironmentVariable,
         authorizedDatabaseName1 + "," + authorizedDatabaseName2);
 
     listener = new ApiaryReadOnlyAuthPreEventListener(configuration);
@@ -135,7 +137,7 @@ public class ApiaryReadOnlyAuthPreEventListenerTest {
 
   @Test
   public void dbListTrimmed() throws Exception {
-    environmentVariables.set("SHARED_HIVE_DB_NAMES",
+    environmentVariables.set(whitelistEnvironmentVariable,
         authorizedDatabaseName1 + "  ,   " + authorizedDatabaseName2);
     listener = new ApiaryReadOnlyAuthPreEventListener(configuration);
 
@@ -149,13 +151,13 @@ public class ApiaryReadOnlyAuthPreEventListenerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void nullDbList() throws HiveException {
-    environmentVariables.set("SHARED_HIVE_DB_NAMES", null);
+    environmentVariables.set(whitelistEnvironmentVariable, null);
     listener = new ApiaryReadOnlyAuthPreEventListener(configuration);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void emptyDbList() throws HiveException {
-    environmentVariables.set("SHARED_HIVE_DB_NAMES", "");
+    environmentVariables.set(whitelistEnvironmentVariable, "");
     listener = new ApiaryReadOnlyAuthPreEventListener(configuration);
   }
 }

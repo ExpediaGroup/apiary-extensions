@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Expedia Inc.
+ * Copyright (C) 2018-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.expedia.apiary.extensions.readonlyauth.listener;
 
 import java.util.Arrays;
@@ -41,18 +40,18 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
   private static final Logger log =
       LoggerFactory.getLogger(ApiaryReadOnlyAuthPreEventListener.class);
 
-  private List<String> sharedDatabases = null;
+  private List<String> databaseWhitelist = null;
 
   public ApiaryReadOnlyAuthPreEventListener(Configuration config) throws HiveException {
     super(config);
 
-    String databaseNames = System.getenv("SHARED_HIVE_DB_NAMES");
+    String databaseNames = System.getenv("HIVE_DB_WHITELIST");
     if (databaseNames == null || databaseNames.equals("")) {
       throw new IllegalArgumentException(
-          "SHARED_HIVE_DB_NAMES System envrionment variable not defined or empty");
+          "HIVE_DB_WHITELIST System envrionment variable not defined or empty");
     }
-    sharedDatabases = Arrays.asList(databaseNames.split(","));
-    sharedDatabases.replaceAll(s -> s.trim());
+    databaseWhitelist = Arrays.asList(databaseNames.split(","));
+    databaseWhitelist.replaceAll(s -> s.trim());
 
     log.debug("ApiaryReadOnlyAuthPreEventListener created");
   }
@@ -70,7 +69,7 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
       databaseName = table.getDbName();
       if (!isAllowedDatabase(databaseName)) {
         throw new InvalidOperationException(
-            databaseName + " database is not in allowed list: " + sharedDatabases);
+            databaseName + " database is not in allowed list: " + databaseWhitelist);
       }
       break;
 
@@ -79,7 +78,7 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
       databaseName = db.getName();
       if (!isAllowedDatabase(databaseName)) {
         throw new InvalidOperationException(
-            databaseName + " database is not in allowed list:" + sharedDatabases);
+            databaseName + " database is not in allowed list:" + databaseWhitelist);
       }
       break;
 
@@ -91,7 +90,7 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
   }
 
   private boolean isAllowedDatabase(String dbName) {
-    return sharedDatabases.contains(dbName);
+    return databaseWhitelist.contains(dbName);
   }
 
 }
