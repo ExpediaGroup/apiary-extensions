@@ -37,8 +37,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListener {
 
-  private static final Logger log =
-      LoggerFactory.getLogger(ApiaryReadOnlyAuthPreEventListener.class);
+  private static final Logger log = LoggerFactory.getLogger(ApiaryReadOnlyAuthPreEventListener.class);
 
   private List<String> databaseWhitelist = null;
 
@@ -47,8 +46,7 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
 
     String databaseNames = System.getenv("HIVE_DB_WHITELIST");
     if (databaseNames == null || databaseNames.equals("")) {
-      throw new IllegalArgumentException(
-          "HIVE_DB_WHITELIST System envrionment variable not defined or empty");
+      throw new IllegalArgumentException("HIVE_DB_WHITELIST System envrionment variable not defined or empty");
     }
     databaseWhitelist = Arrays.asList(databaseNames.split(","));
     databaseWhitelist.replaceAll(s -> s.trim());
@@ -57,8 +55,7 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
   }
 
   @Override
-  public void onEvent(PreEventContext context)
-      throws MetaException, NoSuchObjectException, InvalidOperationException {
+  public void onEvent(PreEventContext context) throws MetaException, NoSuchObjectException, InvalidOperationException {
 
     String databaseName = null;
 
@@ -68,8 +65,7 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
       Table table = ((PreReadTableEvent) context).getTable();
       databaseName = table.getDbName();
       if (!isAllowedDatabase(databaseName)) {
-        throw new InvalidOperationException(
-            databaseName + " database is not in allowed list: " + databaseWhitelist);
+        throw new InvalidOperationException(databaseName + " database is not in allowed list: " + databaseWhitelist);
       }
       break;
 
@@ -77,14 +73,12 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
       Database db = ((PreReadDatabaseEvent) context).getDatabase();
       databaseName = db.getName();
       if (!isAllowedDatabase(databaseName)) {
-        throw new InvalidOperationException(
-            databaseName + " database is not in allowed list:" + databaseWhitelist);
+        throw new InvalidOperationException(databaseName + " database is not in allowed list:" + databaseWhitelist);
       }
       break;
 
     default:
-      throw new InvalidOperationException(
-          context.getEventType() + " is disabled from read-only metastores.");
+      throw new InvalidOperationException(context.getEventType() + " is disabled from read-only metastores.");
     }
 
   }

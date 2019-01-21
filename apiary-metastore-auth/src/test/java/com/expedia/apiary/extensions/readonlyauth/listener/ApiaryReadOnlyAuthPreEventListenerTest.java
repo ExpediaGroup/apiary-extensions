@@ -56,8 +56,7 @@ public class ApiaryReadOnlyAuthPreEventListenerTest {
 
   @Before
   public void setup() throws HiveException {
-    environmentVariables.set(whitelistEnvironmentVariable,
-        authorizedDatabaseName1 + "," + authorizedDatabaseName2);
+    environmentVariables.set(whitelistEnvironmentVariable, authorizedDatabaseName1 + "," + authorizedDatabaseName2);
 
     listener = new ApiaryReadOnlyAuthPreEventListener(configuration);
   }
@@ -137,8 +136,8 @@ public class ApiaryReadOnlyAuthPreEventListenerTest {
 
   @Test
   public void dbListTrimmed() throws Exception {
-    environmentVariables.set(whitelistEnvironmentVariable,
-        authorizedDatabaseName1 + "  ,   " + authorizedDatabaseName2);
+    environmentVariables
+        .set(whitelistEnvironmentVariable, authorizedDatabaseName1 + "  ,   " + authorizedDatabaseName2);
     listener = new ApiaryReadOnlyAuthPreEventListener(configuration);
 
     PreReadDatabaseEvent context = mock(PreReadDatabaseEvent.class);
