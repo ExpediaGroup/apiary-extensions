@@ -57,24 +57,16 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
   @Override
   public void onEvent(PreEventContext context) throws MetaException, NoSuchObjectException, InvalidOperationException {
 
-    String databaseName = null;
-
     switch (context.getEventType()) {
 
     case READ_TABLE:
       Table table = ((PreReadTableEvent) context).getTable();
-      databaseName = table.getDbName();
-      if (!isAllowedDatabase(databaseName)) {
-        throw new InvalidOperationException(databaseName + " database is not in allowed list: " + databaseWhitelist);
-      }
+      applyWhitelist(table.getDbName());
       break;
 
     case READ_DATABASE:
       Database db = ((PreReadDatabaseEvent) context).getDatabase();
-      databaseName = db.getName();
-      if (!isAllowedDatabase(databaseName)) {
-        throw new InvalidOperationException(databaseName + " database is not in allowed list:" + databaseWhitelist);
-      }
+      applyWhitelist(db.getName());
       break;
 
     default:
@@ -83,8 +75,10 @@ public class ApiaryReadOnlyAuthPreEventListener extends MetaStorePreEventListene
 
   }
 
-  private boolean isAllowedDatabase(String dbName) {
-    return databaseWhitelist.contains(dbName);
+  private void applyWhitelist(String databaseName) throws InvalidOperationException {
+    if (!databaseWhitelist.contains(databaseName)) {
+      throw new InvalidOperationException(databaseName + " database is not in allowed list:" + databaseWhitelist);
+    }
   }
 
 }
