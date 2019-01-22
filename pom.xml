@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.hotels</groupId>
     <artifactId>hotels-oss-parent</artifactId>
-    <version>2.3.3</version>
+    <version>2.3.5</version>
   </parent>
 
   <groupId>com.expedia.apiary</groupId>
@@ -41,6 +41,7 @@
     <module>apiary-gluesync-listener</module>
     <module>apiary-ranger-metastore-plugin</module>
     <module>apiary-metastore-metrics</module>
+    <module>apiary-metastore-auth</module>
   </modules>
 
   <dependencyManagement>
