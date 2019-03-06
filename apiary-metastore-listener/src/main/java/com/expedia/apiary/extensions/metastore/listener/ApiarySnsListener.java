@@ -15,10 +15,14 @@
  */
 package com.expedia.apiary.extensions.metastore.listener;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -54,6 +58,8 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
 
   private static final String TOPIC_ARN = System.getenv("SNS_ARN");
+  private static final String HKAAS_REGEX = System.getenv("HKAAS_REGEX");
+
   final static String PROTOCOL_VERSION = "1.0";
   private final String protocolVersion = PROTOCOL_VERSION;
 
@@ -145,8 +151,13 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     throws MetaException {
     JSONObject json = createBaseMessage(eventType, table.getDbName(), table.getTableName());
 
+    json.put("tableLocation", table.getSd().getLocation());
+
+    json.put("hkaasParameters", getHkaasParams(table.getParameters()));
+
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
+      json.put("oldTableLocation", oldtable.getSd().getLocation());
     }
     if (partition != null) {
       LinkedHashMap<String, String> partitionKeysMap = new LinkedHashMap<>();
@@ -158,10 +169,12 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       json.put("partitionKeys", partitionKeys);
       JSONArray partitionValuesArray = new JSONArray(partition.getValues());
       json.put("partitionValues", partitionValuesArray);
+      json.put("partitionLocation", partition.getSd().getLocation());
     }
     if (oldpartition != null) {
       JSONArray partitionValuesArray = new JSONArray(oldpartition.getValues());
       json.put("oldPartitionValues", partitionValuesArray);
+      json.put("oldPartitionLocation", oldpartition.getSd().getLocation());
     }
 
     sendMessage(json);
@@ -203,4 +216,18 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     // TODO: check on size of message and truncation etc (this can come later if/when we add more)
     log.debug("Published SNS Message - " + publishResult.getMessageId());
   }
+
+  private Map<String, String> getHkaasParams(Map<String, String> parameters) {
+    Pattern pattern = Pattern.compile(HKAAS_REGEX);
+    Map<String, String> hkaasParams = new HashMap<>();
+    for (Entry<String, String> entry : parameters.entrySet()) {
+      Matcher matcher = pattern.matcher(entry.getKey());
+      if (matcher.matches()) {
+        hkaasParams.put(entry.getKey(), entry.getValue());
+      }
+    }
+
+    return hkaasParams;
+  }
+
 }

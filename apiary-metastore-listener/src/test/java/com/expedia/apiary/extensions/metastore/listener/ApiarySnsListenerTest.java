@@ -46,7 +46,9 @@ import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -62,12 +64,19 @@ import com.google.common.collect.ImmutableMap;
 @RunWith(MockitoJUnitRunner.class)
 public class ApiarySnsListenerTest {
 
+  @Rule
+  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
+
   @Mock
   private AmazonSNS snsClient;
   @Mock
   private Configuration configuration;
   @Mock
   private PublishResult publishResult;
+  @Mock
+  private StorageDescriptor newStorageDescriptor;
+  @Mock
+  private StorageDescriptor storageDescriptor;
 
   @Captor
   private ArgumentCaptor<PublishRequest> requestCaptor;
@@ -75,16 +84,30 @@ public class ApiarySnsListenerTest {
   private final Table table = new Table();
   private static final String TABLE_NAME = "some_table";
   private static final String DB_NAME = "some_db";
+  private static final String TABLE_LOCATION = "s3://table_location";
+  private static final String NEW_TABLE_LOCATION = "s3://table_location_1";
+
+  private static final String PARTITION_LOCATION = "s3://table_location/partition_location=2";
+  private static final String OLD_PARTITION_LOCATION = "s3://table_location/partition_location=1";
+
   private static final List<String> PARTITION_VALUES = ImmutableList.of("value_1", "1000", "value_2");
   private static final List<String> NEW_PARTITION_VALUES = ImmutableList.of("value_3", "2000", "value_4");
+
+  private static final Map<String, String> PARAMETERS = ImmutableMap
+      .of("HIVE.VERSION", "2.3.4-amzn-0", "HIVE_METASTORE_TRANSACTION_ACTIVE", "false", "HIVE.METASTORE.URIS",
+          "thrift://test_uri:9083", "HKAAS_ENABLED", "true", "HKAAS_EXPIRY_DAYS", "5");
 
   private List<FieldSchema> partitionKeys;
   private ApiarySnsListener snsListener;
 
   @Before
   public void setup() {
+    environmentVariables.set("HKAAS_REGEX", "HKAAS.*");
+
     snsListener = new ApiarySnsListener(configuration, snsClient);
     when(snsClient.publish(any(PublishRequest.class))).thenReturn(publishResult);
+    when(storageDescriptor.getLocation()).thenReturn(TABLE_LOCATION);
+    when(newStorageDescriptor.getLocation()).thenReturn(NEW_TABLE_LOCATION);
 
     FieldSchema partitionColumn1 = new FieldSchema("column_1", "string", "");
     FieldSchema partitionColumn2 = new FieldSchema("column_2", "int", "");
@@ -95,6 +118,8 @@ public class ApiarySnsListenerTest {
     table.setTableName(TABLE_NAME);
     table.setDbName(DB_NAME);
     table.setPartitionKeys(partitionKeys);
+    table.setSd(storageDescriptor);
+    table.setParameters(PARAMETERS);
   }
 
   @Test
@@ -106,10 +131,9 @@ public class ApiarySnsListenerTest {
     snsListener.onCreateTable(event);
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
-    assertThat(publishRequest.getMessage(),
-        is("{\"protocolVersion\":\""
-            + PROTOCOL_VERSION
-            + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"hkaasParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\"}"));
   }
 
   @Test
@@ -145,8 +169,8 @@ public class ApiarySnsListenerTest {
 
     List<Partition> partitions = new ArrayList<>();
     partitions
-        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, createStorageDescriptor(partitionKeys),
-            ImmutableMap.of()));
+        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+            createStorageDescriptor(partitionKeys, PARTITION_LOCATION), ImmutableMap.of()));
 
     when(event.getPartitionIterator()).thenReturn(partitions.iterator());
 
@@ -156,7 +180,8 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"hkaasParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
+
   }
 
   @Test
@@ -167,8 +192,8 @@ public class ApiarySnsListenerTest {
 
     List<Partition> partitions = new ArrayList<>();
     partitions
-        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, createStorageDescriptor(partitionKeys),
-            ImmutableMap.of()));
+        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+            createStorageDescriptor(partitionKeys, PARTITION_LOCATION), ImmutableMap.of()));
 
     when(event.getPartitionIterator()).thenReturn(partitions.iterator());
 
@@ -178,7 +203,8 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"hkaasParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
+
   }
 
   @Test
@@ -191,22 +217,21 @@ public class ApiarySnsListenerTest {
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
 
-    assertThat(publishRequest.getMessage(),
-        is("{\"protocolVersion\":\""
-            + PROTOCOL_VERSION
-            + "\",\"eventType\":\"DROP_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"DROP_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"hkaasParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\"}"));
   }
 
   @Test
-  public void onAlterPartition() throws MetaException {
+  public void onAlterPartitionUpdateLocation() throws MetaException {
     AlterPartitionEvent event = mock(AlterPartitionEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getTable()).thenReturn(table);
 
     Partition oldPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
-        createStorageDescriptor(partitionKeys), ImmutableMap.of());
-    Partition newPartition = new Partition(NEW_PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
-        createStorageDescriptor(partitionKeys), ImmutableMap.of());
+        createStorageDescriptor(partitionKeys, OLD_PARTITION_LOCATION), ImmutableMap.of());
+    Partition newPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+        createStorageDescriptor(partitionKeys, PARTITION_LOCATION), ImmutableMap.of());
 
     when(event.getOldPartition()).thenReturn(oldPartition);
     when(event.getNewPartition()).thenReturn(newPartition);
@@ -217,7 +242,30 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"hkaasParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=1\"}"));
+  }
+
+  @Test
+  public void onAlterPartition() throws MetaException {
+    AlterPartitionEvent event = mock(AlterPartitionEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(table);
+
+    Partition oldPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+        createStorageDescriptor(partitionKeys, PARTITION_LOCATION), ImmutableMap.of());
+    Partition newPartition = new Partition(NEW_PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+        createStorageDescriptor(partitionKeys, PARTITION_LOCATION), ImmutableMap.of());
+
+    when(event.getOldPartition()).thenReturn(oldPartition);
+    when(event.getNewPartition()).thenReturn(newPartition);
+
+    snsListener.onAlterPartition(event);
+    verify(snsClient).publish(requestCaptor.capture());
+    PublishRequest publishRequest = requestCaptor.getValue();
+
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"hkaasParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=2\"}"));
   }
 
   @Test
@@ -225,6 +273,8 @@ public class ApiarySnsListenerTest {
     Table newTable = new Table();
     newTable.setTableName("new_" + TABLE_NAME);
     newTable.setDbName(DB_NAME);
+    newTable.setSd(newStorageDescriptor);
+    newTable.setParameters(PARAMETERS);
 
     AlterTableEvent event = mock(AlterTableEvent.class);
     when(event.getStatus()).thenReturn(true);
@@ -237,11 +287,11 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"oldTableName\":\"some_table\"}"));
+        + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"tableLocation\":\"s3://table_location_1\",\"hkaasParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"oldTableName\":\"some_table\",\"oldTableLocation\":\"s3://table_location\"}"));
   }
 
-  private StorageDescriptor createStorageDescriptor(List<FieldSchema> partitionKeys) {
-    return new StorageDescriptor(partitionKeys, "s3://test_location", "ORC", "ORC", false, 2, new SerDeInfo(),
+  private StorageDescriptor createStorageDescriptor(List<FieldSchema> partitionKeys, String tableLocation) {
+    return new StorageDescriptor(partitionKeys, tableLocation, "ORC", "ORC", false, 2, new SerDeInfo(),
         Collections.emptyList(), Collections.emptyList(), Collections.emptyMap());
   }
   // TODO: test for setting ARN via environment variable
