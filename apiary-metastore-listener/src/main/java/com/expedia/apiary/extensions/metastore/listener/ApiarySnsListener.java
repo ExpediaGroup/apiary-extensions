@@ -57,8 +57,8 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
 
-  private static final String TOPIC_ARN = "arn:aws:sns:us-west-2:440407435941:abhimanyu-sns-test";
-  private static final String HKAAS_REGEX = "HKAAS.*";
+  private static final String TOPIC_ARN = System.getenv("SNS_ARN");
+  private static final String HKAAS_REGEX = System.getenv("HKAAS_REGEX");
 
   final static String PROTOCOL_VERSION = "1.0";
   private final String protocolVersion = PROTOCOL_VERSION;
