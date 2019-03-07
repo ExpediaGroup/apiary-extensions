@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Expedia Inc.
+ * Copyright (C) 2018-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,7 @@ public class ApiarySnsListenerTest {
   @Before
   public void setup() {
     environmentVariables.set("HKAAS_REGEX", "HKAAS.*");
+    environmentVariables.set("SNS_ARN", "arn:test-arn");
 
     snsListener = new ApiarySnsListener(configuration, snsClient);
     when(snsClient.publish(any(PublishRequest.class))).thenReturn(publishResult);
@@ -290,9 +291,15 @@ public class ApiarySnsListenerTest {
         + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"tableLocation\":\"s3://table_location_1\",\"hkaasParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"oldTableName\":\"some_table\",\"oldTableLocation\":\"s3://table_location\"}"));
   }
 
+  @Test
+  public void testEnvironmentVariablesAreBeingSet() {
+    assertThat(System.getenv("SNS_ARN"), is("arn:test-arn"));
+    assertThat(System.getenv("HKAAS_REGEX"), is("HKAAS.*"));
+  }
+
   private StorageDescriptor createStorageDescriptor(List<FieldSchema> partitionKeys, String tableLocation) {
     return new StorageDescriptor(partitionKeys, tableLocation, "ORC", "ORC", false, 2, new SerDeInfo(),
         Collections.emptyList(), Collections.emptyList(), Collections.emptyMap());
   }
-  // TODO: test for setting ARN via environment variable
+
 }

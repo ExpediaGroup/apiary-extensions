@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Expedia Inc.
+ * Copyright (C) 2018-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,8 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
 
-  private static final String TOPIC_ARN = System.getenv("SNS_ARN");
-  private static final String HKAAS_REGEX = System.getenv("HKAAS_REGEX");
+  private static final String TOPIC_ARN = "arn:aws:sns:us-west-2:440407435941:abhimanyu-sns-test";
+  private static final String HKAAS_REGEX = "HKAAS.*";
 
   final static String PROTOCOL_VERSION = "1.0";
   private final String protocolVersion = PROTOCOL_VERSION;
@@ -217,7 +217,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     log.debug("Published SNS Message - " + publishResult.getMessageId());
   }
 
-  private Map<String, String> getHkaasParams(Map<String, String> parameters) {
+  Map<String, String> getHkaasParams(Map<String, String> parameters) {
     Pattern pattern = Pattern.compile(HKAAS_REGEX);
     Map<String, String> hkaasParams = new HashMap<>();
     for (Entry<String, String> entry : parameters.entrySet()) {

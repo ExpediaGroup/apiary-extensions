@@ -38,7 +38,12 @@ The following shows an example JSON message representing a "CREATE_TABLE" event:
       "protocolVersion": "1.0",
       "eventType": "CREATE_TABLE",
       "dbName": "some_db",
-      "tableName": "some_table"
+      "tableName": "some_table",
+      "tableLocation": "s3://table_location",
+      "hkaasParameters": {
+          "HKAAS_ENABLED":"true",
+          "HKAAS_EXPIRY_DAYS":"3"
+       }
 	}
 	
 #### Insert
@@ -54,6 +59,11 @@ The following shows an example JSON message representing an "INSERT" event:
       "partitionKeyValues": {
           "load_date": "2013-03-24",
           "variant_code": "EN"
+       },
+      "tableLocation": "s3://table_location",
+      "hkaasParameters": {
+          "HKAAS_ENABLED":"true",
+          "HKAAS_EXPIRY_DAYS":"3"
        }
     }
     
@@ -65,7 +75,13 @@ The following shows an example JSON message representing an "ALTER_TABLE" event:
       "eventType": "ALTER_TABLE",
       "dbName": "some_db",
       "tableName": "new_some_table",
-      "oldTableName": "some_table"
+      "tableLocation": "s3://table_location",
+      "hkaasParameters": {
+          "HKAAS_ENABLED":"true",
+          "HKAAS_EXPIRY_DAYS":"3"
+       },
+      "oldTableName": "some_table",
+      "oldTableLocation": "s3://old_table_location"
     }
 
 #### Drop Table
@@ -75,7 +91,12 @@ The following shows an example JSON message representing a "DROP_TABLE" event:
       "protocolVersion": "1.0",
       "eventType": "DROP_TABLE",
       "dbName": "some_db",
-      "tableName": "some_table"
+      "tableName": "some_table",
+      "tableLocation": "s3://table_location",
+      "hkaasParameters": {
+          "HKAAS_ENABLED":"true",
+          "HKAAS_EXPIRY_DAYS":"3"
+       }
     }
     
 #### Add Partition
@@ -86,12 +107,18 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "eventType": "ADD_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
+      "tableLocation": "s3://table_location",
+      "hkaasParameters": {
+          "HKAAS_ENABLED":"true",
+          "HKAAS_EXPIRY_DAYS":"3"
+       },
       "partitionKeys": {
           "column_1": "string",
           "column_2": "int",
           "column_3": "string"
        },
-      "partitionValues": ["value_1","1000","value_2"]
+      "partitionValues": ["value_1","1000","value_2"],
+      "partitionLocation": "s3://table_location/partition"
     }
 
 #### Drop Partition
@@ -102,12 +129,18 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "eventType": "DROP_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
+      "tableLocation": "s3://table_location",
+      "hkaasParameters": {
+          "HKAAS_ENABLED":"true",
+          "HKAAS_EXPIRY_DAYS":"3"
+       },
       "partitionKeys": {
           "column_1": "string",
           "column_2": "int",
           "column_3": "string"
        },
-      "partitionValues": ["value_1","1000","value_2"]
+      "partitionValues": ["value_1","1000","value_2"],
+      "partitionLocation": "s3://table_location/partition"
     }
 
 #### Alter Partition
@@ -118,13 +151,20 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "eventType": "ALTER_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
+      "tableLocation": "s3://table_location",
+      "hkaasParameters": {
+          "HKAAS_ENABLED":"true",
+          "HKAAS_EXPIRY_DAYS":"3"
+       },
       "partitionKeys": {
           "column_1": "string",
           "column_2": "int",
           "column_3": "string"
        },
       "partitionValues": ["value_3","2000","value_4"],
-      "oldPartitionValues": ["value_1","1000","value_2"]
+      "partitionLocation": "s3://table_location/partition"
+      "oldPartitionValues": ["value_1","1000","value_2"],
+      "oldPartitionLocation": "s3://table_location/old_partition"
     }
 
 # Legal
