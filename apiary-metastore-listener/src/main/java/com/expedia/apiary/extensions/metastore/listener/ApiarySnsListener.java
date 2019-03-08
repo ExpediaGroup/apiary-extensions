@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -58,22 +59,23 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
 
   private static final String TOPIC_ARN = System.getenv("SNS_ARN");
-  private static final String HKAAS_REGEX = System.getenv("HKAAS_REGEX");
+  private static final String TABLE_PARAM_FILTER = System.getenv("TABLE_PARAM_FILTER");
+  static final String PROTOCOL_VERSION = "1.0";
 
-  final static String PROTOCOL_VERSION = "1.0";
-  private final String protocolVersion = PROTOCOL_VERSION;
+  private final Pattern tableParamFilterPattern;
 
   private final AmazonSNS snsClient;
 
   public ApiarySnsListener(Configuration config) {
-    super(config);
-    snsClient = AmazonSNSClientBuilder.defaultClient();
-    log.debug("ApiarySnsListener created ");
+    this(config, AmazonSNSClientBuilder.defaultClient());
   }
 
   ApiarySnsListener(Configuration config, AmazonSNS snsClient) {
     super(config);
     this.snsClient = snsClient;
+    tableParamFilterPattern = StringUtils.isEmpty(TABLE_PARAM_FILTER) ? Pattern.compile("")
+        : Pattern.compile(TABLE_PARAM_FILTER);
+
     log.debug("ApiarySnsListener created");
   }
 
@@ -153,7 +155,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
     json.put("tableLocation", table.getSd().getLocation());
 
-    json.put("hkaasParameters", getHkaasParams(table.getParameters()));
+    json.put("parameters", getHkaasParams(table.getParameters()));
 
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
@@ -201,7 +203,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private JSONObject createBaseMessage(EventType eventType, String dbName, String tableName) {
     JSONObject json = new JSONObject();
-    json.put("protocolVersion", protocolVersion);
+    json.put("protocolVersion", PROTOCOL_VERSION);
     json.put("eventType", eventType.toString());
     json.put("dbName", dbName);
     json.put("tableName", tableName);
@@ -214,14 +216,13 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     log.debug(String.format("Sending Message: {} to {}", msg, TOPIC_ARN));
     PublishResult publishResult = snsClient.publish(publishRequest);
     // TODO: check on size of message and truncation etc (this can come later if/when we add more)
-    log.debug("Published SNS Message - " + publishResult.getMessageId());
+    log.info("Published SNS Message - " + publishResult.getMessageId());
   }
 
-  Map<String, String> getHkaasParams(Map<String, String> parameters) {
-    Pattern pattern = Pattern.compile(HKAAS_REGEX);
+  private Map<String, String> getHkaasParams(Map<String, String> parameters) {
     Map<String, String> hkaasParams = new HashMap<>();
     for (Entry<String, String> entry : parameters.entrySet()) {
-      Matcher matcher = pattern.matcher(entry.getKey());
+      Matcher matcher = tableParamFilterPattern.matcher(entry.getKey());
       if (matcher.matches()) {
         hkaasParams.put(entry.getKey(), entry.getValue());
       }
