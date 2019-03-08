@@ -40,7 +40,7 @@ The following shows an example JSON message representing a "CREATE_TABLE" event:
       "dbName": "some_db",
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
-      "parameters": {
+      "tableParameters": {
           "HKAAS_ENABLED": "true",
           "HKAAS_EXPIRY_DAYS": "3"
        }
@@ -61,7 +61,7 @@ The following shows an example JSON message representing an "INSERT" event:
           "variant_code": "EN"
        },
       "tableLocation": "s3://table_location",
-      "parameters": {
+      "tableParameters": {
           "HKAAS_ENABLED": "true",
           "HKAAS_EXPIRY_DAYS": "3"
        }
@@ -76,7 +76,7 @@ The following shows an example JSON message representing an "ALTER_TABLE" event:
       "dbName": "some_db",
       "tableName": "new_some_table",
       "tableLocation": "s3://table_location",
-      "parameters": {
+      "tableParameters": {
           "HKAAS_ENABLED": "true",
           "HKAAS_EXPIRY_DAYS": "3"
        },
@@ -93,7 +93,7 @@ The following shows an example JSON message representing a "DROP_TABLE" event:
       "dbName": "some_db",
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
-      "parameters": {
+      "tableParameters": {
           "HKAAS_ENABLED": "true",
           "HKAAS_EXPIRY_DAYS": "3"
        }
@@ -108,7 +108,7 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "dbName": "some_db",
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
-      "parameters": {
+      "tableParameters": {
           "HKAAS_ENABLED": "true",
           "HKAAS_EXPIRY_DAYS": "3"
        },
@@ -130,7 +130,7 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "dbName": "some_db",
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
-      "parameters": {
+      "tableParameters": {
           "HKAAS_ENABLED": "true",
           "HKAAS_EXPIRY_DAYS": "3"
        },
@@ -152,7 +152,7 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "dbName": "some_db",
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
-      "parameters": {
+      "tableParameters": {
           "HKAAS_ENABLED": "true",
           "HKAAS_EXPIRY_DAYS": "3"
        },

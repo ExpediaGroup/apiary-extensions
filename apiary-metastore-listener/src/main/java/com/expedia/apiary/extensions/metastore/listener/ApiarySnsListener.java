@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -58,10 +59,11 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
 
-  private static final String TOPIC_ARN = System.getenv("SNS_ARN");
-  private static final String TABLE_PARAM_FILTER = System.getenv("TABLE_PARAM_FILTER");
   static final String PROTOCOL_VERSION = "1.0";
 
+  private static final String TOPIC_ARN = System.getenv("SNS_ARN");
+
+  private final String tableParamFilter = System.getenv("TABLE_PARAM_FILTER");
   private final Pattern tableParamFilterPattern;
 
   private final AmazonSNS snsClient;
@@ -70,11 +72,11 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     this(config, AmazonSNSClientBuilder.defaultClient());
   }
 
-  ApiarySnsListener(Configuration config, AmazonSNS snsClient) {
+  ApiarySnsListener(Configuration config, AmazonSNS snsClient) throws PatternSyntaxException {
     super(config);
     this.snsClient = snsClient;
-    tableParamFilterPattern = StringUtils.isEmpty(TABLE_PARAM_FILTER) ? Pattern.compile("")
-        : Pattern.compile(TABLE_PARAM_FILTER);
+    tableParamFilterPattern = StringUtils.isEmpty(tableParamFilter) ? Pattern.compile("")
+        : Pattern.compile(tableParamFilter);
 
     log.debug("ApiarySnsListener created");
   }
@@ -155,7 +157,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
     json.put("tableLocation", table.getSd().getLocation());
 
-    json.put("parameters", getHkaasParams(table.getParameters()));
+    json.put("tableParameters", getHkaasParams(table.getParameters()));
 
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
@@ -219,15 +221,16 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     log.info("Published SNS Message - " + publishResult.getMessageId());
   }
 
-  private Map<String, String> getHkaasParams(Map<String, String> parameters) {
+  private Map<String, String> getHkaasParams(Map<String, String> tableParameters) {
     Map<String, String> hkaasParams = new HashMap<>();
-    for (Entry<String, String> entry : parameters.entrySet()) {
-      Matcher matcher = tableParamFilterPattern.matcher(entry.getKey());
-      if (matcher.matches()) {
-        hkaasParams.put(entry.getKey(), entry.getValue());
+    if (!StringUtils.isEmpty(tableParamFilter)) {
+      for (Entry<String, String> entry : tableParameters.entrySet()) {
+        Matcher matcher = tableParamFilterPattern.matcher(entry.getKey());
+        if (matcher.matches()) {
+          hkaasParams.put(entry.getKey(), entry.getValue());
+        }
       }
     }
-
     return hkaasParams;
   }
 
