@@ -25,9 +25,13 @@ topic:
 |`eventType`|String|Always|One of: CREATE_TABLE, DROP_TABLE, ALTER_TABLE, ADD_PARTITION, DROP_PARTITION, ALTER_PARTITION| 
 |`dbName`|String|Always|The Hive database name|
 |`tableName`|String|Always|The Hive table name|
+|`tableLocation`|String|Always|The Hive table location|
+|`tableParameters`|String|Always|The Hive table parameters|
 |`oldTableName`|String|Only when `eventType` is ALTER_TABLE|The old Hive table name|
 |`partition`|String|Only when the `eventType` is one of ADD_PARTITION, DROP_PARTITION, ALTER_PARTITION|The Hive partition values|
+|`partitionLocation`|String|Only when the `eventType` is one of ADD_PARTITION, DROP_PARTITION, ALTER_PARTITION|The Hive partition location|
 |`oldPartition`|String|Only when the `eventType` is ALTER_PARTITION|The old Hive partition values|
+|`oldPartitionLocation`|String|Only when the `eventType` is ALTER_PARTITION|The old Hive partition location|
 
 ### Example Messages
 
