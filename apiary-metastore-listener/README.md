@@ -46,8 +46,8 @@ The following shows an example JSON message representing a "CREATE_TABLE" event:
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "HKAAS_ENABLED": "true",
-          "HKAAS_EXPIRY_DAYS": "3"
+          "hive.version": "2.3.0",
+          "hive.metastore.uris": "thrift://localhost:9083"
        }
 	}
 	
@@ -67,8 +67,8 @@ The following shows an example JSON message representing an "INSERT" event:
        },
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "HKAAS_ENABLED": "true",
-          "HKAAS_EXPIRY_DAYS": "3"
+          "hive.version": "2.3.0",
+          "hive.metastore.uris": "thrift://localhost:9083"
        }
     }
     
@@ -82,8 +82,8 @@ The following shows an example JSON message representing an "ALTER_TABLE" event:
       "tableName": "new_some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "HKAAS_ENABLED": "true",
-          "HKAAS_EXPIRY_DAYS": "3"
+          "hive.version": "2.3.0",
+          "hive.metastore.uris": "thrift://localhost:9083"
        },
       "oldTableName": "some_table",
       "oldTableLocation": "s3://old_table_location"
@@ -99,8 +99,8 @@ The following shows an example JSON message representing a "DROP_TABLE" event:
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "HKAAS_ENABLED": "true",
-          "HKAAS_EXPIRY_DAYS": "3"
+          "hive.version": "2.3.0",
+          "hive.metastore.uris": "thrift://localhost:9083"
        }
     }
     
@@ -114,8 +114,8 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "HKAAS_ENABLED": "true",
-          "HKAAS_EXPIRY_DAYS": "3"
+          "hive.version": "2.3.0",
+          "hive.metastore.uris": "thrift://localhost:9083"
        },
       "partitionKeys": {
           "column_1": "string",
@@ -136,8 +136,8 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "HKAAS_ENABLED": "true",
-          "HKAAS_EXPIRY_DAYS": "3"
+          "hive.version": "2.3.0",
+          "hive.metastore.uris": "thrift://localhost:9083"
        },
       "partitionKeys": {
           "column_1": "string",
@@ -158,8 +158,8 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "HKAAS_ENABLED": "true",
-          "HKAAS_EXPIRY_DAYS": "3"
+          "hive.version": "2.3.0",
+          "hive.metastore.uris": "thrift://localhost:9083"
        },
       "partitionKeys": {
           "column_1": "string",
