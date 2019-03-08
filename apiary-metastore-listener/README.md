@@ -14,6 +14,7 @@ The SNS listener can be configured by setting the following System Environment v
 |Environment Variable|Required|Description|
 |----|----|----|
 SNS_ARN|Yes|The SNS topic ARN to which messages will be sent.
+TABLE_PARAM_FILTER|No|A regular expression for selecting necessary table parameters. If the value isn't set, then no table parameters are selected.
 
 ## JSON Messages
 The following table describes all the fields that may be present in the JSON message that is sent to the SNS 
