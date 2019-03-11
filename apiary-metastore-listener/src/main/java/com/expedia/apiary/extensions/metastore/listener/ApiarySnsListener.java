@@ -221,7 +221,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private Map<String, String> getFilteredParams(Map<String, String> tableParameters) {
     Map<String, String> filteredParams = new HashMap<>();
-    if (tableParamFilterPattern != null) {
+    if (tableParamFilterPattern != null && tableParameters != null) {
       for (Entry<String, String> entry : tableParameters.entrySet()) {
         Matcher matcher = tableParamFilterPattern.matcher(entry.getKey());
         if (matcher.matches()) {
