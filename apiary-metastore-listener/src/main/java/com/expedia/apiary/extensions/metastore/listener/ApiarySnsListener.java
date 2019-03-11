@@ -75,8 +75,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   ApiarySnsListener(Configuration config, AmazonSNS snsClient) throws PatternSyntaxException {
     super(config);
     this.snsClient = snsClient;
-    tableParamFilterPattern = StringUtils.isEmpty(tableParamFilter) ? Pattern.compile("")
-        : Pattern.compile(tableParamFilter);
+    tableParamFilterPattern = StringUtils.isEmpty(tableParamFilter) ? null : Pattern.compile(tableParamFilter);
 
     log.debug("ApiarySnsListener created");
   }
@@ -157,7 +156,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
     json.put("tableLocation", table.getSd().getLocation());
 
-    json.put("tableParameters", getHkaasParams(table.getParameters()));
+    json.put("tableParameters", getFilteredParams(table.getParameters()));
 
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
@@ -221,17 +220,17 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     log.info("Published SNS Message - " + publishResult.getMessageId());
   }
 
-  private Map<String, String> getHkaasParams(Map<String, String> tableParameters) {
-    Map<String, String> hkaasParams = new HashMap<>();
-    if (!StringUtils.isEmpty(tableParamFilter)) {
+  private Map<String, String> getFilteredParams(Map<String, String> tableParameters) {
+    Map<String, String> filteredParams = new HashMap<>();
+    if (tableParamFilterPattern != null) {
       for (Entry<String, String> entry : tableParameters.entrySet()) {
         Matcher matcher = tableParamFilterPattern.matcher(entry.getKey());
         if (matcher.matches()) {
-          hkaasParams.put(entry.getKey(), entry.getValue());
+          filteredParams.put(entry.getKey(), entry.getValue());
         }
       }
     }
-    return hkaasParams;
+    return filteredParams;
   }
 
 }

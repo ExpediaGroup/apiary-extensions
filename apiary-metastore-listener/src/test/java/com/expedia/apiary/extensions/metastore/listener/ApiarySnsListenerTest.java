@@ -96,14 +96,14 @@ public class ApiarySnsListenerTest {
 
   private static final Map<String, String> PARAMETERS = ImmutableMap
       .of("HIVE.VERSION", "2.3.4-amzn-0", "HIVE_METASTORE_TRANSACTION_ACTIVE", "false", "HIVE.METASTORE.URIS",
-          "thrift://test_uri:9083", "HKAAS_ENABLED", "true", "HKAAS_EXPIRY_DAYS", "5");
+          "thrift://test_uri:9083", "MY_VAR_ONE", "true", "MY_VAR_TWO", "5");
 
   private List<FieldSchema> partitionKeys;
   private ApiarySnsListener snsListener;
 
   @Before
   public void setup() {
-    environmentVariables.set("TABLE_PARAM_FILTER", "HKAAS.*");
+    environmentVariables.set("TABLE_PARAM_FILTER", "MY_VAR.*");
     environmentVariables.set("SNS_ARN", "arn:test-arn");
 
     snsListener = new ApiarySnsListener(configuration, snsClient);
@@ -135,7 +135,7 @@ public class ApiarySnsListenerTest {
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\"}"));
+        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
   }
 
   @Test
@@ -205,7 +205,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
+        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
 
   }
 
@@ -228,7 +228,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
+        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
 
   }
 
@@ -244,7 +244,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\"}"));
+        + "\",\"eventType\":\"DROP_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
   }
 
   @Test
@@ -267,7 +267,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=1\"}"));
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=1\"}"));
   }
 
   @Test
@@ -290,7 +290,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=2\"}"));
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=2\"}"));
   }
 
   @Test
@@ -312,7 +312,7 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"tableLocation\":\"s3://table_location_1\",\"tableParameters\":\"{HKAAS_EXPIRY_DAYS=5, HKAAS_ENABLED=true}\",\"oldTableName\":\"some_table\",\"oldTableLocation\":\"s3://table_location\"}"));
+        + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"tableLocation\":\"s3://table_location_1\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"oldTableName\":\"some_table\",\"oldTableLocation\":\"s3://table_location\"}"));
   }
 
   private StorageDescriptor createStorageDescriptor(List<FieldSchema> partitionKeys, String tableLocation) {

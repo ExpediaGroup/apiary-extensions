@@ -5,7 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## [1.2.0] - TBD
 ### Added
-- Old locations for Table and Partitions along with Housekeeping-as-a-service(HKAAS) table parameters to ApiarySNSListener
+- Old locations for Table and Partitions to ApiarySNSListener events.
+- Table parameters with a configurable regular expression to control which table parameters will be added to the ApiarySNSListener message. Default will be none.
 
 ## [1.1.0] - 2019-02-15
 ### Added

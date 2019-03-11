@@ -37,7 +37,7 @@ topic:
 ### Example Messages
 
 #### Create table
-The following shows an example JSON message representing a "CREATE_TABLE" event:
+The following shows an example JSON message representing a "CREATE_TABLE" event when environment variable TABLE_PARAM_FILTER is set to `my_var.*`:
 
 	{
       "protocolVersion": "1.0",
@@ -46,8 +46,8 @@ The following shows an example JSON message representing a "CREATE_TABLE" event:
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "hive.version": "2.3.0",
-          "hive.metastore.uris": "thrift://localhost:9083"
+          "my_var_one": "val_one",
+          "my_var_two": "val_two"
        }
 	}
 	
@@ -77,8 +77,8 @@ The following shows an example JSON message representing an "ALTER_TABLE" event:
       "tableName": "new_some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "hive.version": "2.3.0",
-          "hive.metastore.uris": "thrift://localhost:9083"
+          "my_var_one": "val_one",
+          "my_var_two": "val_two"
        },
       "oldTableName": "some_table",
       "oldTableLocation": "s3://old_table_location"
@@ -94,8 +94,8 @@ The following shows an example JSON message representing a "DROP_TABLE" event:
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "hive.version": "2.3.0",
-          "hive.metastore.uris": "thrift://localhost:9083"
+          "my_var_one": "val_one",
+          "my_var_two": "val_two"
        }
     }
     
@@ -109,8 +109,8 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "hive.version": "2.3.0",
-          "hive.metastore.uris": "thrift://localhost:9083"
+          "my_var_one": "val_one",
+          "my_var_two": "val_two"
        },
       "partitionKeys": {
           "column_1": "string",
@@ -131,8 +131,8 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "hive.version": "2.3.0",
-          "hive.metastore.uris": "thrift://localhost:9083"
+          "my_var_one": "val_one",
+          "my_var_two": "val_two"
        },
       "partitionKeys": {
           "column_1": "string",
@@ -153,8 +153,8 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
-          "hive.version": "2.3.0",
-          "hive.metastore.uris": "thrift://localhost:9083"
+          "my_var_one": "val_one",
+          "my_var_two": "val_two"
        },
       "partitionKeys": {
           "column_1": "string",
