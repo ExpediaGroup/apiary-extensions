@@ -61,6 +61,7 @@ import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiarySnsListenerTest {
@@ -136,6 +137,21 @@ public class ApiarySnsListenerTest {
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
         + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
+  }
+
+  @Test
+  public void onCreateTableWithEmptyTableParams() throws MetaException {
+    table.setParameters(Maps.newHashMap());
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(table);
+
+    snsListener.onCreateTable(event);
+    verify(snsClient).publish(requestCaptor.capture());
+    PublishRequest publishRequest = requestCaptor.getValue();
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
   }
 
   @Test

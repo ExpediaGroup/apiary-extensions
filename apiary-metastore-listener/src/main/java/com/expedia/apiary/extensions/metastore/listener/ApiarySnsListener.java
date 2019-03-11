@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -72,7 +71,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     this(config, AmazonSNSClientBuilder.defaultClient());
   }
 
-  ApiarySnsListener(Configuration config, AmazonSNS snsClient) throws PatternSyntaxException {
+  ApiarySnsListener(Configuration config, AmazonSNS snsClient) {
     super(config);
     this.snsClient = snsClient;
     tableParamFilterPattern = StringUtils.isEmpty(tableParamFilter) ? null : Pattern.compile(tableParamFilter);

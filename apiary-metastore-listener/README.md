@@ -37,18 +37,18 @@ topic:
 ### Example Messages
 
 #### Create table
-The following shows an example JSON message representing a "CREATE_TABLE" event when environment variable TABLE_PARAM_FILTER is set to `my_var.*`:
+The following shows an example JSON message representing a "CREATE_TABLE" event when the environment variable TABLE_PARAM_FILTER is set to `my_var.*`:
 
 	{
-      "protocolVersion": "1.0",
-      "eventType": "CREATE_TABLE",
-      "dbName": "some_db",
-      "tableName": "some_table",
-      "tableLocation": "s3://table_location",
-      "tableParameters": {
-          "my_var_one": "val_one",
-          "my_var_two": "val_two"
-       }
+       "protocolVersion": "1.0",
+       "eventType": "CREATE_TABLE",
+       "dbName": "some_db",
+       "tableName": "some_table",
+       "tableLocation": "s3://table_location",
+       "tableParameters": {
+           "my_var_one": "val_one",
+           "my_var_two": "val_two"
+        }
 	}
 	
 #### Insert
@@ -160,4 +160,4 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
 # Legal
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
-Copyright 2018 Expedia Inc.
+Copyright 2019, Expedia Inc.
