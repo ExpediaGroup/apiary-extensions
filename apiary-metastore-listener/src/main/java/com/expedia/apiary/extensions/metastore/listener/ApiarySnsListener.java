@@ -62,7 +62,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   private static final String TOPIC_ARN = System.getenv("SNS_ARN");
 
   private final String tableParamFilter = System.getenv("TABLE_PARAM_FILTER");
-  private final Pattern tableParamFilterPattern;
+  private Pattern tableParamFilterPattern;
 
   private final AmazonSNS snsClient;
 
@@ -73,9 +73,9 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   ApiarySnsListener(Configuration config, AmazonSNS snsClient) {
     super(config);
     this.snsClient = snsClient;
-    tableParamFilterPattern = (tableParamFilter == null) ? null : Pattern.compile(tableParamFilter);
 
-    if (tableParamFilterPattern != null) {
+    if (tableParamFilter == null) {
+      tableParamFilterPattern = Pattern.compile(tableParamFilter);
       log.info(String.format("Environment Variable TABLE_PARAM_FILTER is set as [%s]", tableParamFilter));
     }
 
