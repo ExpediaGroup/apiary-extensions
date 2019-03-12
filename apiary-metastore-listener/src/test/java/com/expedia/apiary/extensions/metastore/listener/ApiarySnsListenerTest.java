@@ -170,7 +170,7 @@ public class ApiarySnsListenerTest {
   }
 
   @Test
-  public void tableParamRegexNotSet() throws MetaException {
+  public void tableParamFilterRegexNotSet() throws MetaException {
     environmentVariables.clear("TABLE_PARAM_FILTER");
     ApiarySnsListener snsListener = new ApiarySnsListener(configuration, snsClient);
 
