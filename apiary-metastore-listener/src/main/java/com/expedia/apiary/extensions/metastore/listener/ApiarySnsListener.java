@@ -76,6 +76,10 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     this.snsClient = snsClient;
     tableParamFilterPattern = StringUtils.isEmpty(tableParamFilter) ? null : Pattern.compile(tableParamFilter);
 
+    if (tableParamFilterPattern != null) {
+      log.info(String.format("Environment Variable TABLE_PARAM_FILTER is set as [%s]", tableParamFilter));
+    }
+
     log.debug("ApiarySnsListener created");
   }
 
@@ -155,12 +159,15 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
     json.put("tableLocation", table.getSd().getLocation());
 
-    json.put("tableParameters", getFilteredParams(table.getParameters()));
+    if (tableParamFilterPattern != null) {
+      json.put("tableParameters", getFilteredParams(table.getParameters()));
+    }
 
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
       json.put("oldTableLocation", oldtable.getSd().getLocation());
     }
+
     if (partition != null) {
       LinkedHashMap<String, String> partitionKeysMap = new LinkedHashMap<>();
       for (FieldSchema fieldSchema : table.getPartitionKeys()) {
@@ -173,6 +180,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       json.put("partitionValues", partitionValuesArray);
       json.put("partitionLocation", partition.getSd().getLocation());
     }
+
     if (oldpartition != null) {
       JSONArray partitionValuesArray = new JSONArray(oldpartition.getValues());
       json.put("oldPartitionValues", partitionValuesArray);

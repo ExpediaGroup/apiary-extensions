@@ -183,6 +183,23 @@ public class ApiarySnsListenerTest {
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
+        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\"}"));
+  }
+
+  @Test
+  public void tableParamRegexIsEmpty() throws MetaException {
+    environmentVariables.set("TABLE_PARAM_FILTER", "  ");
+    ApiarySnsListener snsListener = new ApiarySnsListener(configuration, snsClient);
+
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(table);
+
+    snsListener.onCreateTable(event);
+    verify(snsClient).publish(requestCaptor.capture());
+    PublishRequest publishRequest = requestCaptor.getValue();
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
         + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
   }
 

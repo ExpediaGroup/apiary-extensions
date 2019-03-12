@@ -27,7 +27,7 @@ topic:
 |`dbName`|String|Always|The Hive database name|
 |`tableName`|String|Always|The Hive table name|
 |`tableLocation`|String|In all events except INSERT|The Hive table location|
-|`tableParameters`|String|In all events except INSERT|The Hive table parameters|
+|`tableParameters`|String|In all events except INSERT when TABLE_PARAM_FILTER is set|The Hive table parameters|
 |`oldTableName`|String|Only when `eventType` is ALTER_TABLE|The old Hive table name|
 |`partition`|String|Only when the `eventType` is one of ADD_PARTITION, DROP_PARTITION, ALTER_PARTITION|The Hive partition values|
 |`partitionLocation`|String|Only when the `eventType` is one of ADD_PARTITION, DROP_PARTITION, ALTER_PARTITION|The Hive partition location|
@@ -68,7 +68,7 @@ The following shows an example JSON message representing an "INSERT" event:
     }
     
 #### Alter Table
-The following shows an example JSON message representing an "ALTER_TABLE" event:
+The following shows an example JSON message representing an "ALTER_TABLE" event when the environment variable TABLE_PARAM_FILTER is set to `my_var.*`:
 
     {
       "protocolVersion": "1.0",
@@ -77,6 +77,8 @@ The following shows an example JSON message representing an "ALTER_TABLE" event:
       "tableName": "new_some_table",
       "tableLocation": "s3://table_location",
       "tableParameters": {
+           "my_var_one": "val_one",
+           "my_var_two": "val_two"
        },
       "oldTableName": "some_table",
       "oldTableLocation": "s3://old_table_location"
@@ -90,9 +92,7 @@ The following shows an example JSON message representing a "DROP_TABLE" event:
       "eventType": "DROP_TABLE",
       "dbName": "some_db",
       "tableName": "some_table",
-      "tableLocation": "s3://table_location",
-      "tableParameters": {
-       }
+      "tableLocation": "s3://table_location"
     }
     
 #### Add Partition
@@ -104,8 +104,6 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "dbName": "some_db",
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
-      "tableParameters": {
-       },
       "partitionKeys": {
           "column_1": "string",
           "column_2": "int",
@@ -124,8 +122,6 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "dbName": "some_db",
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
-      "tableParameters": {
-       },
       "partitionKeys": {
           "column_1": "string",
           "column_2": "int",
@@ -144,8 +140,6 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "dbName": "some_db",
       "tableName": "some_table",
       "tableLocation": "s3://table_location",
-      "tableParameters": {
-       },
       "partitionKeys": {
           "column_1": "string",
           "column_2": "int",
