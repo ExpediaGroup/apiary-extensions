@@ -56,9 +56,7 @@ import com.amazonaws.services.sns.model.PublishResult;
 public class ApiarySnsListener extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
-
   static final String PROTOCOL_VERSION = "1.0";
-
   private static final String TOPIC_ARN = System.getenv("SNS_ARN");
 
   private final String tableParamFilter = System.getenv("TABLE_PARAM_FILTER");
@@ -74,7 +72,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     super(config);
     this.snsClient = snsClient;
 
-    if (tableParamFilter == null) {
+    if (tableParamFilter != null) {
       tableParamFilterPattern = Pattern.compile(tableParamFilter);
       log.info(String.format("Environment Variable TABLE_PARAM_FILTER is set as [%s]", tableParamFilter));
     }
