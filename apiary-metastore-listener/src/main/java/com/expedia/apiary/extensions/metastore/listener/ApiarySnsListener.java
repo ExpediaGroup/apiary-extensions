@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -74,7 +73,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
   ApiarySnsListener(Configuration config, AmazonSNS snsClient) {
     super(config);
     this.snsClient = snsClient;
-    tableParamFilterPattern = StringUtils.isEmpty(tableParamFilter) ? null : Pattern.compile(tableParamFilter);
+    tableParamFilterPattern = (tableParamFilter == null) ? null : Pattern.compile(tableParamFilter);
 
     if (tableParamFilterPattern != null) {
       log.info(String.format("Environment Variable TABLE_PARAM_FILTER is set as [%s]", tableParamFilter));
