@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Expedia Inc.
+ * Copyright (C) 2018-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.expedia.apiary.extensions.metastore.listener;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -52,22 +56,27 @@ import com.amazonaws.services.sns.model.PublishResult;
 public class ApiarySnsListener extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiarySnsListener.class);
-
+  static final String PROTOCOL_VERSION = "1.0";
   private static final String TOPIC_ARN = System.getenv("SNS_ARN");
-  final static String PROTOCOL_VERSION = "1.0";
-  private final String protocolVersion = PROTOCOL_VERSION;
+
+  private final String tableParamFilter = System.getenv("TABLE_PARAM_FILTER");
+  private Pattern tableParamFilterPattern;
 
   private final AmazonSNS snsClient;
 
   public ApiarySnsListener(Configuration config) {
-    super(config);
-    snsClient = AmazonSNSClientBuilder.defaultClient();
-    log.debug("ApiarySnsListener created ");
+    this(config, AmazonSNSClientBuilder.defaultClient());
   }
 
   ApiarySnsListener(Configuration config, AmazonSNS snsClient) {
     super(config);
     this.snsClient = snsClient;
+
+    if (tableParamFilter != null) {
+      tableParamFilterPattern = Pattern.compile(tableParamFilter);
+      log.info(String.format("Environment Variable TABLE_PARAM_FILTER is set as [%s]", tableParamFilter));
+    }
+
     log.debug("ApiarySnsListener created");
   }
 
@@ -145,9 +154,17 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     throws MetaException {
     JSONObject json = createBaseMessage(eventType, table.getDbName(), table.getTableName());
 
+    json.put("tableLocation", table.getSd().getLocation());
+
+    if (tableParamFilterPattern != null) {
+      json.put("tableParameters", getFilteredParams(table.getParameters()));
+    }
+
     if (oldtable != null) {
       json.put("oldTableName", oldtable.getTableName());
+      json.put("oldTableLocation", oldtable.getSd().getLocation());
     }
+
     if (partition != null) {
       LinkedHashMap<String, String> partitionKeysMap = new LinkedHashMap<>();
       for (FieldSchema fieldSchema : table.getPartitionKeys()) {
@@ -158,10 +175,13 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       json.put("partitionKeys", partitionKeys);
       JSONArray partitionValuesArray = new JSONArray(partition.getValues());
       json.put("partitionValues", partitionValuesArray);
+      json.put("partitionLocation", partition.getSd().getLocation());
     }
+
     if (oldpartition != null) {
       JSONArray partitionValuesArray = new JSONArray(oldpartition.getValues());
       json.put("oldPartitionValues", partitionValuesArray);
+      json.put("oldPartitionLocation", oldpartition.getSd().getLocation());
     }
 
     sendMessage(json);
@@ -188,7 +208,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private JSONObject createBaseMessage(EventType eventType, String dbName, String tableName) {
     JSONObject json = new JSONObject();
-    json.put("protocolVersion", protocolVersion);
+    json.put("protocolVersion", PROTOCOL_VERSION);
     json.put("eventType", eventType.toString());
     json.put("dbName", dbName);
     json.put("tableName", tableName);
@@ -201,6 +221,20 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     log.debug(String.format("Sending Message: {} to {}", msg, TOPIC_ARN));
     PublishResult publishResult = snsClient.publish(publishRequest);
     // TODO: check on size of message and truncation etc (this can come later if/when we add more)
-    log.debug("Published SNS Message - " + publishResult.getMessageId());
+    log.info("Published SNS Message - " + publishResult.getMessageId());
   }
+
+  private Map<String, String> getFilteredParams(Map<String, String> tableParameters) {
+    Map<String, String> filteredParams = new HashMap<>();
+    if (tableParamFilterPattern != null && tableParameters != null) {
+      for (Entry<String, String> entry : tableParameters.entrySet()) {
+        Matcher matcher = tableParamFilterPattern.matcher(entry.getKey());
+        if (matcher.matches()) {
+          filteredParams.put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+    return filteredParams;
+  }
+
 }

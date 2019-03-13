@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Expedia Inc.
+ * Copyright (C) 2018-2019 Expedia Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -46,7 +47,9 @@ import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -58,9 +61,13 @@ import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiarySnsListenerTest {
+
+  @Rule
+  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
   @Mock
   private AmazonSNS snsClient;
@@ -68,6 +75,10 @@ public class ApiarySnsListenerTest {
   private Configuration configuration;
   @Mock
   private PublishResult publishResult;
+  @Mock
+  private StorageDescriptor newStorageDescriptor;
+  @Mock
+  private StorageDescriptor storageDescriptor;
 
   @Captor
   private ArgumentCaptor<PublishRequest> requestCaptor;
@@ -75,16 +86,31 @@ public class ApiarySnsListenerTest {
   private final Table table = new Table();
   private static final String TABLE_NAME = "some_table";
   private static final String DB_NAME = "some_db";
+  private static final String TABLE_LOCATION = "s3://table_location";
+  private static final String NEW_TABLE_LOCATION = "s3://table_location_1";
+
+  private static final String PARTITION_LOCATION = "s3://table_location/partition_location=2";
+  private static final String OLD_PARTITION_LOCATION = "s3://table_location/partition_location=1";
+
   private static final List<String> PARTITION_VALUES = ImmutableList.of("value_1", "1000", "value_2");
   private static final List<String> NEW_PARTITION_VALUES = ImmutableList.of("value_3", "2000", "value_4");
+
+  private static final Map<String, String> PARAMETERS = ImmutableMap
+      .of("HIVE.VERSION", "2.3.4-amzn-0", "HIVE_METASTORE_TRANSACTION_ACTIVE", "false", "HIVE.METASTORE.URIS",
+          "thrift://test_uri:9083", "MY_VAR_ONE", "true", "MY_VAR_TWO", "5");
 
   private List<FieldSchema> partitionKeys;
   private ApiarySnsListener snsListener;
 
   @Before
   public void setup() {
+    environmentVariables.set("TABLE_PARAM_FILTER", "MY_VAR.*");
+    environmentVariables.set("SNS_ARN", "arn:test-arn");
+
     snsListener = new ApiarySnsListener(configuration, snsClient);
     when(snsClient.publish(any(PublishRequest.class))).thenReturn(publishResult);
+    when(storageDescriptor.getLocation()).thenReturn(TABLE_LOCATION);
+    when(newStorageDescriptor.getLocation()).thenReturn(NEW_TABLE_LOCATION);
 
     FieldSchema partitionColumn1 = new FieldSchema("column_1", "string", "");
     FieldSchema partitionColumn2 = new FieldSchema("column_2", "int", "");
@@ -95,6 +121,8 @@ public class ApiarySnsListenerTest {
     table.setTableName(TABLE_NAME);
     table.setDbName(DB_NAME);
     table.setPartitionKeys(partitionKeys);
+    table.setSd(storageDescriptor);
+    table.setParameters(PARAMETERS);
   }
 
   @Test
@@ -106,10 +134,96 @@ public class ApiarySnsListenerTest {
     snsListener.onCreateTable(event);
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
-    assertThat(publishRequest.getMessage(),
-        is("{\"protocolVersion\":\""
-            + PROTOCOL_VERSION
-            + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
+  }
+
+  @Test
+  public void onCreateTableWithEmptyTableParams() throws MetaException {
+    table.setParameters(Maps.newHashMap());
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(table);
+
+    snsListener.onCreateTable(event);
+    verify(snsClient).publish(requestCaptor.capture());
+    PublishRequest publishRequest = requestCaptor.getValue();
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+  }
+
+  @Test
+  public void onCreateTableWithNullTableParams() throws MetaException {
+    table.setParameters(null);
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(table);
+
+    snsListener.onCreateTable(event);
+    verify(snsClient).publish(requestCaptor.capture());
+    PublishRequest publishRequest = requestCaptor.getValue();
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+  }
+
+  @Test
+  public void tableParamFilterRegexNotSet() throws MetaException {
+    environmentVariables.clear("TABLE_PARAM_FILTER");
+    ApiarySnsListener snsListener = new ApiarySnsListener(configuration, snsClient);
+
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(table);
+
+    snsListener.onCreateTable(event);
+    verify(snsClient).publish(requestCaptor.capture());
+    PublishRequest publishRequest = requestCaptor.getValue();
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\"}"));
+  }
+
+  @Test
+  public void tableParamRegexIsBlank() throws MetaException {
+    environmentVariables.set("TABLE_PARAM_FILTER", "  ");
+    ApiarySnsListener snsListener = new ApiarySnsListener(configuration, snsClient);
+
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(table);
+
+    snsListener.onCreateTable(event);
+    verify(snsClient).publish(requestCaptor.capture());
+    PublishRequest publishRequest = requestCaptor.getValue();
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+  }
+
+  @Test
+  public void tableParamRegexIsEmpty() throws MetaException {
+    environmentVariables.set("TABLE_PARAM_FILTER", "");
+    ApiarySnsListener snsListener = new ApiarySnsListener(configuration, snsClient);
+
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(table);
+
+    snsListener.onCreateTable(event);
+    verify(snsClient).publish(requestCaptor.capture());
+    PublishRequest publishRequest = requestCaptor.getValue();
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+  }
+
+  @Test(expected = PatternSyntaxException.class)
+  public void tableParamRegexIsInvalid() throws MetaException {
+    environmentVariables.set("TABLE_PARAM_FILTER", "[");
+    new ApiarySnsListener(configuration, snsClient);
   }
 
   @Test
@@ -145,8 +259,8 @@ public class ApiarySnsListenerTest {
 
     List<Partition> partitions = new ArrayList<>();
     partitions
-        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, createStorageDescriptor(partitionKeys),
-            ImmutableMap.of()));
+        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+            createStorageDescriptor(partitionKeys, PARTITION_LOCATION), ImmutableMap.of()));
 
     when(event.getPartitionIterator()).thenReturn(partitions.iterator());
 
@@ -156,7 +270,8 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
+
   }
 
   @Test
@@ -167,8 +282,8 @@ public class ApiarySnsListenerTest {
 
     List<Partition> partitions = new ArrayList<>();
     partitions
-        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0, createStorageDescriptor(partitionKeys),
-            ImmutableMap.of()));
+        .add(new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+            createStorageDescriptor(partitionKeys, PARTITION_LOCATION), ImmutableMap.of()));
 
     when(event.getPartitionIterator()).thenReturn(partitions.iterator());
 
@@ -178,7 +293,8 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
+
   }
 
   @Test
@@ -191,22 +307,21 @@ public class ApiarySnsListenerTest {
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
 
-    assertThat(publishRequest.getMessage(),
-        is("{\"protocolVersion\":\""
-            + PROTOCOL_VERSION
-            + "\",\"eventType\":\"DROP_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"DROP_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
   }
 
   @Test
-  public void onAlterPartition() throws MetaException {
+  public void onAlterPartitionUpdateLocation() throws MetaException {
     AlterPartitionEvent event = mock(AlterPartitionEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getTable()).thenReturn(table);
 
     Partition oldPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
-        createStorageDescriptor(partitionKeys), ImmutableMap.of());
-    Partition newPartition = new Partition(NEW_PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
-        createStorageDescriptor(partitionKeys), ImmutableMap.of());
+        createStorageDescriptor(partitionKeys, OLD_PARTITION_LOCATION), ImmutableMap.of());
+    Partition newPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+        createStorageDescriptor(partitionKeys, PARTITION_LOCATION), ImmutableMap.of());
 
     when(event.getOldPartition()).thenReturn(oldPartition);
     when(event.getNewPartition()).thenReturn(newPartition);
@@ -217,7 +332,30 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=1\"}"));
+  }
+
+  @Test
+  public void onAlterPartition() throws MetaException {
+    AlterPartitionEvent event = mock(AlterPartitionEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(table);
+
+    Partition oldPartition = new Partition(PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+        createStorageDescriptor(partitionKeys, PARTITION_LOCATION), ImmutableMap.of());
+    Partition newPartition = new Partition(NEW_PARTITION_VALUES, DB_NAME, TABLE_NAME, 0, 0,
+        createStorageDescriptor(partitionKeys, PARTITION_LOCATION), ImmutableMap.of());
+
+    when(event.getOldPartition()).thenReturn(oldPartition);
+    when(event.getNewPartition()).thenReturn(newPartition);
+
+    snsListener.onAlterPartition(event);
+    verify(snsClient).publish(requestCaptor.capture());
+    PublishRequest publishRequest = requestCaptor.getValue();
+
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=2\"}"));
   }
 
   @Test
@@ -225,6 +363,8 @@ public class ApiarySnsListenerTest {
     Table newTable = new Table();
     newTable.setTableName("new_" + TABLE_NAME);
     newTable.setDbName(DB_NAME);
+    newTable.setSd(newStorageDescriptor);
+    newTable.setParameters(PARAMETERS);
 
     AlterTableEvent event = mock(AlterTableEvent.class);
     when(event.getStatus()).thenReturn(true);
@@ -237,12 +377,13 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"oldTableName\":\"some_table\"}"));
+        + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"tableLocation\":\"s3://table_location_1\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"oldTableName\":\"some_table\",\"oldTableLocation\":\"s3://table_location\"}"));
   }
 
-  private StorageDescriptor createStorageDescriptor(List<FieldSchema> partitionKeys) {
-    return new StorageDescriptor(partitionKeys, "s3://test_location", "ORC", "ORC", false, 2, new SerDeInfo(),
+  private StorageDescriptor createStorageDescriptor(List<FieldSchema> partitionKeys, String tableLocation) {
+    return new StorageDescriptor(partitionKeys, tableLocation, "ORC", "ORC", false, 2, new SerDeInfo(),
         Collections.emptyList(), Collections.emptyList(), Collections.emptyMap());
   }
   // TODO: test for setting ARN via environment variable
+
 }
