@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import static com.expedia.apiary.extensions.metastore.listener.ApiarySnsListener.PROTOCOL_VERSION;
 
+import com.amazonaws.services.sns.model.MessageAttributeValue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -134,9 +135,14 @@ public class ApiarySnsListenerTest {
     snsListener.onCreateTable(event);
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
-    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
-        + PROTOCOL_VERSION
-        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
+    assertThat(publishRequest.getMessage(),
+        is("{\"protocolVersion\":\""
+            + PROTOCOL_VERSION
+            + "\",\"eventType\":\""
+            + EventType.CREATE_TABLE.toString()
+            + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
+
+    verifyMessageAttributes(publishRequest,  EventType.CREATE_TABLE.toString());
   }
 
   @Test
@@ -151,7 +157,9 @@ public class ApiarySnsListenerTest {
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+        + "\",\"eventType\":\""
+        + EventType.CREATE_TABLE.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
   }
 
   @Test
@@ -166,7 +174,9 @@ public class ApiarySnsListenerTest {
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+        + "\",\"eventType\":\""
+        + EventType.CREATE_TABLE.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
   }
 
   @Test
@@ -183,7 +193,9 @@ public class ApiarySnsListenerTest {
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\"}"));
+        + "\",\"eventType\":\""
+        + EventType.CREATE_TABLE.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\"}"));
   }
 
   @Test
@@ -200,7 +212,9 @@ public class ApiarySnsListenerTest {
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+        + "\",\"eventType\":\""
+        + EventType.CREATE_TABLE.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
   }
 
   @Test
@@ -217,7 +231,9 @@ public class ApiarySnsListenerTest {
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+        + "\",\"eventType\":\""
+        + EventType.CREATE_TABLE.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
   }
 
   @Test(expected = PatternSyntaxException.class)
@@ -247,8 +263,12 @@ public class ApiarySnsListenerTest {
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"INSERT\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"files\":[\"file:/a/b.txt\",\"file:/a/c.txt\"],"
+        + "\",\"eventType\":\""
+        + EventType.INSERT.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"files\":[\"file:/a/b.txt\",\"file:/a/c.txt\"],"
         + "\"fileChecksums\":[\"123\",\"456\"],\"partitionKeyValues\":{\"load_date\":\"2013-03-24\",\"variant_code\":\"EN\"}}"));
+
+    verifyMessageAttributes(publishRequest, EventType.INSERT.toString());
   }
 
   @Test
@@ -270,8 +290,11 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
+        + "\",\"eventType\":\""
+        + EventType.ADD_PARTITION.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
 
+    verifyMessageAttributes(publishRequest, EventType.ADD_PARTITION.toString() );
   }
 
   @Test
@@ -293,8 +316,11 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
+        + "\",\"eventType\":\""
+        + EventType.DROP_PARTITION.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
 
+    verifyMessageAttributes(publishRequest,  EventType.DROP_PARTITION.toString());
   }
 
   @Test
@@ -309,7 +335,11 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
+        + "\",\"eventType\":\""
+        + EventType.DROP_TABLE.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
+
+    verifyMessageAttributes(publishRequest,  EventType.DROP_TABLE.toString());
   }
 
   @Test
@@ -332,7 +362,9 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=1\"}"));
+        + "\",\"eventType\":\""
+        + EventType.ALTER_PARTITION.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=1\"}"));
   }
 
   @Test
@@ -355,7 +387,9 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=2\"}"));
+        + "\",\"eventType\":\""
+        + EventType.ALTER_PARTITION.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=2\"}"));
   }
 
   @Test
@@ -377,7 +411,16 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"tableLocation\":\"s3://table_location_1\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"oldTableName\":\"some_table\",\"oldTableLocation\":\"s3://table_location\"}"));
+        + "\",\"eventType\":\""
+        + EventType.ALTER_TABLE.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"tableLocation\":\"s3://table_location_1\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"oldTableName\":\"some_table\",\"oldTableLocation\":\"s3://table_location\"}"));
+    verifyMessageAttributes(publishRequest,  EventType.ALTER_TABLE.toString());
+  }
+
+  private void verifyMessageAttributes(PublishRequest publishRequest, String eventType) {
+    Map<String, MessageAttributeValue> messageAttributes = publishRequest.getMessageAttributes();
+    assertThat(messageAttributes.size(), is(1));
+    assertThat(messageAttributes.get("eventType").getStringValue(), is(eventType));
   }
 
   private StorageDescriptor createStorageDescriptor(List<FieldSchema> partitionKeys, String tableLocation) {
@@ -385,5 +428,4 @@ public class ApiarySnsListenerTest {
         Collections.emptyList(), Collections.emptyList(), Collections.emptyMap());
   }
   // TODO: test for setting ARN via environment variable
-
 }

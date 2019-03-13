@@ -46,6 +46,7 @@ import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
+import com.amazonaws.services.sns.model.MessageAttributeValue;
 
 /**
  * <p>
@@ -184,7 +185,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       json.put("oldPartitionLocation", oldpartition.getSd().getLocation());
     }
 
-    sendMessage(json);
+    sendMessage(json, getMessageAttributes(eventType));
   }
 
   private void publishInsertEvent(
@@ -203,7 +204,13 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     JSONObject partitionKeyValuesObject = new JSONObject(partitionKeyValues);
     json.put("partitionKeyValues", partitionKeyValuesObject);
 
-    sendMessage(json);
+    sendMessage(json, getMessageAttributes(eventType));
+  }
+
+  private Map<String, MessageAttributeValue> getMessageAttributes(EventType eventType) {
+    Map<String, MessageAttributeValue> map = new HashMap<>();
+    map.put(MessageAttributeKey.EVENT_TYPE.toString(), new MessageAttributeValue().withStringValue(eventType.toString()));
+    return map;
   }
 
   private JSONObject createBaseMessage(EventType eventType, String dbName, String tableName) {
@@ -215,9 +222,10 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     return json;
   }
 
-  private void sendMessage(JSONObject json) {
+  private void sendMessage(JSONObject json, Map<String, MessageAttributeValue> messageAttributes) {
     String msg = json.toString();
     PublishRequest publishRequest = new PublishRequest(TOPIC_ARN, msg);
+    publishRequest.setMessageAttributes(messageAttributes);
     log.debug(String.format("Sending Message: {} to {}", msg, TOPIC_ARN));
     PublishResult publishResult = snsClient.publish(publishRequest);
     // TODO: check on size of message and truncation etc (this can come later if/when we add more)
