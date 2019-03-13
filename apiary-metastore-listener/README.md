@@ -155,9 +155,9 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
 The [Message attributes](https://docs.aws.amazon.com/sns/latest/dg/sns-message-attributes.html) enable filtering of the SNS events. This can be done by applying a filter policy in a subscription receivers.
 The following messages attributes are supported:
 
-|Field Name|Type|
-|----|----|
-|`eventType`|String|
+|Field Name|Type| Description
+|----|----|----
+|`eventType`|String|One of: CREATE_TABLE, DROP_TABLE, ALTER_TABLE, ADD_PARTITION, DROP_PARTITION, ALTER_PARTITION
 
 # Legal
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
