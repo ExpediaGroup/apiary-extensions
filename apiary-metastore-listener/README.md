@@ -14,6 +14,7 @@ The SNS listener can be configured by setting the following System Environment v
 |Environment Variable|Required|Description|
 |----|----|----|
 SNS_ARN|Yes|The SNS topic ARN to which messages will be sent.
+TABLE_PARAM_FILTER|No|A regular expression for selecting necessary table parameters. If the value isn't set, then no table parameters are selected.
 
 ## JSON Messages
 The following table describes all the fields that may be present in the JSON message that is sent to the SNS 
@@ -25,20 +26,29 @@ topic:
 |`eventType`|String|Always|One of: CREATE_TABLE, DROP_TABLE, ALTER_TABLE, ADD_PARTITION, DROP_PARTITION, ALTER_PARTITION| 
 |`dbName`|String|Always|The Hive database name|
 |`tableName`|String|Always|The Hive table name|
+|`tableLocation`|String|In all events except INSERT|The Hive table location|
+|`tableParameters`|String|In all events except INSERT when TABLE_PARAM_FILTER is set|The Hive table parameters|
 |`oldTableName`|String|Only when `eventType` is ALTER_TABLE|The old Hive table name|
 |`partition`|String|Only when the `eventType` is one of ADD_PARTITION, DROP_PARTITION, ALTER_PARTITION|The Hive partition values|
+|`partitionLocation`|String|Only when the `eventType` is one of ADD_PARTITION, DROP_PARTITION, ALTER_PARTITION|The Hive partition location|
 |`oldPartition`|String|Only when the `eventType` is ALTER_PARTITION|The old Hive partition values|
+|`oldPartitionLocation`|String|Only when the `eventType` is ALTER_PARTITION|The old Hive partition location|
 
 ### Example Messages
 
 #### Create table
-The following shows an example JSON message representing a "CREATE_TABLE" event:
+The following shows an example JSON message representing a "CREATE_TABLE" event when the environment variable TABLE_PARAM_FILTER is set to `my_var.*`:
 
 	{
-      "protocolVersion": "1.0",
-      "eventType": "CREATE_TABLE",
-      "dbName": "some_db",
-      "tableName": "some_table"
+       "protocolVersion": "1.0",
+       "eventType": "CREATE_TABLE",
+       "dbName": "some_db",
+       "tableName": "some_table",
+       "tableLocation": "s3://table_location",
+       "tableParameters": {
+           "my_var_one": "val_one",
+           "my_var_two": "val_two"
+        }
 	}
 	
 #### Insert
@@ -58,14 +68,20 @@ The following shows an example JSON message representing an "INSERT" event:
     }
     
 #### Alter Table
-The following shows an example JSON message representing an "ALTER_TABLE" event:
+The following shows an example JSON message representing an "ALTER_TABLE" event when the environment variable TABLE_PARAM_FILTER is set to `my_var.*`:
 
     {
       "protocolVersion": "1.0",
       "eventType": "ALTER_TABLE",
       "dbName": "some_db",
       "tableName": "new_some_table",
-      "oldTableName": "some_table"
+      "tableLocation": "s3://table_location",
+      "tableParameters": {
+           "my_var_one": "val_one",
+           "my_var_two": "val_two"
+       },
+      "oldTableName": "some_table",
+      "oldTableLocation": "s3://old_table_location"
     }
 
 #### Drop Table
@@ -75,7 +91,8 @@ The following shows an example JSON message representing a "DROP_TABLE" event:
       "protocolVersion": "1.0",
       "eventType": "DROP_TABLE",
       "dbName": "some_db",
-      "tableName": "some_table"
+      "tableName": "some_table",
+      "tableLocation": "s3://table_location"
     }
     
 #### Add Partition
@@ -86,12 +103,14 @@ The following shows an example JSON message representing an "ADD_PARTITION" even
       "eventType": "ADD_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
+      "tableLocation": "s3://table_location",
       "partitionKeys": {
           "column_1": "string",
           "column_2": "int",
           "column_3": "string"
        },
-      "partitionValues": ["value_1","1000","value_2"]
+      "partitionValues": ["value_1","1000","value_2"],
+      "partitionLocation": "s3://table_location/partition"
     }
 
 #### Drop Partition
@@ -102,12 +121,14 @@ The following shows an example JSON message representing a "DROP_PARTITION" even
       "eventType": "DROP_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
+      "tableLocation": "s3://table_location",
       "partitionKeys": {
           "column_1": "string",
           "column_2": "int",
           "column_3": "string"
        },
-      "partitionValues": ["value_1","1000","value_2"]
+      "partitionValues": ["value_1","1000","value_2"],
+      "partitionLocation": "s3://table_location/partition"
     }
 
 #### Alter Partition
@@ -118,16 +139,19 @@ The following shows an example JSON message representing an "ALTER_PARTITION" ev
       "eventType": "ALTER_PARTITION",
       "dbName": "some_db",
       "tableName": "some_table",
+      "tableLocation": "s3://table_location",
       "partitionKeys": {
           "column_1": "string",
           "column_2": "int",
           "column_3": "string"
        },
       "partitionValues": ["value_3","2000","value_4"],
-      "oldPartitionValues": ["value_1","1000","value_2"]
+      "partitionLocation": "s3://table_location/partition"
+      "oldPartitionValues": ["value_1","1000","value_2"],
+      "oldPartitionLocation": "s3://table_location/old_partition"
     }
 
 # Legal
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
-Copyright 2018 Expedia Inc.
+Copyright 2019, Expedia Inc.
