@@ -190,7 +190,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
 
   private Map<String, MessageAttributeValue> getMessageAttributes(EventType eventType) {
     Map<String, MessageAttributeValue> map = new HashMap<>();
-    map.put("eventType", new MessageAttributeValue().withStringValue(eventType.toString()));
+    map.put(MessageAttributeKey.EVENT_TYPE.toString(), new MessageAttributeValue().withStringValue(eventType.toString()));
     return map;
   }
 

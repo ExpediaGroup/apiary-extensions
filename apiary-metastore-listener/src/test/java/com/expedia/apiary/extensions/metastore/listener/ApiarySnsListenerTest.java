@@ -110,9 +110,11 @@ public class ApiarySnsListenerTest {
     assertThat(publishRequest.getMessage(),
         is("{\"protocolVersion\":\""
             + PROTOCOL_VERSION
-            + "\",\"eventType\":\"CREATE_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
+            + "\",\"eventType\":\""
+            + EventType.CREATE_TABLE.toString()
+            + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
 
-    verifyMessageAttributes(publishRequest,  "CREATE_TABLE");
+    verifyMessageAttributes(publishRequest,  EventType.CREATE_TABLE.toString());
   }
 
   @Test
@@ -136,10 +138,12 @@ public class ApiarySnsListenerTest {
     PublishRequest publishRequest = requestCaptor.getValue();
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"INSERT\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"files\":[\"file:/a/b.txt\",\"file:/a/c.txt\"],"
+        + "\",\"eventType\":\""
+        + EventType.INSERT.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"files\":[\"file:/a/b.txt\",\"file:/a/c.txt\"],"
         + "\"fileChecksums\":[\"123\",\"456\"],\"partitionKeyValues\":{\"load_date\":\"2013-03-24\",\"variant_code\":\"EN\"}}"));
 
-    verifyMessageAttributes(publishRequest,  "INSERT");
+    verifyMessageAttributes(publishRequest, EventType.INSERT.toString());
   }
 
   @Test
@@ -161,9 +165,11 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ADD_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\""
+        + EventType.ADD_PARTITION.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
 
-    verifyMessageAttributes(publishRequest,  "ADD_PARTITION");
+    verifyMessageAttributes(publishRequest, EventType.ADD_PARTITION.toString() );
   }
 
   @Test
@@ -185,9 +191,11 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"DROP_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\""
+        + EventType.DROP_PARTITION.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
 
-    verifyMessageAttributes(publishRequest,  "DROP_PARTITION");
+    verifyMessageAttributes(publishRequest,  EventType.DROP_PARTITION.toString());
   }
 
   @Test
@@ -200,12 +208,13 @@ public class ApiarySnsListenerTest {
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
 
-    assertThat(publishRequest.getMessage(),
-        is("{\"protocolVersion\":\""
-            + PROTOCOL_VERSION
-            + "\",\"eventType\":\"DROP_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\""
+        + EventType.DROP_TABLE.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\"}"));
 
-    verifyMessageAttributes(publishRequest,  "DROP_TABLE");
+    verifyMessageAttributes(publishRequest,  EventType.DROP_TABLE.toString());
   }
 
   @Test
@@ -228,9 +237,11 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_PARTITION\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
+        + "\",\"eventType\":\""
+        + EventType.ALTER_PARTITION.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"]}"));
 
-    verifyMessageAttributes(publishRequest,  "ALTER_PARTITION");
+    verifyMessageAttributes(publishRequest,  EventType.ALTER_PARTITION.toString());
   }
 
   @Test
@@ -250,9 +261,11 @@ public class ApiarySnsListenerTest {
 
     assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
         + PROTOCOL_VERSION
-        + "\",\"eventType\":\"ALTER_TABLE\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"oldTableName\":\"some_table\"}"));
+        + "\",\"eventType\":\""
+        + EventType.ALTER_TABLE.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"oldTableName\":\"some_table\"}"));
 
-    verifyMessageAttributes(publishRequest,  "ALTER_TABLE");
+    verifyMessageAttributes(publishRequest,  EventType.ALTER_TABLE.toString());
   }
 
   private void verifyMessageAttributes(PublishRequest publishRequest, String eventType) {
