@@ -420,7 +420,8 @@ public class ApiarySnsListenerTest {
   private void verifyMessageAttributes(PublishRequest publishRequest, String eventType) {
     Map<String, MessageAttributeValue> messageAttributes = publishRequest.getMessageAttributes();
     assertThat(messageAttributes.size(), is(1));
-    assertThat(messageAttributes.get("eventType").getStringValue(), is(eventType));
+    assertThat(messageAttributes.get(MessageAttributeKey.EVENT_TYPE.toString()).getStringValue(), is(eventType));
+    assertThat(messageAttributes.get(MessageAttributeKey.EVENT_TYPE.toString()).getDataType(), is(MessageAttributeDataType.STRING.toString()));
   }
 
   private StorageDescriptor createStorageDescriptor(List<FieldSchema> partitionKeys, String tableLocation) {
