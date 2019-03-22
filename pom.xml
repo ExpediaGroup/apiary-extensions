@@ -41,6 +41,7 @@
     <module>apiary-ranger-metastore-plugin</module>
     <module>apiary-metastore-metrics</module>
     <module>apiary-metastore-auth</module>
+    <module>apiary-receiver</module>
   </modules>
 
   <dependencyManagement>
