@@ -4,6 +4,8 @@
 The SNS event listener is an optional Apiary component which, if found on the Hive metastore classpath, will push 
 Hive metastore events as JSON onto an Amazon Web Services SNS topic.
 
+![Apiary SNS event listener Architecture.](images/Apiary_SNS_event_listener.png  "Apiary SNS event listener.")
+
 ## Installation
 The listener can be activated by placing its jar file on the Hive metastore classpath and configuring Hive accordingly. For Apiary 
 this is done in [apiary-metastore-docker](https://github.com/ExpediaInc/apiary-metastore-docker). 
