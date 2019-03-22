@@ -16,8 +16,6 @@
 package com.expedia.apiary.extensions.receiver.common.error;
 
 public class ApiaryReceiverException extends RuntimeException {
-  private static final long serialVersionUID = 1L;
-
   public ApiaryReceiverException(String message) {
     super(message);
   }

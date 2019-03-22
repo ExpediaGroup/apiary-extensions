@@ -34,7 +34,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
@@ -50,11 +49,8 @@ import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageDeserializ
 public class SqsMessageReaderTest {
 
   private static final String QUEUE_NAME = "queue";
-  private static final String AWS_ACCESS_KEY = "aws_access_key";
-  private static final String AWS_SECRET_KEY = "aws_secret_key";
   private static final Integer WAIT_TIME = 1;
   private static final Integer MAX_MESSAGES = 1;
-  private static final Regions REGION = Regions.US_WEST_2;
   private static final String RECEIPT_HANDLER = "receipt_handler";
   private static final String MESSAGE_CONTENT = "message";
 
@@ -83,13 +79,10 @@ public class SqsMessageReaderTest {
     when(message.getBody()).thenReturn(MESSAGE_CONTENT);
     when(serDe.unmarshal(MESSAGE_CONTENT)).thenReturn(event);
 
-    SqsProperties properties = new SqsProperties.Builder(QUEUE_NAME, AWS_ACCESS_KEY, AWS_SECRET_KEY)
-        .withRegion(REGION)
-        .withWaitTimeSeconds(WAIT_TIME)
-        .withMaxMessages(MAX_MESSAGES)
-        .build();
-
-    reader = new SqsMessageReader(properties, serDe, consumer);
+    reader = new SqsMessageReader.Builder(QUEUE_NAME, consumer, serDe)
+      .withMaxMessages(MAX_MESSAGES)
+      .withWaitTimeSeconds(WAIT_TIME)
+      .build();
   }
 
   @Test

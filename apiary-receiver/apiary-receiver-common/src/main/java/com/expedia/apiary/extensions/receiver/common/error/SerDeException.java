@@ -16,8 +16,6 @@
 package com.expedia.apiary.extensions.receiver.common.error;
 
 public class SerDeException extends ApiaryReceiverException {
-  private static final long serialVersionUID = 1L;
-
   public SerDeException(String message) {
     super(message);
   }

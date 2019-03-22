@@ -20,19 +20,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Iterator;
 import java.util.Optional;
 
-import com.amazonaws.auth.AWSCredentialsProviderChain;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.auth.InstanceProfileCredentialsProvider;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.google.common.annotations.VisibleForTesting;
 
 import com.expedia.apiary.extensions.receiver.common.MessageReader;
 import com.expedia.apiary.extensions.receiver.common.error.SerDeException;
@@ -43,48 +34,20 @@ public class SqsMessageReader implements MessageReader {
   private static final Integer DEFAULT_POLLING_WAIT_TIME = 10;
   private static final Integer DEFAULT_MAX_MESSAGES = 10;
 
-  private final String queueUrl;
-  private final SqsMessageDeserializer sqsDeserializer;
-  private final int waitTimeSeconds;
-  private final int maxMessages;
-  private final AmazonSQS consumer;
+  private String queueUrl;
+  private int waitTimeSeconds;
+  private int maxMessages;
+  private SqsMessageDeserializer sqsMessageDeserializer;
+  private AmazonSQS consumer;
   private Iterator<Message> records;
 
-  public SqsMessageReader(SqsProperties properties, SqsMessageDeserializer sqsDeserializer) {
-    this(properties, sqsDeserializer, getSqsConsumer(properties));
-  }
-
-  @VisibleForTesting
-  SqsMessageReader(SqsProperties properties, SqsMessageDeserializer sqsDeserializer, AmazonSQS consumer) {
-    this.queueUrl = checkNotNull(properties.getQueue());
-    this.sqsDeserializer = sqsDeserializer;
-    this.waitTimeSeconds = properties.getWaitTimeSeconds() == null
-        ? DEFAULT_POLLING_WAIT_TIME : properties.getWaitTimeSeconds();
-    this.maxMessages = properties.getMaxMessages() == null
-        ? DEFAULT_MAX_MESSAGES : properties.getMaxMessages();
+  private SqsMessageReader(String queueUrl, int waitTimeSeconds, int maxMessages,
+                          SqsMessageDeserializer sqsMessageDeserializer, AmazonSQS consumer) {
+    this.queueUrl = queueUrl;
+    this.waitTimeSeconds = waitTimeSeconds;
+    this.maxMessages = maxMessages;
+    this.sqsMessageDeserializer = sqsMessageDeserializer;
     this.consumer = consumer;
-  }
-
-  private static AmazonSQS getSqsConsumer(SqsProperties properties) {
-    String awsAccessKey = checkNotNull(properties.getAwsAccessKey());
-    String awsSecretKey = checkNotNull(properties.getAwsAccessKey());
-    Regions region = properties.getRegion() == null
-        ? Regions.DEFAULT_REGION : properties.getRegion();
-
-    AWSCredentialsProviderChain credentials = getAwsCredentialsProviderChain(awsAccessKey, awsSecretKey);
-
-    return AmazonSQSClientBuilder
-        .standard()
-        .withRegion(checkNotNull(region))
-        .withCredentials(credentials)
-        .build();
-  }
-
-  private static AWSCredentialsProviderChain getAwsCredentialsProviderChain(String awsAccessKey, String awsSecretKey) {
-    return new AWSCredentialsProviderChain(new EnvironmentVariableCredentialsProvider(),
-        new InstanceProfileCredentialsProvider(false), new EC2ContainerCredentialsProviderWrapper(),
-        new AWSStaticCredentialsProvider(new BasicAWSCredentials(checkNotNull(awsAccessKey),
-            checkNotNull(awsSecretKey))));
   }
 
   @Override
@@ -121,9 +84,46 @@ public class SqsMessageReader implements MessageReader {
 
   private ListenerEvent eventPayLoad(Message message) {
     try {
-      return sqsDeserializer.unmarshal(message.getBody());
+      return sqsMessageDeserializer.unmarshal(message.getBody());
     } catch (Exception e) {
       throw new SerDeException("Unable to unmarshall event", e);
+    }
+  }
+
+  public static final class Builder {
+    private String queueUrl;
+    private Integer waitTimeSeconds;
+    private Integer maxMessages;
+    private AmazonSQS consumer;
+    private SqsMessageDeserializer sqsMessageDeserializer;
+
+    public Builder(String queueUrl, AmazonSQS consumer, SqsMessageDeserializer sqsMessageDeserializer) {
+      this.queueUrl = queueUrl;
+      this.consumer = consumer;
+      this.sqsMessageDeserializer = sqsMessageDeserializer;
+    }
+
+    public Builder withWaitTimeSeconds(Integer waitTimeSeconds) {
+      this.waitTimeSeconds = waitTimeSeconds;
+      return this;
+    }
+
+    public Builder withMaxMessages(Integer maxMessages) {
+      this.maxMessages = maxMessages;
+      return this;
+    }
+
+    public SqsMessageReader build() {
+      checkNotNull(queueUrl);
+      checkNotNull(consumer);
+      checkNotNull(sqsMessageDeserializer);
+
+      maxMessages = maxMessages == null
+          ? DEFAULT_MAX_MESSAGES : maxMessages;
+      waitTimeSeconds = waitTimeSeconds == null
+          ? DEFAULT_POLLING_WAIT_TIME : waitTimeSeconds;
+
+      return new SqsMessageReader(queueUrl, waitTimeSeconds, maxMessages, sqsMessageDeserializer, consumer);
     }
   }
 }
