@@ -43,7 +43,8 @@ import com.google.common.collect.ImmutableList;
 
 import com.expedia.apiary.extensions.receiver.common.error.SerDeException;
 import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
-import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageDeserializer;
+import com.expedia.apiary.extensions.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
+import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageReader;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SqsMessageReaderTest {
@@ -54,7 +55,7 @@ public class SqsMessageReaderTest {
   private static final String RECEIPT_HANDLER = "receipt_handler";
   private static final String MESSAGE_CONTENT = "message";
 
-  private @Mock SqsMessageDeserializer serDe;
+  private @Mock DefaultSqsMessageDeserializer serDe;
   private @Mock AmazonSQS consumer;
   private @Mock ReceiveMessageResult receiveMessageResult;
   private @Mock List<Message> messages;
@@ -79,10 +80,12 @@ public class SqsMessageReaderTest {
     when(message.getBody()).thenReturn(MESSAGE_CONTENT);
     when(serDe.unmarshal(MESSAGE_CONTENT)).thenReturn(event);
 
-    reader = new SqsMessageReader.Builder(QUEUE_NAME, consumer, serDe)
-      .withMaxMessages(MAX_MESSAGES)
-      .withWaitTimeSeconds(WAIT_TIME)
-      .build();
+    reader = new SqsMessageReader.Builder(QUEUE_NAME)
+        .withConsumer(consumer)
+        .withMessageDeserialiser(serDe)
+        .withMaxMessages(MAX_MESSAGES)
+        .withWaitTimeSeconds(WAIT_TIME)
+        .build();
   }
 
   @Test
@@ -98,6 +101,7 @@ public class SqsMessageReaderTest {
     verify(consumer).receiveMessage(receiveMessageRequestCaptor.capture());
     assertThat(receiveMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
     assertThat(receiveMessageRequestCaptor.getValue().getWaitTimeSeconds()).isEqualTo(WAIT_TIME);
+    assertThat(receiveMessageRequestCaptor.getValue().getMaxNumberOfMessages()).isEqualTo(MAX_MESSAGES);
     verify(serDe).unmarshal(MESSAGE_CONTENT);
   }
 

@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expedia.apiary.extensions.receiver.common;
+package com.expedia.apiary.extensions.receiver.common.event;
 
-import java.io.Closeable;
-import java.util.Optional;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * A {@code MessageReader} is in charge of retrieving events from the messaging infrastructure.
- */
-public interface MessageReader extends Closeable {
+import org.junit.Test;
 
-  Optional<ListenerEvent> read();
+public class EventTypeTest {
 
+  @Test
+  public void eventClassesAreUnique() {
+    Map<Class<? extends ListenerEvent>, EventType> cache = new HashMap<>();
+    for (EventType et : EventType.values()) {
+      assertThat(cache).doesNotContainKey(et.eventClass());
+      cache.put(et.eventClass(), et);
+    }
+    assertThat(cache.values()).hasSize(EventType.values().length);
+  }
 }

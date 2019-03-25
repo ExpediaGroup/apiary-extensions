@@ -31,10 +31,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.expedia.apiary.extensions.receiver.common.error.ApiaryReceiverException;
 import com.expedia.apiary.extensions.receiver.common.messaging.MetaStoreEventDeserializer;
-import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageDeserializer;
+import com.expedia.apiary.extensions.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SqsMessageDeserializerTest {
+public class DefaultSqsMessageDeserializerTest {
   private @Mock MetaStoreEventDeserializer delegateSerDe;
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
       .configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -48,11 +48,11 @@ public class SqsMessageDeserializerTest {
       + "  \"SigningCertURL\" : \"https://sns.us-west-2.amazonaws.com/SimpleNotificationService-xxxx\","
       + "  \"UnsubscribeURL\" : \"https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-west-2:440407435941:sns-topic\",";
 
-  private SqsMessageDeserializer sqsMessageDeserializer;
+  private DefaultSqsMessageDeserializer sqsMessageDeserializer;
 
   @Before
   public void init() {
-    sqsMessageDeserializer = new SqsMessageDeserializer(delegateSerDe, OBJECT_MAPPER);
+    sqsMessageDeserializer = new DefaultSqsMessageDeserializer(delegateSerDe, OBJECT_MAPPER);
   }
 
   @Test

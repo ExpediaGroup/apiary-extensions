@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expedia.apiary.extensions.receiver.sqs;
+package com.expedia.apiary.extensions.receiver.sqs.messaging;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -21,14 +21,17 @@ import java.util.Iterator;
 import java.util.Optional;
 
 import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.expedia.apiary.extensions.receiver.common.MessageReader;
+import com.expedia.apiary.extensions.receiver.common.messaging.JsonMetaStoreEventDeserializer;
+import com.expedia.apiary.extensions.receiver.common.messaging.MessageDeserializer;
+import com.expedia.apiary.extensions.receiver.common.messaging.MessageReader;
 import com.expedia.apiary.extensions.receiver.common.error.SerDeException;
 import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
-import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageDeserializer;
 
 public class SqsMessageReader implements MessageReader {
   private static final Integer DEFAULT_POLLING_WAIT_TIME = 10;
@@ -37,16 +40,16 @@ public class SqsMessageReader implements MessageReader {
   private String queueUrl;
   private int waitTimeSeconds;
   private int maxMessages;
-  private SqsMessageDeserializer sqsMessageDeserializer;
+  private MessageDeserializer messageDeserializer;
   private AmazonSQS consumer;
   private Iterator<Message> records;
 
   private SqsMessageReader(String queueUrl, int waitTimeSeconds, int maxMessages,
-                          SqsMessageDeserializer sqsMessageDeserializer, AmazonSQS consumer) {
+                           MessageDeserializer messageDeserializer, AmazonSQS consumer) {
     this.queueUrl = queueUrl;
     this.waitTimeSeconds = waitTimeSeconds;
     this.maxMessages = maxMessages;
-    this.sqsMessageDeserializer = sqsMessageDeserializer;
+    this.messageDeserializer = messageDeserializer;
     this.consumer = consumer;
   }
 
@@ -84,7 +87,7 @@ public class SqsMessageReader implements MessageReader {
 
   private ListenerEvent eventPayLoad(Message message) {
     try {
-      return sqsMessageDeserializer.unmarshal(message.getBody());
+      return messageDeserializer.unmarshal(message.getBody());
     } catch (Exception e) {
       throw new SerDeException("Unable to unmarshall event", e);
     }
@@ -95,12 +98,20 @@ public class SqsMessageReader implements MessageReader {
     private Integer waitTimeSeconds;
     private Integer maxMessages;
     private AmazonSQS consumer;
-    private SqsMessageDeserializer sqsMessageDeserializer;
+    private MessageDeserializer messageDeserializer;
 
-    public Builder(String queueUrl, AmazonSQS consumer, SqsMessageDeserializer sqsMessageDeserializer) {
+    public Builder(String queueUrl) {
       this.queueUrl = queueUrl;
+    }
+
+    public Builder withConsumer(AmazonSQS consumer) {
       this.consumer = consumer;
-      this.sqsMessageDeserializer = sqsMessageDeserializer;
+      return this;
+    }
+
+    public Builder withMessageDeserialiser(MessageDeserializer messageDeserializer) {
+      this.messageDeserializer = messageDeserializer;
+      return this;
     }
 
     public Builder withWaitTimeSeconds(Integer waitTimeSeconds) {
@@ -115,15 +126,26 @@ public class SqsMessageReader implements MessageReader {
 
     public SqsMessageReader build() {
       checkNotNull(queueUrl);
-      checkNotNull(consumer);
-      checkNotNull(sqsMessageDeserializer);
 
-      maxMessages = maxMessages == null
+      consumer = (consumer == null)
+          ? defaultConsumer() : consumer;
+      messageDeserializer = (messageDeserializer == null)
+          ? defaultMessageDeserializer() : messageDeserializer;
+      maxMessages = (maxMessages == null)
           ? DEFAULT_MAX_MESSAGES : maxMessages;
-      waitTimeSeconds = waitTimeSeconds == null
+      waitTimeSeconds = (waitTimeSeconds == null)
           ? DEFAULT_POLLING_WAIT_TIME : waitTimeSeconds;
 
-      return new SqsMessageReader(queueUrl, waitTimeSeconds, maxMessages, sqsMessageDeserializer, consumer);
+      return new SqsMessageReader(queueUrl, waitTimeSeconds, maxMessages, messageDeserializer, consumer);
+    }
+
+    private AmazonSQS defaultConsumer() {
+      return AmazonSQSClientBuilder.standard().build();
+    }
+
+    private MessageDeserializer defaultMessageDeserializer() {
+      JsonMetaStoreEventDeserializer delegateSerDe = new JsonMetaStoreEventDeserializer(new ObjectMapper());
+      return new DefaultSqsMessageDeserializer(delegateSerDe, new ObjectMapper());
     }
   }
 }

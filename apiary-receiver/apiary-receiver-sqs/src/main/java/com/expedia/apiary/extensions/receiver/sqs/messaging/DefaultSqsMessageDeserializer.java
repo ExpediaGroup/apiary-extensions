@@ -26,13 +26,13 @@ import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageDeserializer;
 import com.expedia.apiary.extensions.receiver.common.messaging.MetaStoreEventDeserializer;
 
-public class SqsMessageDeserializer implements MessageDeserializer {
-  private static final Logger log = LoggerFactory.getLogger(SqsMessageDeserializer.class);
+public class DefaultSqsMessageDeserializer implements MessageDeserializer {
+  private static final Logger log = LoggerFactory.getLogger(DefaultSqsMessageDeserializer.class);
 
   private final ObjectMapper mapper;
   private final MetaStoreEventDeserializer delegateSerDe;
 
-  public SqsMessageDeserializer(MetaStoreEventDeserializer delegateSerDe, ObjectMapper objectMapper) {
+  public DefaultSqsMessageDeserializer(MetaStoreEventDeserializer delegateSerDe, ObjectMapper objectMapper) {
     this.delegateSerDe = delegateSerDe;
     this.mapper = objectMapper;
   }
