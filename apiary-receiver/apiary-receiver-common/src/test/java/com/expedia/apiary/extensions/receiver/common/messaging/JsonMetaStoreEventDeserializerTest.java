@@ -17,6 +17,8 @@ package com.expedia.apiary.extensions.receiver.common.messaging;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 import java.io.IOException;
@@ -24,7 +26,6 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -97,15 +98,15 @@ public class JsonMetaStoreEventDeserializerTest {
     ListenerEvent processedEvent = metaStoreEventDeserializer.unmarshal(addPartitionEvent);
     AddPartitionEvent addPartitionEvent = (AddPartitionEvent) processedEvent;
 
-    Assertions.assertThat(addPartitionEvent.getDbName()).isEqualTo(TEST_DB);
-    Assertions.assertThat(addPartitionEvent.getTableName()).isEqualTo(TEST_TABLE);
-    Assertions.assertThat(addPartitionEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
-    Assertions.assertThat(addPartitionEvent.getProtocolVersion()).isEqualTo("1.0");
-    Assertions.assertThat(addPartitionEvent.getEventType()).isEqualTo(EventType.ADD_PARTITION);
-    Assertions.assertThat(addPartitionEvent.getPartitionKeys()).isEqualTo(PARTITION_KEYS_MAP);
-    Assertions.assertThat(addPartitionEvent.getPartitionValues()).isEqualTo(PARTITION_VALUES);
-    Assertions.assertThat(addPartitionEvent.getPartitionLocation()).isEqualTo(PARTITION_LOCATION);
-    Assertions.assertThat(addPartitionEvent.getTableParameters()).isEqualTo(TABLE_PARAM_MAP);
+    assertThat(addPartitionEvent.getDbName()).isEqualTo(TEST_DB);
+    assertThat(addPartitionEvent.getTableName()).isEqualTo(TEST_TABLE);
+    assertThat(addPartitionEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
+    assertThat(addPartitionEvent.getProtocolVersion()).isEqualTo("1.0");
+    assertThat(addPartitionEvent.getEventType()).isEqualTo(EventType.ADD_PARTITION);
+    assertThat(addPartitionEvent.getPartitionKeys()).isEqualTo(PARTITION_KEYS_MAP);
+    assertThat(addPartitionEvent.getPartitionValues()).isEqualTo(PARTITION_VALUES);
+    assertThat(addPartitionEvent.getPartitionLocation()).isEqualTo(PARTITION_LOCATION);
+    assertThat(addPartitionEvent.getTableParameters()).isEqualTo(TABLE_PARAM_MAP);
   }
 
   @Test
@@ -113,17 +114,17 @@ public class JsonMetaStoreEventDeserializerTest {
     ListenerEvent processedEvent = metaStoreEventDeserializer.unmarshal(alterPartitionEvent);
     AlterPartitionEvent alterPartitionEvent = (AlterPartitionEvent) processedEvent;
 
-    Assertions.assertThat(alterPartitionEvent.getDbName()).isEqualTo(TEST_DB);
-    Assertions.assertThat(alterPartitionEvent.getTableName()).isEqualTo(TEST_TABLE);
-    Assertions.assertThat(alterPartitionEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
-    Assertions.assertThat(alterPartitionEvent.getProtocolVersion()).isEqualTo("1.0");
-    Assertions.assertThat(alterPartitionEvent.getEventType()).isEqualTo(EventType.ALTER_PARTITION);
-    Assertions.assertThat(alterPartitionEvent.getPartitionKeys()).isEqualTo(PARTITION_KEYS_MAP);
-    Assertions.assertThat(alterPartitionEvent.getPartitionValues()).isEqualTo(PARTITION_VALUES);
-    Assertions.assertThat(alterPartitionEvent.getPartitionLocation()).isEqualTo(PARTITION_LOCATION);
-    Assertions.assertThat(alterPartitionEvent.getOldPartitionValues()).isEqualTo(OLD_PARTITION_VALUES);
-    Assertions.assertThat(alterPartitionEvent.getOldPartitionLocation()).isEqualTo(OLD_PARTITION_LOCATION);
-    Assertions.assertThat(alterPartitionEvent.getTableParameters()).isEqualTo(TABLE_PARAM_MAP);
+    assertThat(alterPartitionEvent.getDbName()).isEqualTo(TEST_DB);
+    assertThat(alterPartitionEvent.getTableName()).isEqualTo(TEST_TABLE);
+    assertThat(alterPartitionEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
+    assertThat(alterPartitionEvent.getProtocolVersion()).isEqualTo("1.0");
+    assertThat(alterPartitionEvent.getEventType()).isEqualTo(EventType.ALTER_PARTITION);
+    assertThat(alterPartitionEvent.getPartitionKeys()).isEqualTo(PARTITION_KEYS_MAP);
+    assertThat(alterPartitionEvent.getPartitionValues()).isEqualTo(PARTITION_VALUES);
+    assertThat(alterPartitionEvent.getPartitionLocation()).isEqualTo(PARTITION_LOCATION);
+    assertThat(alterPartitionEvent.getOldPartitionValues()).isEqualTo(OLD_PARTITION_VALUES);
+    assertThat(alterPartitionEvent.getOldPartitionLocation()).isEqualTo(OLD_PARTITION_LOCATION);
+    assertThat(alterPartitionEvent.getTableParameters()).isEqualTo(TABLE_PARAM_MAP);
   }
 
   @Test
@@ -131,15 +132,15 @@ public class JsonMetaStoreEventDeserializerTest {
     ListenerEvent processedEvent = metaStoreEventDeserializer.unmarshal(dropPartitionEvent);
     DropPartitionEvent dropPartitionEvent = (DropPartitionEvent) processedEvent;
 
-    Assertions.assertThat(dropPartitionEvent.getDbName()).isEqualTo(TEST_DB);
-    Assertions.assertThat(dropPartitionEvent.getTableName()).isEqualTo(TEST_TABLE);
-    Assertions.assertThat(dropPartitionEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
-    Assertions.assertThat(dropPartitionEvent.getProtocolVersion()).isEqualTo("1.0");
-    Assertions.assertThat(dropPartitionEvent.getEventType()).isEqualTo(EventType.DROP_PARTITION);
-    Assertions.assertThat(dropPartitionEvent.getPartitionKeys()).isEqualTo(PARTITION_KEYS_MAP);
-    Assertions.assertThat(dropPartitionEvent.getPartitionValues()).isEqualTo(PARTITION_VALUES);
-    Assertions.assertThat(dropPartitionEvent.getPartitionLocation()).isEqualTo(PARTITION_LOCATION);
-    Assertions.assertThat(dropPartitionEvent.getTableParameters()).isEqualTo(TABLE_PARAM_MAP);
+    assertThat(dropPartitionEvent.getDbName()).isEqualTo(TEST_DB);
+    assertThat(dropPartitionEvent.getTableName()).isEqualTo(TEST_TABLE);
+    assertThat(dropPartitionEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
+    assertThat(dropPartitionEvent.getProtocolVersion()).isEqualTo("1.0");
+    assertThat(dropPartitionEvent.getEventType()).isEqualTo(EventType.DROP_PARTITION);
+    assertThat(dropPartitionEvent.getPartitionKeys()).isEqualTo(PARTITION_KEYS_MAP);
+    assertThat(dropPartitionEvent.getPartitionValues()).isEqualTo(PARTITION_VALUES);
+    assertThat(dropPartitionEvent.getPartitionLocation()).isEqualTo(PARTITION_LOCATION);
+    assertThat(dropPartitionEvent.getTableParameters()).isEqualTo(TABLE_PARAM_MAP);
   }
 
   @Test
@@ -147,12 +148,12 @@ public class JsonMetaStoreEventDeserializerTest {
     ListenerEvent processedEvent = metaStoreEventDeserializer.unmarshal(createTableEvent);
     CreateTableEvent createTableEvent = (CreateTableEvent) processedEvent;
 
-    Assertions.assertThat(createTableEvent.getDbName()).isEqualTo(TEST_DB);
-    Assertions.assertThat(createTableEvent.getTableName()).isEqualTo(TEST_TABLE);
-    Assertions.assertThat(createTableEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
-    Assertions.assertThat(createTableEvent.getProtocolVersion()).isEqualTo("1.0");
-    Assertions.assertThat(createTableEvent.getEventType()).isEqualTo(EventType.CREATE_TABLE);
-    Assertions.assertThat(createTableEvent.getTableParameters()).isEqualTo(Maps.newHashMap());
+    assertThat(createTableEvent.getDbName()).isEqualTo(TEST_DB);
+    assertThat(createTableEvent.getTableName()).isEqualTo(TEST_TABLE);
+    assertThat(createTableEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
+    assertThat(createTableEvent.getProtocolVersion()).isEqualTo("1.0");
+    assertThat(createTableEvent.getEventType()).isEqualTo(EventType.CREATE_TABLE);
+    assertThat(createTableEvent.getTableParameters()).isEqualTo(Maps.newHashMap());
   }
 
   @Test
@@ -164,14 +165,14 @@ public class JsonMetaStoreEventDeserializerTest {
     ListenerEvent processedEvent = metaStoreEventDeserializer.unmarshal(insertEvent);
     InsertTableEvent insertTableEvent = (InsertTableEvent) processedEvent;
 
-    Assertions.assertThat(insertTableEvent.getDbName()).isEqualTo(TEST_DB);
-    Assertions.assertThat(insertTableEvent.getTableName()).isEqualTo(TEST_TABLE);
-    Assertions.assertThat(insertTableEvent.getProtocolVersion()).isEqualTo("1.0");
-    Assertions.assertThat(insertTableEvent.getEventType()).isEqualTo(EventType.INSERT);
-    Assertions.assertThat(insertTableEvent.getPartitionKeyValues()).isEqualTo(PARTITION_KEY_VALUE_MAP);
+    assertThat(insertTableEvent.getDbName()).isEqualTo(TEST_DB);
+    assertThat(insertTableEvent.getTableName()).isEqualTo(TEST_TABLE);
+    assertThat(insertTableEvent.getProtocolVersion()).isEqualTo("1.0");
+    assertThat(insertTableEvent.getEventType()).isEqualTo(EventType.INSERT);
+    assertThat(insertTableEvent.getPartitionKeyValues()).isEqualTo(PARTITION_KEY_VALUE_MAP);
 
-    Assertions.assertThat(insertTableEvent.getFiles()).isEqualTo(expectedFiles);
-    Assertions.assertThat(insertTableEvent.getFileChecksums()).isEqualTo(expectedFileChecksums);
+    assertThat(insertTableEvent.getFiles()).isEqualTo(expectedFiles);
+    assertThat(insertTableEvent.getFileChecksums()).isEqualTo(expectedFileChecksums);
   }
 
   @Test
@@ -179,14 +180,14 @@ public class JsonMetaStoreEventDeserializerTest {
     ListenerEvent processedEvent = metaStoreEventDeserializer.unmarshal(alterTableEvent);
     AlterTableEvent alterTableEvent = (AlterTableEvent) processedEvent;
 
-    Assertions.assertThat(alterTableEvent.getDbName()).isEqualTo(TEST_DB);
-    Assertions.assertThat(alterTableEvent.getTableName()).isEqualTo(TEST_TABLE);
-    Assertions.assertThat(alterTableEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
-    Assertions.assertThat(alterTableEvent.getOldTableLocation()).isEqualTo(OLD_TEST_TABLE_LOCATION);
-    Assertions.assertThat(alterTableEvent.getOldTableName()).isEqualTo(TEST_TABLE);
-    Assertions.assertThat(alterTableEvent.getProtocolVersion()).isEqualTo("1.0");
-    Assertions.assertThat(alterTableEvent.getEventType()).isEqualTo(EventType.ALTER_TABLE);
-    Assertions.assertThat(alterTableEvent.getTableParameters()).isEqualTo(TABLE_PARAM_MAP);
+    assertThat(alterTableEvent.getDbName()).isEqualTo(TEST_DB);
+    assertThat(alterTableEvent.getTableName()).isEqualTo(TEST_TABLE);
+    assertThat(alterTableEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
+    assertThat(alterTableEvent.getOldTableLocation()).isEqualTo(OLD_TEST_TABLE_LOCATION);
+    assertThat(alterTableEvent.getOldTableName()).isEqualTo(TEST_TABLE);
+    assertThat(alterTableEvent.getProtocolVersion()).isEqualTo("1.0");
+    assertThat(alterTableEvent.getEventType()).isEqualTo(EventType.ALTER_TABLE);
+    assertThat(alterTableEvent.getTableParameters()).isEqualTo(TABLE_PARAM_MAP);
   }
 
   @Test
@@ -194,11 +195,11 @@ public class JsonMetaStoreEventDeserializerTest {
     ListenerEvent processedEvent = metaStoreEventDeserializer.unmarshal(dropTableEvent);
     DropTableEvent dropTableEvent = (DropTableEvent) processedEvent;
 
-    Assertions.assertThat(dropTableEvent.getDbName()).isEqualTo(TEST_DB);
-    Assertions.assertThat(dropTableEvent.getTableName()).isEqualTo(TEST_TABLE);
-    Assertions.assertThat(dropTableEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
-    Assertions.assertThat(dropTableEvent.getProtocolVersion()).isEqualTo("1.0");
-    Assertions.assertThat(dropTableEvent.getEventType()).isEqualTo(EventType.DROP_TABLE);
-    Assertions.assertThat(dropTableEvent.getTableParameters()).isEqualTo(Maps.newHashMap());
+    assertThat(dropTableEvent.getDbName()).isEqualTo(TEST_DB);
+    assertThat(dropTableEvent.getTableName()).isEqualTo(TEST_TABLE);
+    assertThat(dropTableEvent.getTableLocation()).isEqualTo(TEST_TABLE_LOCATION);
+    assertThat(dropTableEvent.getProtocolVersion()).isEqualTo("1.0");
+    assertThat(dropTableEvent.getEventType()).isEqualTo(EventType.DROP_TABLE);
+    assertThat(dropTableEvent.getTableParameters()).isEqualTo(Maps.newHashMap());
   }
 }
