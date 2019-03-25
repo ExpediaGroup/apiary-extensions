@@ -92,8 +92,8 @@ public class SqsMessageReaderTest {
   }
 
   @Test
-  public void nextReadsRecordsFromQueue() throws Exception {
-    ListenerEvent result = reader.next().get();
+  public void readRecordsFromQueue() throws Exception {
+    ListenerEvent result = reader.read().get();
     assertThat(result).isSameAs(this.event);
     verify(consumer).receiveMessage(receiveMessageRequestCaptor.capture());
     assertThat(receiveMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
@@ -102,9 +102,9 @@ public class SqsMessageReaderTest {
   }
 
   @Test
-  public void nextReadsNoRecordsFromQueue() throws Exception {
+  public void readNoRecordsFromQueue() throws Exception {
     when(receiveMessageResult.getMessages()).thenReturn(ImmutableList.<Message>of());
-    Optional<ListenerEvent> result = reader.next();
+    Optional<ListenerEvent> result = reader.read();
     verify(consumer, times(1)).receiveMessage(any(ReceiveMessageRequest.class));
     verify(serDe, times(0)).unmarshal(any());
     assertThat(result.isPresent()).isEqualTo(false);
@@ -121,6 +121,6 @@ public class SqsMessageReaderTest {
   @Test(expected = SerDeException.class)
   public void unmarshallThrowsException() throws Exception {
     when(serDe.unmarshal(any(String.class))).thenThrow(RuntimeException.class);
-    reader.next();
+    reader.read();
   }
 }

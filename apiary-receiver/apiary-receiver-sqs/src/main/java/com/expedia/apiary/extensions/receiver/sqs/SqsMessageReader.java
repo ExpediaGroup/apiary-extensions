@@ -56,10 +56,12 @@ public class SqsMessageReader implements MessageReader {
   }
 
   @Override
-  public Optional<ListenerEvent> next() {
-    readRecords();
+  public Optional<ListenerEvent> read() {
+    if (records == null || !records.hasNext()) {
+      records = receiveMessage();
+    }
     if (records.hasNext()) {
-      return Optional.ofNullable(eventPayLoad(records.next()));
+      return Optional.of(eventPayLoad(records.next()));
     } else {
       return Optional.empty();
     }
@@ -72,14 +74,12 @@ public class SqsMessageReader implements MessageReader {
     consumer.deleteMessage(request);
   }
 
-  private void readRecords() {
-    if (records == null || !records.hasNext()) {
+  private Iterator<Message> receiveMessage() {
       ReceiveMessageRequest request = new ReceiveMessageRequest()
           .withQueueUrl(queueUrl)
           .withWaitTimeSeconds(waitTimeSeconds)
           .withMaxNumberOfMessages(maxMessages);
-      records = consumer.receiveMessage(request).getMessages().iterator();
-    }
+      return consumer.receiveMessage(request).getMessages().iterator();
   }
 
   private ListenerEvent eventPayLoad(Message message) {

@@ -25,6 +25,6 @@ import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
  */
 public interface MessageReader extends Closeable {
 
-  Optional<ListenerEvent> next();
+  Optional<ListenerEvent> read();
 
 }
