@@ -1,11 +1,11 @@
 
 # Overview
 
-`apiary-receivers-parent` provides common libraries for receiving messages from Apiary messaging infrastructure.  
+`apiary-receivers` provides common libraries for receiving messages from Apiary messaging infrastructure.  
 
 ## SQS
 
-`apiary-receiver-sqs` is a library for polling sqs messages. 
+`apiary-receiver-sqs` is a library for polling SQS messages. 
 
 To use, build `SqsMessageReader` with the required configuration:
 
@@ -27,4 +27,4 @@ If you would like to ask any questions about or discuss Apiary please join our m
 # Legal
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
-Copyright 2019 Expedia Inc.
+Copyright 2019 Expedia, Inc.

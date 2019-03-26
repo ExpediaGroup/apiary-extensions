@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## TBD
 ### Added
-- `apiary-receivers-parent` parent module and `apiary-receiver-sqs` sub-module, a library to poll Apiary SQS messaging infrastructure for Hive events.
+- `apiary-receivers` parent module and `apiary-receiver-sqs` sub-module, a library to poll Apiary SQS messaging infrastructure for Hive events.
 
 ## [1.3.2] - 2019-03-22
 ### Fixed

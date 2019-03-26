@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.expedia.apiary.extensions.receiver.common.error.ApiaryReceiverException;
+import com.expedia.apiary.extensions.receiver.common.error.SerDeException;
 import com.expedia.apiary.extensions.receiver.common.event.EventType;
 import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
 
@@ -34,7 +34,7 @@ public class JsonMetaStoreEventDeserializer implements MetaStoreEventDeserialize
   }
 
   @Override
-  public <T extends ListenerEvent> T unmarshal(String payload) throws ApiaryReceiverException {
+  public <T extends ListenerEvent> T unmarshal(String payload) throws SerDeException {
     try {
       log.debug("Marshalled event is: {}", payload);
 
@@ -47,8 +47,7 @@ public class JsonMetaStoreEventDeserializer implements MetaStoreEventDeserialize
       log.debug("Unmarshalled event is: {}", event);
       return event;
     } catch (Exception e) {
-      String message = "Unable to unmarshal event from payload";
-      throw new ApiaryReceiverException(message, e);
+      throw new SerDeException("Unable to unmarshal event from payload", e);
     }
   }
 

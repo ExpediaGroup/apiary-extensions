@@ -15,11 +15,11 @@
  */
 package com.expedia.apiary.extensions.receiver.common.messaging;
 
-import com.expedia.apiary.extensions.receiver.common.error.ApiaryReceiverException;
+import com.expedia.apiary.extensions.receiver.common.error.SerDeException;
 import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
 
 public interface MessageDeserializer {
 
-  <T extends ListenerEvent> T unmarshal(String payload) throws ApiaryReceiverException;
+  <T extends ListenerEvent> T unmarshal(String payload) throws SerDeException;
 
 }

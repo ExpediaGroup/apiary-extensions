@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.expedia.apiary.extensions.receiver.common.error.ApiaryReceiverException;
+import com.expedia.apiary.extensions.receiver.common.error.SerDeException;
 import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageDeserializer;
 import com.expedia.apiary.extensions.receiver.common.messaging.MetaStoreEventDeserializer;
@@ -37,7 +37,7 @@ public class DefaultSqsMessageDeserializer implements MessageDeserializer {
     this.mapper = objectMapper;
   }
 
-  public <T extends ListenerEvent> T unmarshal(String payload) throws ApiaryReceiverException {
+  public <T extends ListenerEvent> T unmarshal(String payload) throws SerDeException {
     try {
       log.debug("Unmarshalled payload is: {}", payload);
       SqsMessage sqsMessage = mapper
@@ -47,8 +47,7 @@ public class DefaultSqsMessageDeserializer implements MessageDeserializer {
       T event = delegateSerDe.unmarshal(sqsMessage.getMessage());
       return event;
     } catch (Exception e) {
-      String message = "Unable to unmarshal event from payload";
-      throw new ApiaryReceiverException(message, e);
+      throw new SerDeException("Unable to unmarshal event from payload", e);
     }
   }
 }
