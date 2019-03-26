@@ -82,7 +82,7 @@ public class SqsMessageReaderTest {
 
     reader = new SqsMessageReader.Builder(QUEUE_NAME)
         .withConsumer(consumer)
-        .withMessageDeserialiser(serDe)
+        .withMessageDeserializer(serDe)
         .withMaxMessages(MAX_MESSAGES)
         .withWaitTimeSeconds(WAIT_TIME)
         .build();
@@ -102,6 +102,9 @@ public class SqsMessageReaderTest {
     assertThat(receiveMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
     assertThat(receiveMessageRequestCaptor.getValue().getWaitTimeSeconds()).isEqualTo(WAIT_TIME);
     assertThat(receiveMessageRequestCaptor.getValue().getMaxNumberOfMessages()).isEqualTo(MAX_MESSAGES);
+    verify(consumer).deleteMessage(deleteMessageRequestCaptor.capture());
+    assertThat(deleteMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
+    assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLER);
     verify(serDe).unmarshal(MESSAGE_CONTENT);
   }
 
@@ -112,14 +115,6 @@ public class SqsMessageReaderTest {
     verify(consumer, times(1)).receiveMessage(any(ReceiveMessageRequest.class));
     verify(serDe, times(0)).unmarshal(any());
     assertThat(result.isPresent()).isEqualTo(false);
-  }
-
-  @Test
-  public void deleteMessagesFromQueue() throws Exception {
-    reader.delete(message);
-    verify(consumer).deleteMessage(deleteMessageRequestCaptor.capture());
-    assertThat(deleteMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
-    assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLER);
   }
 
   @Test(expected = SerDeException.class)

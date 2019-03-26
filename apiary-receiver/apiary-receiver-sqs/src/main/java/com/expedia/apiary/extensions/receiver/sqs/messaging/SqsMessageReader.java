@@ -15,6 +15,7 @@
  */
 package com.expedia.apiary.extensions.receiver.sqs.messaging;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Iterator;
@@ -34,12 +35,12 @@ import com.expedia.apiary.extensions.receiver.common.error.SerDeException;
 import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
 
 public class SqsMessageReader implements MessageReader {
-  private static final Integer DEFAULT_POLLING_WAIT_TIME = 10;
+  private static final Integer DEFAULT_POLLING_WAIT_TIME_SECONDS = 10;
   private static final Integer DEFAULT_MAX_MESSAGES = 10;
 
   private String queueUrl;
-  private int waitTimeSeconds;
-  private int maxMessages;
+  private Integer waitTimeSeconds;
+  private Integer maxMessages;
   private MessageDeserializer messageDeserializer;
   private AmazonSQS consumer;
   private Iterator<Message> records;
@@ -64,13 +65,15 @@ public class SqsMessageReader implements MessageReader {
       records = receiveMessage();
     }
     if (records.hasNext()) {
-      return Optional.of(eventPayLoad(records.next()));
+      Message message = records.next();
+      delete(message);
+      return Optional.of(eventPayLoad(message));
     } else {
       return Optional.empty();
     }
   }
 
-  public void delete(Message message) {
+  private void delete(Message message) {
     DeleteMessageRequest request = new DeleteMessageRequest()
         .withQueueUrl(queueUrl)
         .withReceiptHandle(message.getReceiptHandle());
@@ -109,7 +112,7 @@ public class SqsMessageReader implements MessageReader {
       return this;
     }
 
-    public Builder withMessageDeserialiser(MessageDeserializer messageDeserializer) {
+    public Builder withMessageDeserializer(MessageDeserializer messageDeserializer) {
       this.messageDeserializer = messageDeserializer;
       return this;
     }
@@ -134,7 +137,7 @@ public class SqsMessageReader implements MessageReader {
       maxMessages = (maxMessages == null)
           ? DEFAULT_MAX_MESSAGES : maxMessages;
       waitTimeSeconds = (waitTimeSeconds == null)
-          ? DEFAULT_POLLING_WAIT_TIME : waitTimeSeconds;
+          ? DEFAULT_POLLING_WAIT_TIME_SECONDS : waitTimeSeconds;
 
       return new SqsMessageReader(queueUrl, waitTimeSeconds, maxMessages, messageDeserializer, consumer);
     }
@@ -144,8 +147,10 @@ public class SqsMessageReader implements MessageReader {
     }
 
     private MessageDeserializer defaultMessageDeserializer() {
-      JsonMetaStoreEventDeserializer delegateSerDe = new JsonMetaStoreEventDeserializer(new ObjectMapper());
-      return new DefaultSqsMessageDeserializer(delegateSerDe, new ObjectMapper());
+      ObjectMapper mapper = new ObjectMapper()
+          .configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+      JsonMetaStoreEventDeserializer delegateSerDe = new JsonMetaStoreEventDeserializer(mapper);
+      return new DefaultSqsMessageDeserializer(delegateSerDe, mapper);
     }
   }
 }
