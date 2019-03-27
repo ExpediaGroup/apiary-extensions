@@ -68,20 +68,6 @@ public abstract class ListenerEvent implements Serializable {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (!(obj instanceof ListenerEvent)) {
-      return false;
-    }
-    ListenerEvent other = (ListenerEvent) obj;
-    return Objects.equals(status, other.status)
-        && Objects.equals(tableParameters, other.tableParameters)
-        && Objects.equals(getEnvironmentContext(), other.getEnvironmentContext());
-  }
-
-  @Override
   public String toString() {
     return ReflectionToStringBuilder.toString(this);
   }
