@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## TBD
+## [1.4.0] - 2019-03-27
 ### Added
 - `apiary-receivers` parent module and `apiary-receiver-sqs` sub-module, a library to poll Apiary SQS messaging infrastructure for Hive events.
 
