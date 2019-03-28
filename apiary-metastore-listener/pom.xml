@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.expedia.apiary</groupId>
     <artifactId>apiary-extensions-parent</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>1.4.0</version>
   </parent>
 
   <artifactId>apiary-metastore-listener</artifactId>
