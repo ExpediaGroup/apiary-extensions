@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - `MessageReader.read()` now returns `MessageEvent`, wrapping `ListenerEvent` and `MessageProperty`.
 
 ### Added
-- `SqsMessageReader.delete()` no longer deletes messages on read. Instead, `SqsMessageReader.delete()` and `SqsMessageReader.extendVisibilityTimeout()` have been added to give more control over inflight messages.
+- `SqsMessageReader.read()` no longer deletes messages. Instead, `SqsMessageReader.delete()` and `SqsMessageReader.extendVisibilityTimeout()` have been added to give more control over inflight messages.
 
 ### Removed
 - `aws-java-sdk` dependency from `apiary-receiver-sqs`.
