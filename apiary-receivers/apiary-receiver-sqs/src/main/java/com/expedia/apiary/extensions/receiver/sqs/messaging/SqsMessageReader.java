@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
@@ -87,6 +88,14 @@ public class SqsMessageReader implements MessageReader {
         .withQueueUrl(queueUrl)
         .withReceiptHandle(receiptHandle);
     consumer.deleteMessage(request);
+  }
+
+  public void extendVisibilityTimeout(String receiptHandle) {
+    ChangeMessageVisibilityRequest request = new ChangeMessageVisibilityRequest()
+        .withQueueUrl(queueUrl)
+        .withReceiptHandle(receiptHandle)
+        .withVisibilityTimeout(visibilityTimeoutSeconds);
+    consumer.changeMessageVisibility(request);
   }
 
   private Iterator<Message> receiveMessage() {

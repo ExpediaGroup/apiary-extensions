@@ -36,6 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
@@ -70,6 +71,7 @@ public class SqsMessageReaderTest {
 
   private @Captor ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestCaptor;
   private @Captor ArgumentCaptor<DeleteMessageRequest> deleteMessageRequestCaptor;
+  private @Captor ArgumentCaptor<ChangeMessageVisibilityRequest> changeMessageVisibilityRequestCaptor;
 
   private final Configuration conf = new Configuration();
   private SqsMessageReader reader;
@@ -131,6 +133,16 @@ public class SqsMessageReaderTest {
     verify(consumer).deleteMessage(deleteMessageRequestCaptor.capture());
     assertThat(deleteMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
     assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLER);
+  }
+
+  @Test
+  public void extendVisibilityTimeout() throws Exception {
+    MessageEvent messageEvent = reader.read().get();
+    reader.extendVisibilityTimeout(messageEvent.getMessageProperties().get(SqsMessageProperty.RECEIPT_HANDLE));
+    verify(consumer).changeMessageVisibility(changeMessageVisibilityRequestCaptor.capture());
+    assertThat(changeMessageVisibilityRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
+    assertThat(changeMessageVisibilityRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLER);
+    assertThat(changeMessageVisibilityRequestCaptor.getValue().getVisibilityTimeout()).isEqualTo(VISIBILITY_TIMEOUT);
   }
 
   @Test(expected = SerDeException.class)
