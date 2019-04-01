@@ -27,11 +27,6 @@
     <!-- AWS -->
     <dependency>
       <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk</artifactId>
-      <version>${aws.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-sqs</artifactId>
       <version>${aws.version}</version>
     </dependency>
