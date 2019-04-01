@@ -37,18 +37,21 @@ import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
 public class SqsMessageReader implements MessageReader {
   private static final Integer DEFAULT_POLLING_WAIT_TIME_SECONDS = 10;
   private static final Integer DEFAULT_MAX_MESSAGES = 10;
+  private static final Integer DEFAULT_VISIBILITY_TIMEOUT_SECONDS = 30;
 
   private String queueUrl;
   private Integer waitTimeSeconds;
+  private Integer visibilityTimeoutSeconds;
   private Integer maxMessages;
   private MessageDeserializer messageDeserializer;
   private AmazonSQS consumer;
   private Iterator<Message> records;
 
-  private SqsMessageReader(String queueUrl, int waitTimeSeconds, int maxMessages,
+  private SqsMessageReader(String queueUrl, int waitTimeSeconds, int visibilityTimeoutSeconds, int maxMessages,
                            MessageDeserializer messageDeserializer, AmazonSQS consumer) {
     this.queueUrl = queueUrl;
     this.waitTimeSeconds = waitTimeSeconds;
+    this.visibilityTimeoutSeconds = visibilityTimeoutSeconds;
     this.maxMessages = maxMessages;
     this.messageDeserializer = messageDeserializer;
     this.consumer = consumer;
@@ -84,7 +87,8 @@ public class SqsMessageReader implements MessageReader {
       ReceiveMessageRequest request = new ReceiveMessageRequest()
           .withQueueUrl(queueUrl)
           .withWaitTimeSeconds(waitTimeSeconds)
-          .withMaxNumberOfMessages(maxMessages);
+          .withMaxNumberOfMessages(maxMessages)
+          .withVisibilityTimeout(visibilityTimeoutSeconds);
       return consumer.receiveMessage(request).getMessages().iterator();
   }
 
@@ -99,6 +103,7 @@ public class SqsMessageReader implements MessageReader {
   public static final class Builder {
     private String queueUrl;
     private Integer waitTimeSeconds;
+    private Integer visibilityTimeoutSeconds;
     private Integer maxMessages;
     private AmazonSQS consumer;
     private MessageDeserializer messageDeserializer;
@@ -122,6 +127,11 @@ public class SqsMessageReader implements MessageReader {
       return this;
     }
 
+    public Builder withVisibilityTimeoutSeconds(Integer visibilityTimeoutSeconds) {
+      this.visibilityTimeoutSeconds = visibilityTimeoutSeconds;
+      return this;
+    }
+
     public Builder withMaxMessages(Integer maxMessages) {
       this.maxMessages = maxMessages;
       return this;
@@ -138,8 +148,10 @@ public class SqsMessageReader implements MessageReader {
           ? DEFAULT_MAX_MESSAGES : maxMessages;
       waitTimeSeconds = (waitTimeSeconds == null)
           ? DEFAULT_POLLING_WAIT_TIME_SECONDS : waitTimeSeconds;
+      visibilityTimeoutSeconds = (visibilityTimeoutSeconds == null)
+          ? DEFAULT_VISIBILITY_TIMEOUT_SECONDS : visibilityTimeoutSeconds;
 
-      return new SqsMessageReader(queueUrl, waitTimeSeconds, maxMessages, messageDeserializer, consumer);
+      return new SqsMessageReader(queueUrl, waitTimeSeconds, visibilityTimeoutSeconds, maxMessages, messageDeserializer, consumer);
     }
 
     private AmazonSQS defaultConsumer() {

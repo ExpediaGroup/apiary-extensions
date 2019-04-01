@@ -51,7 +51,8 @@ public class SqsMessageReaderTest {
 
   private static final String QUEUE_NAME = "queue";
   private static final Integer WAIT_TIME = 1;
-  private static final Integer MAX_MESSAGES = 1;
+  private static final Integer VISIBILITY_TIMEOUT = 2;
+  private static final Integer MAX_MESSAGES = 3;
   private static final String RECEIPT_HANDLER = "receipt_handler";
   private static final String MESSAGE_CONTENT = "message";
 
@@ -85,6 +86,7 @@ public class SqsMessageReaderTest {
         .withMessageDeserializer(serDe)
         .withMaxMessages(MAX_MESSAGES)
         .withWaitTimeSeconds(WAIT_TIME)
+        .withVisibilityTimeoutSeconds(VISIBILITY_TIMEOUT)
         .build();
   }
 
@@ -102,6 +104,7 @@ public class SqsMessageReaderTest {
     assertThat(receiveMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
     assertThat(receiveMessageRequestCaptor.getValue().getWaitTimeSeconds()).isEqualTo(WAIT_TIME);
     assertThat(receiveMessageRequestCaptor.getValue().getMaxNumberOfMessages()).isEqualTo(MAX_MESSAGES);
+    assertThat(receiveMessageRequestCaptor.getValue().getVisibilityTimeout()).isEqualTo(VISIBILITY_TIMEOUT);
     verify(consumer).deleteMessage(deleteMessageRequestCaptor.capture());
     assertThat(deleteMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
     assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLER);
