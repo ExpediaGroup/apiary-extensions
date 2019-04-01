@@ -25,7 +25,6 @@ import com.expedia.apiary.extensions.receiver.common.error.SerDeException;
 import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageDeserializer;
 import com.expedia.apiary.extensions.receiver.common.messaging.MetaStoreEventDeserializer;
-import com.expedia.apiary.extensions.receiver.sqs.model.SqsMessage;
 
 public class DefaultSqsMessageDeserializer implements MessageDeserializer {
   private static final Logger log = LoggerFactory.getLogger(DefaultSqsMessageDeserializer.class);
