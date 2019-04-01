@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## TBD
 ### Changed
-- MessageReader to return MessageEvent which wraps a ListenerEvent and MessageProperty.
+- `MessageReader.read()` now returns `MessageEvent` which wraps `ListenerEvent` and `MessageProperty`.
 
 ### Added
 - `SqsMessageReader.delete()` and `SqsMessageReader.extendVisibilityTimeout()` methods.
