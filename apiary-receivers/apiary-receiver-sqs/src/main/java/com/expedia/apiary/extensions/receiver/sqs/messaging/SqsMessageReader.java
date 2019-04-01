@@ -38,8 +38,6 @@ import com.expedia.apiary.extensions.receiver.common.messaging.MessageDeserializ
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageEvent;
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageProperty;
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageReader;
-import com.expedia.apiary.extensions.receiver.sqs.model.SqsMessageEvent;
-import com.expedia.apiary.extensions.receiver.sqs.model.SqsMessageProperty;
 
 public class SqsMessageReader implements MessageReader {
   private static final Integer DEFAULT_POLLING_WAIT_TIME_SECONDS = 10;
@@ -76,7 +74,7 @@ public class SqsMessageReader implements MessageReader {
     }
     if (records.hasNext()) {
       Message message = records.next();
-      SqsMessageEvent sqsMessageEvent = mapToMessageEvent(message);
+      MessageEvent sqsMessageEvent = messageEvent(message);
       return Optional.of(sqsMessageEvent);
     } else {
       return Optional.empty();
@@ -107,12 +105,12 @@ public class SqsMessageReader implements MessageReader {
       return consumer.receiveMessage(request).getMessages().iterator();
   }
 
-  private SqsMessageEvent mapToMessageEvent(Message message) {
+  private MessageEvent messageEvent(Message message) {
     ListenerEvent listenerEvent = eventPayLoad(message);
     Map<MessageProperty, String> properties = Collections.singletonMap(
         SqsMessageProperty.RECEIPT_HANDLE, message.getReceiptHandle());
 
-    return new SqsMessageEvent(listenerEvent, properties);
+    return new MessageEvent(listenerEvent, properties);
   }
 
   private ListenerEvent eventPayLoad(Message message) {

@@ -19,9 +19,20 @@ import java.util.Map;
 
 import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
 
-public interface MessageEvent {
+public class MessageEvent {
+  private ListenerEvent event;
+  private Map<MessageProperty, String> messageProperties;
 
-  ListenerEvent getEvent();
+  public MessageEvent(ListenerEvent event, Map<MessageProperty, String> messageProperties) {
+    this.event = event;
+    this.messageProperties = messageProperties;
+  }
 
-  Map<MessageProperty, String> getMessageProperties();
+  public ListenerEvent getEvent() {
+    return event;
+  }
+
+  public Map<MessageProperty, String> getMessageProperties() {
+    return messageProperties;
+  }
 }

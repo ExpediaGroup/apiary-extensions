@@ -49,7 +49,7 @@ import com.expedia.apiary.extensions.receiver.common.messaging.MessageEvent;
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageProperty;
 import com.expedia.apiary.extensions.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
 import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageReader;
-import com.expedia.apiary.extensions.receiver.sqs.model.SqsMessageProperty;
+import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageProperty;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SqsMessageReaderTest {
@@ -113,8 +113,8 @@ public class SqsMessageReaderTest {
     assertThat(receiveMessageRequestCaptor.getValue().getMaxNumberOfMessages()).isEqualTo(MAX_MESSAGES);
     assertThat(receiveMessageRequestCaptor.getValue().getVisibilityTimeout()).isEqualTo(VISIBILITY_TIMEOUT);
     verify(serDe).unmarshal(MESSAGE_CONTENT);
-    Map<MessageProperty, String> messageDetails = messageEvent.getMessageProperties();
-    assertThat(messageDetails.get(SqsMessageProperty.RECEIPT_HANDLE)).isEqualTo(RECEIPT_HANDLER);
+    Map<MessageProperty, String> messageProperties = messageEvent.getMessageProperties();
+    assertThat(messageProperties.get(SqsMessageProperty.RECEIPT_HANDLE)).isEqualTo(RECEIPT_HANDLER);
   }
 
   @Test

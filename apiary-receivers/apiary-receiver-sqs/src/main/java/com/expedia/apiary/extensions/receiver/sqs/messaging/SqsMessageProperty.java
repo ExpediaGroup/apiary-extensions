@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expedia.apiary.extensions.receiver.sqs.model;
+package com.expedia.apiary.extensions.receiver.sqs.messaging;
 
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageProperty;
 
@@ -25,15 +25,6 @@ public enum SqsMessageProperty implements MessageProperty {
 
   SqsMessageProperty(String property) {
     this.property = property;
-  }
-
-  public static SqsMessageProperty toSqsMessageProperty(String property) {
-    for (SqsMessageProperty p : values()) {
-      if (p.getProperty().equals(property)) {
-        return p;
-      }
-    }
-    throw new IllegalArgumentException("SqsMessageProperty not found for " + property);
   }
 
   public String getProperty() {
