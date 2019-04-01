@@ -16,5 +16,5 @@
 package com.expedia.apiary.extensions.receiver.common.messaging;
 
 public enum MessageProperty {
-  SQS_MESSAGE_RECEIPT_HANDLE;
+  SQS_MESSAGE_RECEIPT_HANDLE
 }
