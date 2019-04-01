@@ -15,14 +15,8 @@
  */
 package com.expedia.apiary.extensions.receiver.common.messaging;
 
-import java.io.Closeable;
-import java.util.Optional;
+public interface MessageProperty {
 
-/**
- * A {@code MessageReader} is in charge of retrieving events from the messaging infrastructure.
- */
-public interface MessageReader extends Closeable {
-
-  Optional<MessageEvent> read();
+  String getProperty();
 
 }

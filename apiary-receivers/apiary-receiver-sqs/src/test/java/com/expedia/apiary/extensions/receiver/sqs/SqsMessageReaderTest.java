@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.hadoop.conf.Configuration;
@@ -43,8 +44,11 @@ import com.google.common.collect.ImmutableList;
 
 import com.expedia.apiary.extensions.receiver.common.error.SerDeException;
 import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
+import com.expedia.apiary.extensions.receiver.common.messaging.MessageEvent;
+import com.expedia.apiary.extensions.receiver.common.messaging.MessageProperty;
 import com.expedia.apiary.extensions.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
 import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageReader;
+import com.expedia.apiary.extensions.receiver.sqs.model.SqsMessageProperty;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SqsMessageReaderTest {
@@ -98,26 +102,35 @@ public class SqsMessageReaderTest {
 
   @Test
   public void readRecordsFromQueue() throws Exception {
-    ListenerEvent result = reader.read().get();
+    MessageEvent messageEvent = reader.read().get();
+    ListenerEvent result = messageEvent.getEvent();
     assertThat(result).isSameAs(this.event);
     verify(consumer).receiveMessage(receiveMessageRequestCaptor.capture());
     assertThat(receiveMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
     assertThat(receiveMessageRequestCaptor.getValue().getWaitTimeSeconds()).isEqualTo(WAIT_TIME);
     assertThat(receiveMessageRequestCaptor.getValue().getMaxNumberOfMessages()).isEqualTo(MAX_MESSAGES);
     assertThat(receiveMessageRequestCaptor.getValue().getVisibilityTimeout()).isEqualTo(VISIBILITY_TIMEOUT);
-    verify(consumer).deleteMessage(deleteMessageRequestCaptor.capture());
-    assertThat(deleteMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
-    assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLER);
     verify(serDe).unmarshal(MESSAGE_CONTENT);
+    Map<MessageProperty, String> messageDetails = messageEvent.getMessageProperties();
+    assertThat(messageDetails.get(SqsMessageProperty.RECEIPT_HANDLE)).isEqualTo(RECEIPT_HANDLER);
   }
 
   @Test
   public void readNoRecordsFromQueue() throws Exception {
     when(receiveMessageResult.getMessages()).thenReturn(ImmutableList.<Message>of());
-    Optional<ListenerEvent> result = reader.read();
+    Optional<MessageEvent> result = reader.read();
     verify(consumer, times(1)).receiveMessage(any(ReceiveMessageRequest.class));
     verify(serDe, times(0)).unmarshal(any());
     assertThat(result.isPresent()).isEqualTo(false);
+  }
+
+  @Test
+  public void deleteMessageFromQueue() throws Exception {
+    MessageEvent messageEvent = reader.read().get();
+    reader.delete(messageEvent.getMessageProperties().get(SqsMessageProperty.RECEIPT_HANDLE));
+    verify(consumer).deleteMessage(deleteMessageRequestCaptor.capture());
+    assertThat(deleteMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
+    assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLER);
   }
 
   @Test(expected = SerDeException.class)

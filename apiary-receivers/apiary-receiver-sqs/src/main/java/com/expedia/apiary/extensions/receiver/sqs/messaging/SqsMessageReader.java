@@ -18,7 +18,9 @@ package com.expedia.apiary.extensions.receiver.sqs.messaging;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -28,11 +30,15 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.expedia.apiary.extensions.receiver.common.messaging.JsonMetaStoreEventDeserializer;
-import com.expedia.apiary.extensions.receiver.common.messaging.MessageDeserializer;
-import com.expedia.apiary.extensions.receiver.common.messaging.MessageReader;
 import com.expedia.apiary.extensions.receiver.common.error.SerDeException;
 import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
+import com.expedia.apiary.extensions.receiver.common.messaging.JsonMetaStoreEventDeserializer;
+import com.expedia.apiary.extensions.receiver.common.messaging.MessageDeserializer;
+import com.expedia.apiary.extensions.receiver.common.messaging.MessageEvent;
+import com.expedia.apiary.extensions.receiver.common.messaging.MessageProperty;
+import com.expedia.apiary.extensions.receiver.common.messaging.MessageReader;
+import com.expedia.apiary.extensions.receiver.sqs.model.SqsMessageEvent;
+import com.expedia.apiary.extensions.receiver.sqs.model.SqsMessageProperty;
 
 public class SqsMessageReader implements MessageReader {
   private static final Integer DEFAULT_POLLING_WAIT_TIME_SECONDS = 10;
@@ -63,23 +69,23 @@ public class SqsMessageReader implements MessageReader {
   }
 
   @Override
-  public Optional<ListenerEvent> read() {
+  public Optional<MessageEvent> read() {
     if (records == null || !records.hasNext()) {
       records = receiveMessage();
     }
     if (records.hasNext()) {
       Message message = records.next();
-      delete(message);
-      return Optional.of(eventPayLoad(message));
+      SqsMessageEvent sqsMessageEvent = mapToMessageEvent(message);
+      return Optional.of(sqsMessageEvent);
     } else {
       return Optional.empty();
     }
   }
 
-  private void delete(Message message) {
+  public void delete(String receiptHandle) {
     DeleteMessageRequest request = new DeleteMessageRequest()
         .withQueueUrl(queueUrl)
-        .withReceiptHandle(message.getReceiptHandle());
+        .withReceiptHandle(receiptHandle);
     consumer.deleteMessage(request);
   }
 
@@ -90,6 +96,14 @@ public class SqsMessageReader implements MessageReader {
           .withMaxNumberOfMessages(maxMessages)
           .withVisibilityTimeout(visibilityTimeoutSeconds);
       return consumer.receiveMessage(request).getMessages().iterator();
+  }
+
+  private SqsMessageEvent mapToMessageEvent(Message message) {
+    ListenerEvent listenerEvent = eventPayLoad(message);
+    Map<MessageProperty, String> properties = Collections.singletonMap(
+        SqsMessageProperty.RECEIPT_HANDLE, message.getReceiptHandle());
+
+    return new SqsMessageEvent(listenerEvent, properties);
   }
 
   private ListenerEvent eventPayLoad(Message message) {
