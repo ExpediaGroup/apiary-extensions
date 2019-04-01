@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,7 +48,6 @@ import com.expedia.apiary.extensions.receiver.common.messaging.MessageEvent;
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageProperty;
 import com.expedia.apiary.extensions.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
 import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageReader;
-import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageProperty;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SqsMessageReaderTest {
@@ -58,7 +56,7 @@ public class SqsMessageReaderTest {
   private static final Integer WAIT_TIME = 1;
   private static final Integer VISIBILITY_TIMEOUT = 2;
   private static final Integer MAX_MESSAGES = 3;
-  private static final String RECEIPT_HANDLER = "receipt_handler";
+  private static final String RECEIPT_HANDLE = "receipt_handle";
   private static final String MESSAGE_CONTENT = "message";
 
   private @Mock DefaultSqsMessageDeserializer serDe;
@@ -73,7 +71,6 @@ public class SqsMessageReaderTest {
   private @Captor ArgumentCaptor<DeleteMessageRequest> deleteMessageRequestCaptor;
   private @Captor ArgumentCaptor<ChangeMessageVisibilityRequest> changeMessageVisibilityRequestCaptor;
 
-  private final Configuration conf = new Configuration();
   private SqsMessageReader reader;
 
   @Before
@@ -83,7 +80,7 @@ public class SqsMessageReaderTest {
     when(messages.iterator()).thenReturn(messageIterator);
     when(messageIterator.hasNext()).thenReturn(true);
     when(messageIterator.next()).thenReturn(message);
-    when(message.getReceiptHandle()).thenReturn(RECEIPT_HANDLER);
+    when(message.getReceiptHandle()).thenReturn(RECEIPT_HANDLE);
     when(message.getBody()).thenReturn(MESSAGE_CONTENT);
     when(serDe.unmarshal(MESSAGE_CONTENT)).thenReturn(event);
 
@@ -114,7 +111,7 @@ public class SqsMessageReaderTest {
     assertThat(receiveMessageRequestCaptor.getValue().getVisibilityTimeout()).isEqualTo(VISIBILITY_TIMEOUT);
     verify(serDe).unmarshal(MESSAGE_CONTENT);
     Map<MessageProperty, String> messageProperties = messageEvent.getMessageProperties();
-    assertThat(messageProperties.get(SqsMessageProperty.RECEIPT_HANDLE)).isEqualTo(RECEIPT_HANDLER);
+    assertThat(messageProperties.get(MessageProperty.SQS_MESSAGE_RECEIPT_HANDLE)).isEqualTo(RECEIPT_HANDLE);
   }
 
   @Test
@@ -129,19 +126,19 @@ public class SqsMessageReaderTest {
   @Test
   public void deleteMessageFromQueue() throws Exception {
     MessageEvent messageEvent = reader.read().get();
-    reader.delete(messageEvent.getMessageProperties().get(SqsMessageProperty.RECEIPT_HANDLE));
+    reader.delete(messageEvent.getMessageProperties().get(MessageProperty.SQS_MESSAGE_RECEIPT_HANDLE));
     verify(consumer).deleteMessage(deleteMessageRequestCaptor.capture());
     assertThat(deleteMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
-    assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLER);
+    assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLE);
   }
 
   @Test
   public void extendVisibilityTimeout() throws Exception {
     MessageEvent messageEvent = reader.read().get();
-    reader.extendVisibilityTimeout(messageEvent.getMessageProperties().get(SqsMessageProperty.RECEIPT_HANDLE));
+    reader.extendVisibilityTimeout(messageEvent.getMessageProperties().get(MessageProperty.SQS_MESSAGE_RECEIPT_HANDLE));
     verify(consumer).changeMessageVisibility(changeMessageVisibilityRequestCaptor.capture());
     assertThat(changeMessageVisibilityRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
-    assertThat(changeMessageVisibilityRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLER);
+    assertThat(changeMessageVisibilityRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLE);
     assertThat(changeMessageVisibilityRequestCaptor.getValue().getVisibilityTimeout()).isEqualTo(VISIBILITY_TIMEOUT);
   }
 

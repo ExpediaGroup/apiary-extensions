@@ -108,7 +108,7 @@ public class SqsMessageReader implements MessageReader {
   private MessageEvent messageEvent(Message message) {
     ListenerEvent listenerEvent = eventPayLoad(message);
     Map<MessageProperty, String> properties = Collections.singletonMap(
-        SqsMessageProperty.RECEIPT_HANDLE, message.getReceiptHandle());
+        MessageProperty.SQS_MESSAGE_RECEIPT_HANDLE, message.getReceiptHandle());
 
     return new MessageEvent(listenerEvent, properties);
   }
