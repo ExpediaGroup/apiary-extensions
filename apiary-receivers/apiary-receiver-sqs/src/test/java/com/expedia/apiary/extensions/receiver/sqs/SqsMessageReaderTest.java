@@ -35,7 +35,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
@@ -47,6 +46,7 @@ import com.expedia.apiary.extensions.receiver.common.event.ListenerEvent;
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageEvent;
 import com.expedia.apiary.extensions.receiver.common.messaging.MessageProperty;
 import com.expedia.apiary.extensions.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
+import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageProperty;
 import com.expedia.apiary.extensions.receiver.sqs.messaging.SqsMessageReader;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -54,8 +54,7 @@ public class SqsMessageReaderTest {
 
   private static final String QUEUE_NAME = "queue";
   private static final Integer WAIT_TIME = 1;
-  private static final Integer VISIBILITY_TIMEOUT = 2;
-  private static final Integer MAX_MESSAGES = 3;
+  private static final Integer MAX_MESSAGES = 2;
   private static final String RECEIPT_HANDLE = "receipt_handle";
   private static final String MESSAGE_CONTENT = "message";
 
@@ -69,7 +68,6 @@ public class SqsMessageReaderTest {
 
   private @Captor ArgumentCaptor<ReceiveMessageRequest> receiveMessageRequestCaptor;
   private @Captor ArgumentCaptor<DeleteMessageRequest> deleteMessageRequestCaptor;
-  private @Captor ArgumentCaptor<ChangeMessageVisibilityRequest> changeMessageVisibilityRequestCaptor;
 
   private SqsMessageReader reader;
 
@@ -89,7 +87,6 @@ public class SqsMessageReaderTest {
         .withMessageDeserializer(serDe)
         .withMaxMessages(MAX_MESSAGES)
         .withWaitTimeSeconds(WAIT_TIME)
-        .withVisibilityTimeoutSeconds(VISIBILITY_TIMEOUT)
         .build();
   }
 
@@ -108,10 +105,9 @@ public class SqsMessageReaderTest {
     assertThat(receiveMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
     assertThat(receiveMessageRequestCaptor.getValue().getWaitTimeSeconds()).isEqualTo(WAIT_TIME);
     assertThat(receiveMessageRequestCaptor.getValue().getMaxNumberOfMessages()).isEqualTo(MAX_MESSAGES);
-    assertThat(receiveMessageRequestCaptor.getValue().getVisibilityTimeout()).isEqualTo(VISIBILITY_TIMEOUT);
     verify(serDe).unmarshal(MESSAGE_CONTENT);
     Map<MessageProperty, String> messageProperties = messageEvent.getMessageProperties();
-    assertThat(messageProperties.get(MessageProperty.SQS_MESSAGE_RECEIPT_HANDLE)).isEqualTo(RECEIPT_HANDLE);
+    assertThat(messageProperties.get(SqsMessageProperty.SQS_MESSAGE_RECEIPT_HANDLE)).isEqualTo(RECEIPT_HANDLE);
   }
 
   @Test
@@ -126,20 +122,10 @@ public class SqsMessageReaderTest {
   @Test
   public void deleteMessageFromQueue() throws Exception {
     MessageEvent messageEvent = reader.read().get();
-    reader.delete(messageEvent.getMessageProperties().get(MessageProperty.SQS_MESSAGE_RECEIPT_HANDLE));
+    reader.delete(messageEvent.getMessageProperties().get(SqsMessageProperty.SQS_MESSAGE_RECEIPT_HANDLE));
     verify(consumer).deleteMessage(deleteMessageRequestCaptor.capture());
     assertThat(deleteMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
     assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLE);
-  }
-
-  @Test
-  public void extendVisibilityTimeout() throws Exception {
-    MessageEvent messageEvent = reader.read().get();
-    reader.extendVisibilityTimeout(messageEvent.getMessageProperties().get(MessageProperty.SQS_MESSAGE_RECEIPT_HANDLE));
-    verify(consumer).changeMessageVisibility(changeMessageVisibilityRequestCaptor.capture());
-    assertThat(changeMessageVisibilityRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
-    assertThat(changeMessageVisibilityRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLE);
-    assertThat(changeMessageVisibilityRequestCaptor.getValue().getVisibilityTimeout()).isEqualTo(VISIBILITY_TIMEOUT);
   }
 
   @Test(expected = SerDeException.class)

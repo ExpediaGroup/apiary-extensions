@@ -25,7 +25,6 @@ import java.util.Optional;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
@@ -42,21 +41,18 @@ import com.expedia.apiary.extensions.receiver.common.messaging.MessageReader;
 public class SqsMessageReader implements MessageReader {
   private static final Integer DEFAULT_POLLING_WAIT_TIME_SECONDS = 10;
   private static final Integer DEFAULT_MAX_MESSAGES = 10;
-  private static final Integer DEFAULT_VISIBILITY_TIMEOUT_SECONDS = 30;
 
   private String queueUrl;
   private Integer waitTimeSeconds;
-  private Integer visibilityTimeoutSeconds;
   private Integer maxMessages;
   private MessageDeserializer messageDeserializer;
   private AmazonSQS consumer;
   private Iterator<Message> records;
 
-  private SqsMessageReader(String queueUrl, int waitTimeSeconds, int visibilityTimeoutSeconds, int maxMessages,
+  private SqsMessageReader(String queueUrl, int waitTimeSeconds, int maxMessages,
                            MessageDeserializer messageDeserializer, AmazonSQS consumer) {
     this.queueUrl = queueUrl;
     this.waitTimeSeconds = waitTimeSeconds;
-    this.visibilityTimeoutSeconds = visibilityTimeoutSeconds;
     this.maxMessages = maxMessages;
     this.messageDeserializer = messageDeserializer;
     this.consumer = consumer;
@@ -81,6 +77,7 @@ public class SqsMessageReader implements MessageReader {
     }
   }
 
+  @Override
   public void delete(String receiptHandle) {
     DeleteMessageRequest request = new DeleteMessageRequest()
         .withQueueUrl(queueUrl)
@@ -88,28 +85,18 @@ public class SqsMessageReader implements MessageReader {
     consumer.deleteMessage(request);
   }
 
-  public void extendVisibilityTimeout(String receiptHandle) {
-    ChangeMessageVisibilityRequest request = new ChangeMessageVisibilityRequest()
-        .withQueueUrl(queueUrl)
-        .withReceiptHandle(receiptHandle)
-        .withVisibilityTimeout(visibilityTimeoutSeconds);
-    consumer.changeMessageVisibility(request);
-  }
-
   private Iterator<Message> receiveMessage() {
       ReceiveMessageRequest request = new ReceiveMessageRequest()
           .withQueueUrl(queueUrl)
           .withWaitTimeSeconds(waitTimeSeconds)
-          .withMaxNumberOfMessages(maxMessages)
-          .withVisibilityTimeout(visibilityTimeoutSeconds);
+          .withMaxNumberOfMessages(maxMessages);
       return consumer.receiveMessage(request).getMessages().iterator();
   }
 
   private MessageEvent messageEvent(Message message) {
     ListenerEvent listenerEvent = eventPayLoad(message);
     Map<MessageProperty, String> properties = Collections.singletonMap(
-        MessageProperty.SQS_MESSAGE_RECEIPT_HANDLE, message.getReceiptHandle());
-
+        SqsMessageProperty.SQS_MESSAGE_RECEIPT_HANDLE, message.getReceiptHandle());
     return new MessageEvent(listenerEvent, properties);
   }
 
@@ -124,7 +111,6 @@ public class SqsMessageReader implements MessageReader {
   public static final class Builder {
     private String queueUrl;
     private Integer waitTimeSeconds;
-    private Integer visibilityTimeoutSeconds;
     private Integer maxMessages;
     private AmazonSQS consumer;
     private MessageDeserializer messageDeserializer;
@@ -148,11 +134,6 @@ public class SqsMessageReader implements MessageReader {
       return this;
     }
 
-    public Builder withVisibilityTimeoutSeconds(Integer visibilityTimeoutSeconds) {
-      this.visibilityTimeoutSeconds = visibilityTimeoutSeconds;
-      return this;
-    }
-
     public Builder withMaxMessages(Integer maxMessages) {
       this.maxMessages = maxMessages;
       return this;
@@ -169,10 +150,8 @@ public class SqsMessageReader implements MessageReader {
           ? DEFAULT_MAX_MESSAGES : maxMessages;
       waitTimeSeconds = (waitTimeSeconds == null)
           ? DEFAULT_POLLING_WAIT_TIME_SECONDS : waitTimeSeconds;
-      visibilityTimeoutSeconds = (visibilityTimeoutSeconds == null)
-          ? DEFAULT_VISIBILITY_TIMEOUT_SECONDS : visibilityTimeoutSeconds;
 
-      return new SqsMessageReader(queueUrl, waitTimeSeconds, visibilityTimeoutSeconds, maxMessages, messageDeserializer, consumer);
+      return new SqsMessageReader(queueUrl, waitTimeSeconds, maxMessages, messageDeserializer, consumer);
     }
 
     private AmazonSQS defaultConsumer() {

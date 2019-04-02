@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expedia.apiary.extensions.receiver.common.messaging;
+package com.expedia.apiary.extensions.receiver.sqs.messaging;
 
-/**
- * Marker interface to classify Enum implementations as a MessageProperty.
- */
-public interface MessageProperty {
+import com.expedia.apiary.extensions.receiver.common.messaging.MessageProperty;
 
+public enum SqsMessageProperty implements MessageProperty {
+  SQS_MESSAGE_RECEIPT_HANDLE
 }
