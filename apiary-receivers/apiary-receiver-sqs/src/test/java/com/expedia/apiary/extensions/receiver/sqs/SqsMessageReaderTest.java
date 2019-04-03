@@ -128,6 +128,11 @@ public class SqsMessageReaderTest {
     assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLE);
   }
 
+  @Test(expected = NullPointerException.class)
+  public void deleteMessageThrowsException() throws Exception {
+    reader.delete(null);
+  }
+
   @Test(expected = SerDeException.class)
   public void unmarshallThrowsException() throws Exception {
     when(serDe.unmarshal(any(String.class))).thenThrow(RuntimeException.class);
