@@ -25,6 +25,6 @@ public interface MessageReader extends Closeable {
 
   Optional<MessageEvent> read();
 
-  void delete(String messageId);
+  void delete(MessageEvent messageEvent);
 
 }

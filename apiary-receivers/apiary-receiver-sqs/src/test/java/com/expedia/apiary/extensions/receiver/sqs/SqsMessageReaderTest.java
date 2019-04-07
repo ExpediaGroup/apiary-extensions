@@ -122,7 +122,7 @@ public class SqsMessageReaderTest {
   @Test
   public void deleteMessageFromQueue() throws Exception {
     MessageEvent messageEvent = reader.read().get();
-    reader.delete(messageEvent.getMessageProperties().get(SqsMessageProperty.SQS_MESSAGE_RECEIPT_HANDLE));
+    reader.delete(messageEvent);
     verify(consumer).deleteMessage(deleteMessageRequestCaptor.capture());
     assertThat(deleteMessageRequestCaptor.getValue().getQueueUrl()).isEqualTo(QUEUE_NAME);
     assertThat(deleteMessageRequestCaptor.getValue().getReceiptHandle()).isEqualTo(RECEIPT_HANDLE);

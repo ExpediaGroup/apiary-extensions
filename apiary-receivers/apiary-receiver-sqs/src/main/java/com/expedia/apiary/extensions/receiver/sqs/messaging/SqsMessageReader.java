@@ -78,8 +78,9 @@ public class SqsMessageReader implements MessageReader {
   }
 
   @Override
-  public void delete(String receiptHandle) {
-    checkNotNull(receiptHandle);
+  public void delete(MessageEvent messageEvent) {
+    String receiptHandle = messageEvent.getMessageProperties()
+        .get(SqsMessageProperty.SQS_MESSAGE_RECEIPT_HANDLE);
     DeleteMessageRequest request = new DeleteMessageRequest()
         .withQueueUrl(queueUrl)
         .withReceiptHandle(receiptHandle);
