@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expedia.apiary.extensions.receiver.common.messaging;
+package com.expedia.apiary.extensions.receiver.sqs.messaging;
 
-import java.io.Closeable;
-import java.util.Optional;
+import com.expedia.apiary.extensions.receiver.common.messaging.MessageProperty;
 
-/**
- * A {@code MessageReader} is in charge of retrieving events from the messaging infrastructure.
- */
-public interface MessageReader extends Closeable {
-
-  Optional<MessageEvent> read();
-
-  void delete(MessageEvent messageEvent);
-
+public enum SqsMessageProperty implements MessageProperty {
+  SQS_MESSAGE_RECEIPT_HANDLE
 }

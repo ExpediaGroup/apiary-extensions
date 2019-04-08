@@ -15,16 +15,9 @@
  */
 package com.expedia.apiary.extensions.receiver.common.messaging;
 
-import java.io.Closeable;
-import java.util.Optional;
-
 /**
- * A {@code MessageReader} is in charge of retrieving events from the messaging infrastructure.
+ * Marker interface to classify Enum implementations as a MessageProperty.
  */
-public interface MessageReader extends Closeable {
-
-  Optional<MessageEvent> read();
-
-  void delete(MessageEvent messageEvent);
+public interface MessageProperty {
 
 }
