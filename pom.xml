@@ -17,9 +17,9 @@
   <inceptionYear>2018</inceptionYear>
 
   <scm>
-    <connection>scm:git:git@github.com:ExpediaInc/apiary-extensions.git</connection>
-    <developerConnection>scm:git:git@github.com:ExpediaInc/apiary-extensions.git</developerConnection>
-    <url>https://github.com/ExpediaInc/apiary-extensions</url>
+    <connection>scm:git:git@github.com:ExpediaGroup/apiary-extensions.git</connection>
+    <developerConnection>scm:git:git@github.com:ExpediaGroup/apiary-extensions.git</developerConnection>
+    <url>https://github.com/ExpediaGroup/apiary-extensions</url>
     <tag>HEAD</tag>
   </scm>
 
