@@ -8,7 +8,7 @@ Hive metastore events as JSON onto an Amazon Web Services SNS topic.
 
 ## Installation
 The listener can be activated by placing its jar file on the Hive metastore classpath and configuring Hive accordingly. For Apiary 
-this is done in [apiary-metastore-docker](https://github.com/ExpediaInc/apiary-metastore-docker). 
+this is done in [apiary-metastore-docker](https://github.com/ExpediaGroup/apiary-metastore-docker). 
 
 ## Configuration
 The SNS listener can be configured by setting the following System Environment variables:
@@ -164,4 +164,4 @@ The following messages attributes are supported:
 # Legal
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
-Copyright 2019, Expedia Inc.
+Copyright 2019 Expedia, Inc.
