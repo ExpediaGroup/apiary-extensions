@@ -18,14 +18,6 @@ package com.expediagroup.apiary.extensions.receiver.sqs.messaging;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.expediagroup.apiary.extensions.receiver.common.error.SerDeException;
-import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
-import com.expediagroup.apiary.extensions.receiver.common.messaging.JsonMetaStoreEventDeserializer;
-import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageDeserializer;
-import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageEvent;
-import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageProperty;
-import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageReader;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -37,6 +29,14 @@ import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.expediagroup.apiary.extensions.receiver.common.error.SerDeException;
+import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
+import com.expediagroup.apiary.extensions.receiver.common.messaging.JsonMetaStoreEventDeserializer;
+import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageDeserializer;
+import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageEvent;
+import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageProperty;
+import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageReader;
 
 public class SqsMessageReader implements MessageReader {
   private static final Integer DEFAULT_POLLING_WAIT_TIME_SECONDS = 10;

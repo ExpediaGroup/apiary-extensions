@@ -21,16 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
-import com.expediagroup.apiary.extensions.receiver.common.event.AddPartitionEvent;
-import com.expediagroup.apiary.extensions.receiver.common.event.AlterPartitionEvent;
-import com.expediagroup.apiary.extensions.receiver.common.event.AlterTableEvent;
-import com.expediagroup.apiary.extensions.receiver.common.event.CreateTableEvent;
-import com.expediagroup.apiary.extensions.receiver.common.event.DropPartitionEvent;
-import com.expediagroup.apiary.extensions.receiver.common.event.DropTableEvent;
-import com.expediagroup.apiary.extensions.receiver.common.event.EventType;
-import com.expediagroup.apiary.extensions.receiver.common.event.InsertTableEvent;
-import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
@@ -49,6 +39,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+
+import com.expediagroup.apiary.extensions.receiver.common.event.AddPartitionEvent;
+import com.expediagroup.apiary.extensions.receiver.common.event.AlterPartitionEvent;
+import com.expediagroup.apiary.extensions.receiver.common.event.AlterTableEvent;
+import com.expediagroup.apiary.extensions.receiver.common.event.CreateTableEvent;
+import com.expediagroup.apiary.extensions.receiver.common.event.DropPartitionEvent;
+import com.expediagroup.apiary.extensions.receiver.common.event.DropTableEvent;
+import com.expediagroup.apiary.extensions.receiver.common.event.EventType;
+import com.expediagroup.apiary.extensions.receiver.common.event.InsertTableEvent;
+import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JsonMetaStoreEventDeserializerTest {

@@ -15,9 +15,9 @@
  */
 package com.expediagroup.apiary.extensions.receiver.common.messaging;
 
-import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
-
 import java.util.Map;
+
+import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
 
 public class MessageEvent {
   private ListenerEvent event;

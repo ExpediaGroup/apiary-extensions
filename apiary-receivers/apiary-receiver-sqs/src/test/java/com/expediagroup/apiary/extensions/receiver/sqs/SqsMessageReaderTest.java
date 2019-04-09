@@ -21,14 +21,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.expediagroup.apiary.extensions.receiver.common.error.SerDeException;
-import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
-import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageEvent;
-import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageProperty;
-import com.expediagroup.apiary.extensions.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
-import com.expediagroup.apiary.extensions.receiver.sqs.messaging.SqsMessageProperty;
-import com.expediagroup.apiary.extensions.receiver.sqs.messaging.SqsMessageReader;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +40,14 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.google.common.collect.ImmutableList;
+
+import com.expediagroup.apiary.extensions.receiver.common.error.SerDeException;
+import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
+import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageEvent;
+import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageProperty;
+import com.expediagroup.apiary.extensions.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
+import com.expediagroup.apiary.extensions.receiver.sqs.messaging.SqsMessageProperty;
+import com.expediagroup.apiary.extensions.receiver.sqs.messaging.SqsMessageReader;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SqsMessageReaderTest {

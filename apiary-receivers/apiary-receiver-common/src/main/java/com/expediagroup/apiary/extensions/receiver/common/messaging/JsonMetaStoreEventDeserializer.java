@@ -15,14 +15,14 @@
  */
 package com.expediagroup.apiary.extensions.receiver.common.messaging;
 
-import com.expediagroup.apiary.extensions.receiver.common.error.SerDeException;
-import com.expediagroup.apiary.extensions.receiver.common.event.EventType;
-import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.expediagroup.apiary.extensions.receiver.common.error.SerDeException;
+import com.expediagroup.apiary.extensions.receiver.common.event.EventType;
+import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
 
 public class JsonMetaStoreEventDeserializer implements MetaStoreEventDeserializer {
   private static final Logger log = LoggerFactory.getLogger(JsonMetaStoreEventDeserializer.class);
