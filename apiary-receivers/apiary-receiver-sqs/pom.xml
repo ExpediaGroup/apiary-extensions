@@ -2,9 +2,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.expedia.apiary</groupId>
+    <groupId>com.expediagroup.apiary</groupId>
     <artifactId>apiary-receivers-parent</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>apiary-receiver-sqs</artifactId>
@@ -19,7 +19,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.expedia.apiary</groupId>
+      <groupId>com.expediagroup.apiary</groupId>
       <artifactId>apiary-receiver-common</artifactId>
       <version>${project.version}</version>
     </dependency>
