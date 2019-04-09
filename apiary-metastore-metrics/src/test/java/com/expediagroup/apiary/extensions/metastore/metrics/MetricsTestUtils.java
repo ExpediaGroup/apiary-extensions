@@ -19,14 +19,14 @@
  */
 package com.expediagroup.apiary.extensions.metastore.metrics;
 
-import com.codahale.metrics.Meter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Assert;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
+import org.junit.Assert;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Utilities for codahale metrics verification.

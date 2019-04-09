@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 
 import static com.expediagroup.apiary.extensions.metastore.listener.ApiarySnsListener.PROTOCOL_VERSION;
 
-import com.amazonaws.services.sns.model.MessageAttributeValue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,12 +57,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
-import com.expediagroup.apiary.extensions.metastore.listener.ApiarySnsListener;
-import com.expediagroup.apiary.extensions.metastore.listener.EventType;
-import com.expediagroup.apiary.extensions.metastore.listener.MessageAttributeDataType;
-import com.expediagroup.apiary.extensions.metastore.listener.MessageAttributeKey;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;

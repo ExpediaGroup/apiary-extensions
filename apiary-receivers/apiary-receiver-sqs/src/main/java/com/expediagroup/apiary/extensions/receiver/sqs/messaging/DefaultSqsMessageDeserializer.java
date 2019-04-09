@@ -15,13 +15,14 @@
  */
 package com.expediagroup.apiary.extensions.receiver.sqs.messaging;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.expediagroup.apiary.extensions.receiver.common.error.SerDeException;
 import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
 import com.expediagroup.apiary.extensions.receiver.common.messaging.MessageDeserializer;
 import com.expediagroup.apiary.extensions.receiver.common.messaging.MetaStoreEventDeserializer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

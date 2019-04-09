@@ -15,12 +15,13 @@
  */
 package com.expediagroup.apiary.extensions.receiver.common.messaging;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.expediagroup.apiary.extensions.receiver.common.error.SerDeException;
 import com.expediagroup.apiary.extensions.receiver.common.event.EventType;
 import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonMetaStoreEventDeserializer implements MetaStoreEventDeserializer {

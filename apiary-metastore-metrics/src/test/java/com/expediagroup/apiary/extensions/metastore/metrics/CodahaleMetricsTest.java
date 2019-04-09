@@ -42,7 +42,6 @@ import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import com.expediagroup.apiary.extensions.metastore.metrics.CodahaleMetrics;
 
 /**
  * Unit test for new Metrics subsystem.

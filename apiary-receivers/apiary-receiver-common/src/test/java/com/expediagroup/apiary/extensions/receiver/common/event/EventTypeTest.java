@@ -22,9 +22,6 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.expediagroup.apiary.extensions.receiver.common.event.EventType;
-import com.expediagroup.apiary.extensions.receiver.common.event.ListenerEvent;
-
 public class EventTypeTest {
 
   @Test

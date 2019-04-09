@@ -18,7 +18,6 @@ package com.expediagroup.apiary.extensions.receiver.common.event;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.hadoop.hive.metastore.api.EnvironmentContext;

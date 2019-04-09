@@ -46,7 +46,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.CreateTableResult;
-import com.expediagroup.apiary.extensions.gluesync.listener.ApiaryGlueSync;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryGlueSyncTest {

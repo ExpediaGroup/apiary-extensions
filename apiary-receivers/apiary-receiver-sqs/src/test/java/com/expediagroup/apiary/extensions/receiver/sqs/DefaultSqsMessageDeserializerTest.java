@@ -21,15 +21,16 @@ import static org.mockito.Mockito.when;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
+import com.expediagroup.apiary.extensions.receiver.common.error.ApiaryReceiverException;
+import com.expediagroup.apiary.extensions.receiver.common.messaging.MetaStoreEventDeserializer;
+import com.expediagroup.apiary.extensions.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.expediagroup.apiary.extensions.receiver.common.error.ApiaryReceiverException;
-import com.expediagroup.apiary.extensions.receiver.common.messaging.MetaStoreEventDeserializer;
-import com.expediagroup.apiary.extensions.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(MockitoJUnitRunner.class)

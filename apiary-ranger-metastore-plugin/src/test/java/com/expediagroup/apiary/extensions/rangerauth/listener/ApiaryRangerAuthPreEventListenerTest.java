@@ -34,8 +34,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.expediagroup.apiary.extensions.rangerauth.listener.ApiaryRangerAuthPreEventListener;
-
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryRangerAuthPreEventListenerTest {
 
