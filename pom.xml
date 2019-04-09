@@ -8,10 +8,10 @@
     <version>2.3.5</version>
   </parent>
 
-  <groupId>com.expedia.apiary</groupId>
+  <groupId>com.expediagroup.apiary</groupId>
   <artifactId>apiary-extensions-parent</artifactId>
   <description>Various extensions to Apiary that provide additional, optional functionality</description>
-  <version>2.0.1-SNAPSHOT</version>
+  <version>3.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apiary Extensions Parent</name>
   <inceptionYear>2018</inceptionYear>
