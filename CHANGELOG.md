@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## TBD
 ### Fixed
-- `apiary-metastore-listener` now serialises metastore table properties as a Map instead of a String. 
+- `apiary-metastore-listener` now serializes metastore table properties as a Map instead of a String. 
 
 ## [3.0.0] - 2019-04-12
 ### Changed
