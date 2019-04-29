@@ -140,7 +140,7 @@ public class ApiarySnsListenerTest {
             + PROTOCOL_VERSION
             + "\",\"eventType\":\""
             + EventType.CREATE_TABLE.toString()
-            + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
+            + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"}}"));
 
     verifyMessageAttributes(publishRequest,  EventType.CREATE_TABLE.toString());
   }
@@ -159,7 +159,7 @@ public class ApiarySnsListenerTest {
         + PROTOCOL_VERSION
         + "\",\"eventType\":\""
         + EventType.CREATE_TABLE.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{}}"));
   }
 
   @Test
@@ -176,7 +176,7 @@ public class ApiarySnsListenerTest {
         + PROTOCOL_VERSION
         + "\",\"eventType\":\""
         + EventType.CREATE_TABLE.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{}}"));
   }
 
   @Test
@@ -214,7 +214,7 @@ public class ApiarySnsListenerTest {
         + PROTOCOL_VERSION
         + "\",\"eventType\":\""
         + EventType.CREATE_TABLE.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{}}"));
   }
 
   @Test
@@ -233,7 +233,7 @@ public class ApiarySnsListenerTest {
         + PROTOCOL_VERSION
         + "\",\"eventType\":\""
         + EventType.CREATE_TABLE.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{}\"}"));
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{}}"));
   }
 
   @Test(expected = PatternSyntaxException.class)
@@ -292,7 +292,8 @@ public class ApiarySnsListenerTest {
         + PROTOCOL_VERSION
         + "\",\"eventType\":\""
         + EventType.ADD_PARTITION.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"},"
+        + "\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
 
     verifyMessageAttributes(publishRequest, EventType.ADD_PARTITION.toString() );
   }
@@ -318,7 +319,7 @@ public class ApiarySnsListenerTest {
         + PROTOCOL_VERSION
         + "\",\"eventType\":\""
         + EventType.DROP_PARTITION.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"},\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
 
     verifyMessageAttributes(publishRequest,  EventType.DROP_PARTITION.toString());
   }
@@ -337,7 +338,7 @@ public class ApiarySnsListenerTest {
         + PROTOCOL_VERSION
         + "\",\"eventType\":\""
         + EventType.DROP_TABLE.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\"}"));
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"}}"));
 
     verifyMessageAttributes(publishRequest,  EventType.DROP_TABLE.toString());
   }
@@ -364,7 +365,7 @@ public class ApiarySnsListenerTest {
         + PROTOCOL_VERSION
         + "\",\"eventType\":\""
         + EventType.ALTER_PARTITION.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=1\"}"));
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"},\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=1\"}"));
   }
 
   @Test
@@ -389,7 +390,7 @@ public class ApiarySnsListenerTest {
         + PROTOCOL_VERSION
         + "\",\"eventType\":\""
         + EventType.ALTER_PARTITION.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=2\"}"));
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"},\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_3\",\"2000\",\"value_4\"],\"partitionLocation\":\"s3://table_location/partition_location=2\",\"oldPartitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"oldPartitionLocation\":\"s3://table_location/partition_location=2\"}"));
   }
 
   @Test
@@ -413,7 +414,7 @@ public class ApiarySnsListenerTest {
         + PROTOCOL_VERSION
         + "\",\"eventType\":\""
         + EventType.ALTER_TABLE.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"tableLocation\":\"s3://table_location_1\",\"tableParameters\":\"{MY_VAR_TWO=5, MY_VAR_ONE=true}\",\"oldTableName\":\"some_table\",\"oldTableLocation\":\"s3://table_location\"}"));
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"tableLocation\":\"s3://table_location_1\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"},\"oldTableName\":\"some_table\",\"oldTableLocation\":\"s3://table_location\"}"));
     verifyMessageAttributes(publishRequest,  EventType.ALTER_TABLE.toString());
   }
 

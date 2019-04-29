@@ -158,7 +158,10 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     json.put("tableLocation", table.getSd().getLocation());
 
     if (tableParamFilterPattern != null) {
-      json.put("tableParameters", getFilteredParams(table.getParameters()));
+      Map<String, String> filteredParams = getFilteredParams(table.getParameters());
+      JSONObject tableParameters = new JSONObject();
+      filteredParams.forEach(tableParameters::put);
+      json.put("tableParameters", tableParameters);
     }
 
     if (oldtable != null) {
