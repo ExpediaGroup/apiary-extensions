@@ -41,6 +41,7 @@
     <module>apiary-metastore-metrics</module>
     <module>apiary-metastore-auth</module>
     <module>apiary-receivers</module>
+    <module>apiary-hive-consumers</module>
   </modules>
 
   <dependencyManagement>
