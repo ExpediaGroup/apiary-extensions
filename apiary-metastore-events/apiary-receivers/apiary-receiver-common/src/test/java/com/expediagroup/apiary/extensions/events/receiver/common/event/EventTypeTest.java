@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class EventTypeTest {
@@ -29,9 +28,9 @@ public class EventTypeTest {
   public void eventClassesAreUnique() {
     Map<Class<? extends ListenerEvent>, EventType> cache = new HashMap<>();
     for (EventType et : EventType.values()) {
-      Assertions.assertThat(cache).doesNotContainKey(et.eventClass());
+      assertThat(cache).doesNotContainKey(et.eventClass());
       cache.put(et.eventClass(), et);
     }
-    Assertions.assertThat(cache.values()).hasSize(EventType.values().length);
+    assertThat(cache.values()).hasSize(EventType.values().length);
   }
 }
