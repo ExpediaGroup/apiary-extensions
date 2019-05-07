@@ -9,7 +9,7 @@ Currently, the following modules are defined:
  
 The architecture below represents the flow of processing Hive Metastore events:
 
-![Apiary SNS event listener Architecture.](images/Apiary_SNS_event_listener.png  "Apiary SNS event listener.")
+![Apiary Metastore Events Architecture.](images/Apiary_metastore_events_architecture.png  "Apiary SNS event listener.")
 
 # Legal
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
