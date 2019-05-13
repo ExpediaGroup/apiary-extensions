@@ -3,25 +3,32 @@
 
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
-    <artifactId>apiary-extensions-parent</artifactId>
+    <artifactId>apiary-metastore-events-parent</artifactId>
     <version>4.0.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>apiary-metastore-metrics</artifactId>
-  <name>Apiary Metastore Metrics</name>
-  <description>Codahale reporter to send Hive Metastore metrics to CloudWatch</description>
+  <artifactId>apiary-metastore-listener</artifactId>
+  <name>Apiary Metastore Listener</name>
+  <description>Hive Metastore Listener for Apiary that forwards events on to AWS SNS</description>
 
   <dependencies>
     <dependency>
       <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk-cloudwatch</artifactId>
+      <artifactId>aws-java-sdk-sns</artifactId>
       <version>${aws-java-sdk.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-mapreduce-client-common</artifactId>
-      <scope>provided</scope>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-core</artifactId>
+      <version>${aws-java-sdk.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.tdunning</groupId>
+      <artifactId>json</artifactId>
+      <version>1.8</version>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-metastore</artifactId>
@@ -42,14 +49,14 @@
 
     <!-- Test -->
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>com.github.stefanbirkner</groupId>
+      <artifactId>system-rules</artifactId>
+      <version>1.19.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.stefanbirkner</groupId>
-      <artifactId>system-rules</artifactId>
-      <version>1.18.0</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -78,12 +85,29 @@
                 <includes>
                   <include>com.amazonaws:*</include>
                   <include>com.expediagroup.apiary:*</include>
+                  <include>com.fasterxml.jackson.*:*</include>
+                  <include>com.tdunning:json</include>
+                  <include>org.apache.httpcomponents:*</include>
                 </includes>
               </artifactSet>
               <relocations>
                 <relocation>
                   <pattern>com.amazonaws</pattern>
                   <shadedPattern>${shade.prefix}.com.amazonaws</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.fasterxml.jackson</pattern>
+                  <shadedPattern>${shade.prefix}.com.fasterxml.jackson</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- Note org.apache.httpcomponents groupId but org.apache.http package, this is relocated due
+                    to newer version used by com.amazonaws, older version is provided by /usr/lib/hive/ -->
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>${shade.prefix}.org.apache.http</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.json</pattern>
+                  <shadedPattern>${shade.prefix}.org.json</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>

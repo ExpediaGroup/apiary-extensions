@@ -11,7 +11,7 @@
   <groupId>com.expediagroup.apiary</groupId>
   <artifactId>apiary-extensions-parent</artifactId>
   <description>Various extensions to Apiary that provide additional, optional functionality</description>
-  <version>3.0.1-SNAPSHOT</version>
+  <version>4.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apiary Extensions Parent</name>
   <inceptionYear>2018</inceptionYear>
@@ -35,13 +35,11 @@
   </properties>
 
   <modules>
-    <module>apiary-metastore-listener</module>
+    <module>apiary-metastore-events</module>
     <module>apiary-gluesync-listener</module>
     <module>apiary-ranger-metastore-plugin</module>
     <module>apiary-metastore-metrics</module>
     <module>apiary-metastore-auth</module>
-    <module>apiary-receivers</module>
-    <module>apiary-hive-consumers</module>
   </modules>
 
   <dependencyManagement>

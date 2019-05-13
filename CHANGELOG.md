@@ -2,10 +2,15 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+## [4.0.0] - 2019-05-08
+### Added
+- `apiary-metastore-events` module and moved `apiary-metastore-listener` and `apiary-receivers` into this.
+### Changed
+- `apiary-metastore-listener` and `apiary-receivers` package paths renamed from `com.expediagroup.apiary.extensions` to `com.expediagroup.apiary.extensions.events` (if you refer to these classes by fully qualified name downstream you will need to update these references before upgrading to this version).
 
-## TBD
+## [3.1.0] - 2019-05-03
 ### Fixed
-- `apiary-metastore-listener` now serializes metastore table properties as a Map instead of a String. 
+- `apiary-metastore-listener` now serializes metastore table properties as a Map instead of a String.
 
 ## [3.0.0] - 2019-04-12
 ### Changed
