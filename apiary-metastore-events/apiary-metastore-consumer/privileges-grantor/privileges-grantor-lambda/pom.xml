@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>apiary-privileges-grantor-parent</artifactId>
+        <groupId>com.expediagroup.apiary</groupId>
+        <version>4.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>apiary-privileges-grantor-lambda</artifactId>
+    <packaging>jar</packaging>
+
+    <properties>
+        <project.sourceEncoding>UTF-8</project.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <mavenPlugin.version>3.8.0</mavenPlugin.version>
+
+        <!-- AWS SDK for Lambda -->
+        <awsLambdaSdk.version>1.11.390</awsLambdaSdk.version>
+        <awsLambdaCore.version>1.2.0</awsLambdaCore.version>
+        <awsLambdaEvents.version>2.2.6</awsLambdaEvents.version>
+
+        <!--Test -->
+        <powermock.version>1.7.4</powermock.version>
+        <powermockApiMockito.version>1.7.4</powermockApiMockito.version>
+
+        <!-- Plugins -->
+        <mavenSurefire.version>2.22.0</mavenSurefire.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.expediagroup.apiary</groupId>
+            <artifactId>apiary-privileges-grantor-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-lambda</artifactId>
+            <version>${awsLambdaSdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-core</artifactId>
+            <version>${awsLambdaCore.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-events</artifactId>
+            <version>${awsLambdaEvents.version}</version>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>${powermock.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>${powermockApiMockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.hotels</groupId>
+            <artifactId>beeju</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${mavenPlugin.version}</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/assembly/aws-lambda-assembly.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>aws-lambda-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${mavenSurefire.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

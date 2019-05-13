@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+## TBD
+### Added
+- `apiary-metastore-consumer` submodule of `apiary-metastore-events`
+- `metastore-consumer-common` module that contains a common metastore consumers classes
+- `prvileges-grantor-core` module that grants Select Privilege on a table
+- `privileges-grantor-lambda` module that triggers `privileges-grantor-core` logic
+
 ## [4.0.0] - 2019-05-08
 ### Added
 - `apiary-metastore-events` module and moved `apiary-metastore-listener` and `apiary-receivers` into this.

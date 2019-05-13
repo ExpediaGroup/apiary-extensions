@@ -13,6 +13,7 @@
   <modules>
     <module>apiary-metastore-listener</module>
     <module>apiary-receivers</module>
+    <module>apiary-metastore-consumer</module>
   </modules>
 
 </project>
