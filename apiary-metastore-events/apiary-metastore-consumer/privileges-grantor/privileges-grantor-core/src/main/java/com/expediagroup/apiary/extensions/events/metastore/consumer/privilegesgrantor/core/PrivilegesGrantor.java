@@ -101,7 +101,7 @@ public class PrivilegesGrantor {
 
     PrivilegeGrantInfo privilegeGrantInfo =
         new PrivilegeGrantInfo(
-            Privilege.SELECT.toString(), 0, Grantor.ADMIN.toString(), PrincipalType.ROLE, false);
+            Privilege.SELECT.toString(), 0, Grantor.APIARY_PRIVILEGE_GRANTOR.toString(), PrincipalType.ROLE, false);
 
     HiveObjectPrivilege hiveObjectPrivilege = new HiveObjectPrivilege();
     hiveObjectPrivilege.setHiveObject(hiveObjectRef);

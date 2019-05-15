@@ -10,6 +10,11 @@
     <artifactId>apiary-hive-consumers-parent</artifactId>
     <packaging>pom</packaging>
 
+    <modules>
+        <module>metastore-consumer-common</module>
+        <module>privileges-grantor</module>
+    </modules>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.hive</groupId>
@@ -17,9 +22,5 @@
             <version>${hive.version}</version>
         </dependency>
     </dependencies>
-    <modules>
-        <module>metastore-consumer-common</module>
-        <module>privileges-grantor</module>
-    </modules>
 
 </project>

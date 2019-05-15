@@ -37,11 +37,11 @@ public class PrivilegesGrantorLambda implements RequestHandler<SQSEvent, Respons
 
   private static final String THRIFT_CONNECTION_URI = System.getenv("THRIFT_CONNECTION_URI");
   private static final String THRIFT_CONNECTION_TIMEOUT = "20000";
-  private LambdaLogger Logger;
+  private LambdaLogger logger;
 
   @Override
   public Response handleRequest(SQSEvent event, Context context) {
-    Logger = context.getLogger();
+    logger = context.getLogger();
 
     List<String> failedEvents = new ArrayList<>();
     List<String> successfulTableNames = new ArrayList<>();
@@ -53,21 +53,21 @@ public class PrivilegesGrantorLambda implements RequestHandler<SQSEvent, Respons
       privilegesGrantor = new PrivilegesGrantor(new ThriftHiveClient(THRIFT_CONNECTION_URI, THRIFT_CONNECTION_TIMEOUT));
     } catch (HiveClientException e) {
       String responseMessage = String.format("Unable to establish Thrift Connection with the uri %s", THRIFT_CONNECTION_URI);
-      Logger.log(responseMessage);
+      logger.log(responseMessage);
       failedEvents.add(responseMessage);
       return createResponse(successfulTableNames, failedEvents);
     }
 
     for (SQSEvent.SQSMessage record : event.getRecords()) {
       try {
-        Logger.log("Processing Event: " + record.getBody());
+        logger.log("Processing Event: " + record.getBody());
         HiveMetastoreEvent hiveMetastoreEvent =
             objectMapper.readValue(record.getBody(), HiveMetastoreEvent.class);
         privilegesGrantor.grantSelectPrivileges(
             hiveMetastoreEvent.getDbName(), hiveMetastoreEvent.getTableName());
         successfulTableNames.add(hiveMetastoreEvent.getTableName());
       } catch (HiveClientException | IOException e) {
-        Logger.log("Exception occurred: " + e.toString());
+        logger.log("Exception occurred: " + e.toString());
         failedEvents.add(record.getBody());
       }
     }

@@ -16,7 +16,7 @@
 package com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core;
 
 public enum Grantor {
-  ADMIN("admin");
+  APIARY_PRIVILEGE_GRANTOR("apiary-privilege-grantor");
 
   private final String grantor;
 

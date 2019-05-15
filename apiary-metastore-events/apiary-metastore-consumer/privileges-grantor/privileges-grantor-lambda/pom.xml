@@ -14,12 +14,6 @@
     <packaging>jar</packaging>
 
     <properties>
-        <project.sourceEncoding>UTF-8</project.sourceEncoding>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-        <mavenPlugin.version>3.8.0</mavenPlugin.version>
-
         <!-- AWS SDK for Lambda -->
         <awsLambdaSdk.version>1.11.390</awsLambdaSdk.version>
         <awsLambdaCore.version>1.2.0</awsLambdaCore.version>
@@ -28,9 +22,6 @@
         <!--Test -->
         <powermock.version>1.7.4</powermock.version>
         <powermockApiMockito.version>1.7.4</powermockApiMockito.version>
-
-        <!-- Plugins -->
-        <mavenSurefire.version>2.22.0</mavenSurefire.version>
     </properties>
 
     <dependencies>
@@ -83,11 +74,6 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${mavenPlugin.version}</version>
-            </plugin>
-            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
@@ -104,11 +90,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${mavenSurefire.version}</version>
-            </plugin>
         </plugins>
     </build>
+
 </project>

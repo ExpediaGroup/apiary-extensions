@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Added
 - `apiary-metastore-consumer` submodule of `apiary-metastore-events`
 - `metastore-consumer-common` module that contains a common metastore consumers classes
-- `prvileges-grantor-core` module that grants Select Privilege on a table
+- `privileges-grantor-core` module that grants Select Privilege on a table
 - `privileges-grantor-lambda` module that triggers `privileges-grantor-core` logic
 
 ## [4.0.0] - 2019-05-08

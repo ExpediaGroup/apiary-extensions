@@ -1,14 +1,9 @@
 # Overview
 
-`apiary-hive-consumers` provides implementation of features that are relying on the Hive Metastore events.
-  
- Each of the consumers consists of:
-  - SQS Queue (retrieves/filters messages from SNS)
-  - SQS Queue Consumer (i.e. Lambda or EC2 instance)
-  - Feature Logic (i.e. Privileges Grantor)
-
+Consumers receive and process Hive Metastore event messages published by the `apiary-metastore-listener`. Each of the consumers has its own SQS Queue. SQS Queue subscribes to relevant events from an SNS topic.
+ 
 ## Supported Apiary Hive Consumers
 
-|ConsumerName|Connection to SQS| Subscribed Event Types | Description
+|Consumer Name|Connection to SQS| Subscribed Event Types | Description
 |----|----|----|----
 |PrivilegesGrantor|Lambda|CREATE_TABLE|Grants Public Role Privileges to a newly created table 

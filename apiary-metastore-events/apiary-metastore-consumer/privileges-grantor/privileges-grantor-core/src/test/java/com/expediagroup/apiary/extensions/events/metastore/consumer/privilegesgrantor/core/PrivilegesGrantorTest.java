@@ -39,7 +39,7 @@ import static org.junit.Assert.assertFalse;
 
 public class PrivilegesGrantorTest {
 
-  private PrivilegesGrantor HiveClient;
+  private PrivilegesGrantor privilegesGrantor;
   private static final String DB_NAME = "foo_db";
   private static final String TABLE_NAME = "bar_table";
 
@@ -49,7 +49,7 @@ public class PrivilegesGrantorTest {
   @Before
   public void setUp() throws Exception {
     String connectionURL = hive.getThriftConnectionUri();
-    HiveClient = new PrivilegesGrantor(new ThriftHiveClient(connectionURL));
+    privilegesGrantor = new PrivilegesGrantor(new ThriftHiveClient(connectionURL));
     createPartitionedTable(DB_NAME, TABLE_NAME);
   }
 
@@ -61,14 +61,14 @@ public class PrivilegesGrantorTest {
 
     assertEquals(0, hiveObjectPrivilegeList.size());
 
-    HiveClient.grantSelectPrivileges(DB_NAME, TABLE_NAME);
+    privilegesGrantor.grantSelectPrivileges(DB_NAME, TABLE_NAME);
 
     hiveObjectPrivilegeList =
         hive.client().list_privileges(PrincipalName.PUBLIC.toString(), PrincipalType.ROLE, getHiveObjectRef());
     assertEquals(1, hiveObjectPrivilegeList.size());
     HiveObjectPrivilege hiveObjectPrivilege = hiveObjectPrivilegeList.get(0);
     assertEquals(Privilege.SELECT.toString(), hiveObjectPrivilege.getGrantInfo().getPrivilege());
-    assertEquals(Grantor.ADMIN.toString(), hiveObjectPrivilege.getGrantInfo().getGrantor());
+    assertEquals(Grantor.APIARY_PRIVILEGE_GRANTOR.toString(), hiveObjectPrivilege.getGrantInfo().getGrantor());
     assertEquals(false, hiveObjectPrivilege.getGrantInfo().isGrantOption());
     assertEquals(PrincipalType.ROLE, hiveObjectPrivilege.getGrantInfo().getGrantorType());
     assertEquals(PrincipalType.ROLE, hiveObjectPrivilege.getPrincipalType());
@@ -77,13 +77,13 @@ public class PrivilegesGrantorTest {
   @Test
   public void testPrivilegeNotGranted() throws Exception {
     createPartitionedTable(DB_NAME, TABLE_NAME);
-    assertFalse(HiveClient.isSelectPrivilegeGranted(DB_NAME, DB_NAME));
+    assertFalse(privilegesGrantor.isSelectPrivilegeGranted(DB_NAME, DB_NAME));
   }
 
   @Test
   public void testPrivilegeGranted() {
-    HiveClient.grantSelectPrivileges(DB_NAME, TABLE_NAME);
-    assertTrue(HiveClient.isSelectPrivilegeGranted(DB_NAME, TABLE_NAME));
+    privilegesGrantor.grantSelectPrivileges(DB_NAME, TABLE_NAME);
+    assertTrue(privilegesGrantor.isSelectPrivilegeGranted(DB_NAME, TABLE_NAME));
   }
 
   @Test(expected = HiveClientException.class)
@@ -93,7 +93,7 @@ public class PrivilegesGrantorTest {
 
   @Test(expected = HiveClientException.class)
   public void testAddingPrivilegesFailure() {
-    HiveClient.grantSelectPrivileges(DB_NAME,null);
+    privilegesGrantor.grantSelectPrivileges(DB_NAME,null);
   }
 
   private HiveObjectRef getHiveObjectRef() {
