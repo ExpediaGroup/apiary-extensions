@@ -5,14 +5,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## TBD
 ### Added
-- `apiary-metastore-consumers` submodule of `apiary-metastore-events`
-- `metastore-consumer-common` module that contains a common metastore consumers classes
-- `privileges-grantor-core` module that grants Select Privilege on a table
-- `privileges-grantor-lambda` module that triggers `privileges-grantor-core` logic
+- `apiary-metastore-consumers` submodule of `apiary-metastore-events`.
+- `metastore-consumer-common` module that contains a common metastore consumers classes.
+- `privileges-grantor-core` module that grants Select Privilege on a table.
+- `privileges-grantor-lambda` module that triggers `privileges-grantor-core` logic.
 
 ## [4.0.0] - 2019-05-08
 ### Added
 - `apiary-metastore-events` module and moved `apiary-metastore-listener` and `apiary-receivers` into this.
+
 ### Changed
 - `apiary-metastore-listener` and `apiary-receivers` package paths renamed from `com.expediagroup.apiary.extensions` to `com.expediagroup.apiary.extensions.events` (if you refer to these classes by fully qualified name downstream you will need to update these references before upgrading to this version).
 
