@@ -3,12 +3,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## TBD
+## 4.1.0 - TBD
 ### Added
-- `apiary-metastore-consumers` submodule of `apiary-metastore-events`.
-- `metastore-consumer-common` module that contains a common metastore consumers classes.
-- `privileges-grantor-core` module that grants Select Privilege on a table.
-- `privileges-grantor-lambda` module that triggers `privileges-grantor-core` logic.
+- `apiary-metastore-consumers` sub-module of `apiary-metastore-events`.
+- `metastore-consumer-common` module that contains common metastore consumer classes.
+- `privileges-grantor-core` module that grants "SELECT" privileges on a table.
+- `privileges-grantor-lambda` module that triggers `privileges-grantor-core` logic from an AWS Lambda.
 
 ## [4.0.0] - 2019-05-08
 ### Added

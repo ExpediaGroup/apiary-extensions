@@ -4,9 +4,9 @@
 Apiary Metastore Events contains a set of modules responsible for retrieving and processing Hive Metastore events.
 
 Currently, the following modules are defined:
- - [apiary-metastore-listener](apiary-metastore-listener) - listens to events from the Hive Metastore and publishes them to an SNS queue
- - [apiary-receivers](apiary-receivers) - common logic to simplify receiving and deserialising Hive Metastore event messages published by the 'apiary-metastore-listener'
- - [apiary-metastore-consumer](apiary-metastore-consumer) - consumers that receive and process Hive Metastore event messages published by the 'apiary-metastore-listener'
+ - [apiary-metastore-listener](apiary-metastore-listener) - listens to events from the Hive Metastore and publishes them to an SNS topic.
+ - [apiary-receivers](apiary-receivers) - common logic to simplify receiving and deserialising Hive Metastore event messages published by the `apiary-metastore-listener`.
+ - [apiary-metastore-consumers](apiary-metastore-consumers) - consumers that receive and process Hive Metastore event messages published by the `apiary-metastore-listener`.
   
 The architecture below represents the flow of processing Hive Metastore events:
 

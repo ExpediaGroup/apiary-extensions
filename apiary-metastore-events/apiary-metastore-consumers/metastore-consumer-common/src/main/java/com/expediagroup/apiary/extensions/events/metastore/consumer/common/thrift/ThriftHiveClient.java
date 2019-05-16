@@ -41,11 +41,10 @@ public class ThriftHiveClient {
         hiveConf.setVar(
             HiveConf.ConfVars.METASTORE_CLIENT_SOCKET_TIMEOUT, hiveMetastoreClientSocketTimeout);
       }
-      hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, hiveMetaStoreUris);
 
       this.client = new HiveMetaStoreClient(hiveConf);
     } catch (Exception e) {
-      throw new HiveClientException("Error creating hive metastore client", e);
+      throw new HiveClientException("Error creating Hive metastore client", e);
     }
   }
 

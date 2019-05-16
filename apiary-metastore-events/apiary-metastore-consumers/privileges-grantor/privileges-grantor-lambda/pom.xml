@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.expediagroup.apiary</groupId>
         <artifactId>apiary-privileges-grantor-parent</artifactId>
-        <version>4.0.1-SNAPSHOT</version>
+        <version>4.1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>apiary-privileges-grantor-lambda</artifactId>
@@ -15,11 +15,8 @@
     <properties>
         <!-- AWS SDK for Lambda -->
         <aws-java-sdk-lambda.version>1.11.390</aws-java-sdk-lambda.version>
-        <aws-lambda-java-cor.version>1.2.0</aws-lambda-java-cor.version>
+        <aws-lambda-java-core.version>1.2.0</aws-lambda-java-core.version>
         <aws-lambda-java-events.version>2.2.6</aws-lambda-java-events.version>
-
-        <!--Test -->
-        <powermock.version>1.7.4</powermock.version>
     </properties>
 
     <dependencies>
@@ -36,7 +33,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
-            <version>${aws-lambda-java-cor.version}</version>
+            <version>${aws-lambda-java-core.version}</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -48,18 +45,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <version>${powermock.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito</artifactId>
-            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
