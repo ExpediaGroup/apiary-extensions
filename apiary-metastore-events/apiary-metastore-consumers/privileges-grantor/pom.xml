@@ -3,10 +3,16 @@
 
     <parent>
         <groupId>com.expediagroup.apiary</groupId>
-        <artifactId>apiary-hive-consumers-parent</artifactId>
+        <artifactId>apiary-metastore-consumers-parent</artifactId>
         <version>4.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>metastore-consumer-common</artifactId>
+    <artifactId>apiary-privileges-grantor-parent</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>privileges-grantor-core</module>
+        <module>privileges-grantor-lambda</module>
+    </modules>
 
 </project>

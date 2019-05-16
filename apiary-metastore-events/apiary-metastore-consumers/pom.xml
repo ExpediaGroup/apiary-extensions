@@ -7,7 +7,7 @@
         <version>4.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>apiary-hive-consumers-parent</artifactId>
+    <artifactId>apiary-metastore-consumers-parent</artifactId>
     <packaging>pom</packaging>
 
     <modules>

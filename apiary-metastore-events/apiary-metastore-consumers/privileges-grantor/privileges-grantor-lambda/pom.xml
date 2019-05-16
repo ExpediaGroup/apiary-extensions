@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>apiary-privileges-grantor-parent</artifactId>
         <groupId>com.expediagroup.apiary</groupId>
+        <artifactId>apiary-privileges-grantor-parent</artifactId>
         <version>4.0.1-SNAPSHOT</version>
     </parent>
 
@@ -14,13 +14,12 @@
 
     <properties>
         <!-- AWS SDK for Lambda -->
-        <awsLambdaSdk.version>1.11.390</awsLambdaSdk.version>
-        <awsLambdaCore.version>1.2.0</awsLambdaCore.version>
-        <awsLambdaEvents.version>2.2.6</awsLambdaEvents.version>
+        <aws-java-sdk-lambda.version>1.11.390</aws-java-sdk-lambda.version>
+        <aws-lambda-java-cor.version>1.2.0</aws-lambda-java-cor.version>
+        <aws-lambda-java-events.version>2.2.6</aws-lambda-java-events.version>
 
         <!--Test -->
         <powermock.version>1.7.4</powermock.version>
-        <powermockApiMockito.version>1.7.4</powermockApiMockito.version>
     </properties>
 
     <dependencies>
@@ -32,17 +31,17 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-lambda</artifactId>
-            <version>${awsLambdaSdk.version}</version>
+            <version>${aws-java-sdk-lambda.version}</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
-            <version>${awsLambdaCore.version}</version>
+            <version>${aws-lambda-java-cor.version}</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-events</artifactId>
-            <version>${awsLambdaEvents.version}</version>
+            <version>${aws-lambda-java-events.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
@@ -60,7 +59,7 @@
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito</artifactId>
-            <version>${powermockApiMockito.version}</version>
+            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
