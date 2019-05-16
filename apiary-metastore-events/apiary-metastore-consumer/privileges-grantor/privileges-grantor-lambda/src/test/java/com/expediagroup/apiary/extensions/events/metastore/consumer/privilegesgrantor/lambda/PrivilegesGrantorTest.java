@@ -16,8 +16,8 @@
 package com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.lambda;
 
 
-import com.expediagroup.apiary.extensions.events.hive.consumer.common.exception.HiveClientException;
-import com.expediagroup.apiary.extensions.events.hive.consumer.common.thrift.ThriftHiveClient;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClient;
 import com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core.Grantor;
 import com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core.PrincipalName;
 import com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core.Privilege;

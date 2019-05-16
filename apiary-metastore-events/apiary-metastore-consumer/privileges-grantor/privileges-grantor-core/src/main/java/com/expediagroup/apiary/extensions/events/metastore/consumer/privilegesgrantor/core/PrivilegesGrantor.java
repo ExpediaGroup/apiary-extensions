@@ -16,8 +16,8 @@
 package com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core;
 
 
-import com.expediagroup.apiary.extensions.events.hive.consumer.common.exception.HiveClientException;
-import com.expediagroup.apiary.extensions.events.hive.consumer.common.thrift.ThriftHiveClient;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClient;
 import java.util.logging.Logger;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.HiveObjectPrivilege;

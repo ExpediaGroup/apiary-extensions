@@ -15,8 +15,8 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core;
 
-import com.expediagroup.apiary.extensions.events.hive.consumer.common.exception.HiveClientException;
-import com.expediagroup.apiary.extensions.events.hive.consumer.common.thrift.ThriftHiveClient;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClient;
 import com.hotels.beeju.ThriftHiveMetaStoreJUnitRule;
 import java.util.Arrays;
 import java.util.List;

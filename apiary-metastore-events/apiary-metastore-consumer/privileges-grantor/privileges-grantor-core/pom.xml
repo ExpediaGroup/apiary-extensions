@@ -12,15 +12,10 @@
 
     <artifactId>apiary-privileges-grantor-core</artifactId>
 
-    <properties>
-        <!-- Plugins -->
-        <mavenSurefire.version>2.22.0</mavenSurefire.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.expediagroup.apiary</groupId>
-            <artifactId>apiary-hive-consumer-common</artifactId>
+            <artifactId>metastore-consumer-common</artifactId>
             <version>${project.version}</version>
         </dependency>
 
