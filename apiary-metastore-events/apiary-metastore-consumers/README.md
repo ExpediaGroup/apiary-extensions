@@ -1,6 +1,6 @@
 # Overview
 
-Consumers receive and process Hive Metastore event messages published by the `apiary-metastore-listener`. Each of the consumers has its own SQS Queue which subscribes to relevant events from a SNS topic.
+Consumers receive and process Hive Metastore event messages published by the `apiary-metastore-listener`. Each of the consumers has its own SQS Queue which subscribes to relevant events from an SNS topic.
  
 ## Supported Apiary Hive Consumers
 
