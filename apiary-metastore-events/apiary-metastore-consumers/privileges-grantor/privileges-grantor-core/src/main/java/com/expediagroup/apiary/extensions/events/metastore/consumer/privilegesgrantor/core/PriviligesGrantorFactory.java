@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception;
+package com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core;
 
-/**
- * An exception class representing runtime exceptions thrown by Hive Clients.
- */
-public class HiveClientException extends RuntimeException {
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 
-  private static final long serialVersionUID = 1L;
+public class PriviligesGrantorFactory {
 
-  public HiveClientException(String message) {
-    super(message);
+  public PrivilegesGrantor newInstance(IMetaStoreClient metaStoreClient) {
+    return new PrivilegesGrantor(metaStoreClient);
   }
 
-  public HiveClientException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

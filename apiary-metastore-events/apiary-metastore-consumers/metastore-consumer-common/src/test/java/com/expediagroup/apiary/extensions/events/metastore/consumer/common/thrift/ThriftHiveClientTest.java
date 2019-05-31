@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception;
+package com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift;
 
-/**
- * An exception class representing runtime exceptions thrown by Hive Clients.
- */
-public class HiveClientException extends RuntimeException {
+import org.junit.Test;
 
-  private static final long serialVersionUID = 1L;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
 
-  public HiveClientException(String message) {
-    super(message);
+public class ThriftHiveClientTest {
+
+  @Test(expected = HiveClientException.class)
+  public void testConstructorFailure() {
+    new ThriftHiveClient("BOOOOOM").getMetaStoreClient();
   }
 
-  public HiveClientException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

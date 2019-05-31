@@ -15,20 +15,31 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.lambda;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.http.HttpStatus;
+
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
-import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
-import com.expediagroup.apiary.extensions.events.metastore.consumer.common.model.HiveMetastoreEvent;
-import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClient;
-import com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core.PrivilegesGrantor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.http.HttpStatus;
+import com.google.common.annotations.VisibleForTesting;
+
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClient;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClientFactory;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core.PrivilegesGrantor;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core.PriviligesGrantorFactory;
+import com.expediagroup.apiary.extensions.events.receiver.common.error.SerDeException;
+import com.expediagroup.apiary.extensions.events.receiver.common.event.AlterTableEvent;
+import com.expediagroup.apiary.extensions.events.receiver.common.event.EventType;
+import com.expediagroup.apiary.extensions.events.receiver.common.event.ListenerEvent;
+import com.expediagroup.apiary.extensions.events.receiver.common.messaging.JsonMetaStoreEventDeserializer;
+import com.expediagroup.apiary.extensions.events.receiver.common.messaging.MetaStoreEventDeserializer;
 
 /**
  * Consumes events from the SQS queue and grants Public privileges to a table.
@@ -38,52 +49,92 @@ public class PrivilegesGrantorLambda implements RequestHandler<SQSEvent, Respons
   private static final String THRIFT_CONNECTION_URI = System.getenv("THRIFT_CONNECTION_URI");
   private static final String THRIFT_CONNECTION_TIMEOUT = "20000";
   private LambdaLogger logger;
+  private final PriviligesGrantorFactory priviligesGrantorFactory;
+  private final ThriftHiveClientFactory thriftHiveClientFactory;
+
+  public PrivilegesGrantorLambda() {
+    this(new PriviligesGrantorFactory(), new ThriftHiveClientFactory());
+  }
+
+  @VisibleForTesting
+  PrivilegesGrantorLambda(
+      PriviligesGrantorFactory priviligesGrantorFactory,
+      ThriftHiveClientFactory thriftHiveClientFactory) {
+    this.priviligesGrantorFactory = priviligesGrantorFactory;
+    this.thriftHiveClientFactory = thriftHiveClientFactory;
+  }
 
   @Override
   public Response handleRequest(SQSEvent event, Context context) {
     logger = context.getLogger();
-
     List<String> failedEvents = new ArrayList<>();
     List<String> successfulTableNames = new ArrayList<>();
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-    PrivilegesGrantor privilegesGrantor;
-
+    IMetaStoreClient metaStoreClient = null;
     try {
-      privilegesGrantor = new PrivilegesGrantor(new ThriftHiveClient(THRIFT_CONNECTION_URI, THRIFT_CONNECTION_TIMEOUT));
+      ThriftHiveClient thriftHiveClient = thriftHiveClientFactory
+          .newInstance(THRIFT_CONNECTION_URI, THRIFT_CONNECTION_TIMEOUT);
+      metaStoreClient = thriftHiveClient.getMetaStoreClient();
+      PrivilegesGrantor privilegesGrantor = priviligesGrantorFactory.newInstance(metaStoreClient);
+      MetaStoreEventDeserializer metaStoreEventDeserializer = newMetaStoreEventDeserializer();
+      for (SQSEvent.SQSMessage record : event.getRecords()) {
+        handleRecord(failedEvents, successfulTableNames, privilegesGrantor, metaStoreEventDeserializer, record);
+      }
     } catch (HiveClientException e) {
-      String responseMessage = String.format("Unable to establish Thrift Connection with the uri %s", THRIFT_CONNECTION_URI);
+      String responseMessage = String
+          .format("Unable to establish Thrift Connection with the uri %s", THRIFT_CONNECTION_URI);
       logger.log(responseMessage);
       failedEvents.add(responseMessage);
       return createResponse(successfulTableNames, failedEvents);
-    }
-
-    for (SQSEvent.SQSMessage record : event.getRecords()) {
-      try {
-        logger.log("Processing Event: " + record.getBody());
-        HiveMetastoreEvent hiveMetastoreEvent =
-            objectMapper.readValue(record.getBody(), HiveMetastoreEvent.class);
-        privilegesGrantor.grantSelectPrivileges(
-            hiveMetastoreEvent.getDbName(), hiveMetastoreEvent.getTableName());
-        successfulTableNames.add(hiveMetastoreEvent.getTableName());
-      } catch (HiveClientException | IOException e) {
-        logger.log("Exception occurred: " + e.toString());
-        failedEvents.add(record.getBody());
+    } finally {
+      if (metaStoreClient != null) {
+        metaStoreClient.close();
       }
     }
-
     return createResponse(successfulTableNames, failedEvents);
   }
 
-  private Response createResponse(List<String> successfulTableNames, List<String> failedEvents) {
+  private void handleRecord(
+      List<String> failedEvents,
+      List<String> successfulTableNames,
+      PrivilegesGrantor privilegesGrantor,
+      MetaStoreEventDeserializer metaStoreEventDeserializer,
+      SQSEvent.SQSMessage record) {
+    try {
+      logger.log("Processing Event: " + record.getBody());
+      ListenerEvent listenerEvent = metaStoreEventDeserializer.unmarshal(record.getBody());
+      if (listenerEvent.getEventType() == EventType.CREATE_TABLE) {
+        privilegesGrantor.grantSelectPrivileges(listenerEvent.getDbName(), listenerEvent.getTableName());
+        successfulTableNames.add(listenerEvent.getTableName());
+      }
+      if (listenerEvent.getEventType() == EventType.ALTER_TABLE) {
+        AlterTableEvent alterTableEvent = (AlterTableEvent) listenerEvent;
+        if (!alterTableEvent.getTableName().equals(alterTableEvent.getOldTableName())) {
+          privilegesGrantor.grantSelectPrivileges(listenerEvent.getDbName(), listenerEvent.getTableName());
+          successfulTableNames.add(listenerEvent.getTableName());
+        }
+      }
+    } catch (HiveClientException | SerDeException e) {
+      logger.log("Exception occurred: " + e.toString());
+      failedEvents.add(record.getBody());
+    }
+  }
 
+  private MetaStoreEventDeserializer newMetaStoreEventDeserializer() {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    return new JsonMetaStoreEventDeserializer(objectMapper);
+  }
+
+  private Response createResponse(List<String> successfulTableNames, List<String> failedEvents) {
     Response response = new Response();
     StringBuffer description = new StringBuffer();
-
     if (failedEvents.isEmpty()) {
       description.append("Privileges granted successfully: " + successfulTableNames + "\n");
       response.setStatusCode(HttpStatus.SC_OK);
     } else {
+      if (!successfulTableNames.isEmpty()) {
+        description.append("Privileges granted successfully: " + successfulTableNames + "\n");
+      }
       description.append("Failed to grant privileges: " + failedEvents + "\n");
       response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
     }
