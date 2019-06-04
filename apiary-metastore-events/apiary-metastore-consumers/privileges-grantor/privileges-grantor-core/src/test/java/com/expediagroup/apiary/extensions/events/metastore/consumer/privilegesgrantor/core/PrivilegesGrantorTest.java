@@ -15,11 +15,14 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.core;
 
-import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
-import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClient;
-import com.hotels.beeju.ThriftHiveMetaStoreJUnitRule;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
+import static junit.framework.TestCase.assertTrue;
+
 import java.util.Arrays;
 import java.util.List;
+
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.HiveObjectPrivilege;
 import org.apache.hadoop.hive.metastore.api.HiveObjectRef;
@@ -33,9 +36,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClient;
+
+import com.hotels.beeju.ThriftHiveMetaStoreJUnitRule;
 
 public class PrivilegesGrantorTest {
 
@@ -49,22 +53,24 @@ public class PrivilegesGrantorTest {
   @Before
   public void setUp() throws Exception {
     String connectionURL = hive.getThriftConnectionUri();
-    privilegesGrantor = new PrivilegesGrantor(new ThriftHiveClient(connectionURL));
+    privilegesGrantor = new PrivilegesGrantor(new ThriftHiveClient(connectionURL).getMetaStoreClient());
     createPartitionedTable(DB_NAME, TABLE_NAME);
   }
 
   @Test
   public void testGrantSelectPrivilegesToPublic() throws TException {
 
-    List<HiveObjectPrivilege> hiveObjectPrivilegeList =
-        hive.client().list_privileges(PrincipalName.PUBLIC.toString(), PrincipalType.ROLE, getHiveObjectRef());
+    List<HiveObjectPrivilege> hiveObjectPrivilegeList = hive
+        .client()
+        .list_privileges(PrincipalName.PUBLIC.toString(), PrincipalType.ROLE, getHiveObjectRef());
 
     assertEquals(0, hiveObjectPrivilegeList.size());
 
     privilegesGrantor.grantSelectPrivileges(DB_NAME, TABLE_NAME);
 
-    hiveObjectPrivilegeList =
-        hive.client().list_privileges(PrincipalName.PUBLIC.toString(), PrincipalType.ROLE, getHiveObjectRef());
+    hiveObjectPrivilegeList = hive
+        .client()
+        .list_privileges(PrincipalName.PUBLIC.toString(), PrincipalType.ROLE, getHiveObjectRef());
     assertEquals(1, hiveObjectPrivilegeList.size());
     HiveObjectPrivilege hiveObjectPrivilege = hiveObjectPrivilegeList.get(0);
     assertEquals(Privilege.SELECT.toString(), hiveObjectPrivilege.getGrantInfo().getPrivilege());
@@ -87,13 +93,8 @@ public class PrivilegesGrantorTest {
   }
 
   @Test(expected = HiveClientException.class)
-  public void testConstructorFailure() {
-    new PrivilegesGrantor(new ThriftHiveClient("BOOOOOM"));
-  }
-
-  @Test(expected = HiveClientException.class)
   public void testAddingPrivilegesFailure() {
-    privilegesGrantor.grantSelectPrivileges(DB_NAME,null);
+    privilegesGrantor.grantSelectPrivileges(DB_NAME, null);
   }
 
   private HiveObjectRef getHiveObjectRef() {
@@ -114,18 +115,11 @@ public class PrivilegesGrantorTest {
     table.setDbName(databaseName);
     table.setTableName(tableName);
     table.setSd(new StorageDescriptor());
-    table
-        .getSd()
-        .setCols(
-            Arrays.asList(
-                new FieldSchema("value", "string", null)));
+    table.getSd().setCols(Arrays.asList(new FieldSchema("value", "string", null)));
     table.getSd().setInputFormat("org.apache.hadoop.mapred.TextInputFormat");
     table.getSd().setOutputFormat("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat");
     table.getSd().setSerdeInfo(new SerDeInfo());
-    table
-        .getSd()
-        .getSerdeInfo()
-        .setSerializationLib("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe");
+    table.getSd().getSerdeInfo().setSerializationLib("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe");
 
     hive.client().createTable(table);
 

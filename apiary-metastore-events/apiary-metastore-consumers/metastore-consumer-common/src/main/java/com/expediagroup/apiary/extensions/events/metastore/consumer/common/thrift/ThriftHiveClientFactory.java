@@ -13,28 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.consumer.common.model;
+package com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift;
 
-import java.io.Serializable;
+public class ThriftHiveClientFactory {
 
-public class HiveMetastoreEvent implements Serializable {
-
-  private String dbName;
-  private String tableName;
-
-  public String getDbName() {
-    return dbName;
+  public ThriftHiveClient newInstance(String thriftConnectionUri, String thriftConnectionTimeout) {
+    return new ThriftHiveClient(thriftConnectionUri, thriftConnectionTimeout);
   }
 
-  public void setDbName(String dbName) {
-    this.dbName = dbName;
-  }
-
-  public String getTableName() {
-    return tableName;
-  }
-
-  public void setTableName(String tableName) {
-    this.tableName = tableName;
-  }
 }

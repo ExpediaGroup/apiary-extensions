@@ -17,12 +17,19 @@
         <aws-java-sdk-lambda.version>1.11.390</aws-java-sdk-lambda.version>
         <aws-lambda-java-core.version>1.2.0</aws-lambda-java-core.version>
         <aws-lambda-java-events.version>2.2.6</aws-lambda-java-events.version>
+        <system-rules.version>1.19.0</system-rules.version>
+        <aws-serverless-java-container-core.version>1.3</aws-serverless-java-container-core.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.expediagroup.apiary</groupId>
             <artifactId>apiary-privileges-grantor-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.expediagroup.apiary</groupId>
+            <artifactId>apiary-receiver-common</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -51,6 +58,23 @@
             <groupId>com.hotels</groupId>
             <artifactId>beeju</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.mockito</groupId>
+          <artifactId>mockito-core</artifactId>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.github.stefanbirkner</groupId>
+          <artifactId>system-rules</artifactId>
+          <version>${system-rules.version}</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws.serverless</groupId>
+          <artifactId>aws-serverless-java-container-core</artifactId>
+          <version>${aws-serverless-java-container-core.version}</version>
+          <scope>test</scope>
         </dependency>
     </dependencies>
 
