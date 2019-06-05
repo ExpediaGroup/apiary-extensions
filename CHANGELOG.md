@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - `metastore-consumer-common` module that contains common metastore consumer classes.
 - `privileges-grantor-core` module that grants "SELECT" privileges on a table.
 - `privileges-grantor-lambda` module that triggers `privileges-grantor-core` logic from an AWS Lambda.
+- `apiary-extensions-terraform` module that contains terraform scripts for deploying `privileges-grantor-lambda`. This module will also be a placeholder for any future terraform scripts for `apiary-extensions`.
 
 ## [4.0.0] - 2019-05-08
 ### Added
