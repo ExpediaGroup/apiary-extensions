@@ -10,6 +10,7 @@ For more information please refer to the main [Apiary](https://github.com/Expedi
 |------|-------------|:----:|:-----:|:-----:|
 | instance\_name | Privilege Grantor instance name to identify resources in multi-instance deployments. | string | `""` | no |
 | memory | The amount of memory (in MiB) to be used by Lambda | string | `"512"` | no |
+| metastore\_events\_sns\_topic | SNS Topic for Hive Metastore events. | string | n/a | yes |
 | pg\_jars\_s3\_key | S3 key where zip file is located. | string | n/a | yes |
 | pg\_lambda\_bucket | Bucket where the Lambda zip can be found, for example 'bucket_name' (Note with s3://). Used together with `pg_jars_s3_key`. | string | n/a | yes |
 | pg\_lambda\_version | Version of the Privilege Grantor Lambda. | string | n/a | yes |
