@@ -72,6 +72,18 @@ resource "aws_iam_role_policy" "sqs_for_privilege_grantor" {
 EOF
 }
 
+resource "aws_sns_topic_subscription" "sqs_hive_metastore_sns_subscription" {
+  topic_arn = "${var.metastore_events_sns_topic}"
+  protocol  = "sqs"
+  endpoint  = "${aws_sqs_queue.privilege_grantor_sqs_queue.arn}"
+
+  filter_policy = <<EOF
+{
+   "eventType": ["CREATE_TABLE", "ALTER_TABLE"]
+}
+EOF
+}
+
 resource "aws_lambda_function" "privilege_grantor_fn" {
   s3_bucket     = "${var.pg_lambda_bucket}"
   s3_key        = "${var.pg_jars_s3_key}/apiary-privileges-grantor-lambda-${var.pg_lambda_version}.zip"
@@ -95,7 +107,7 @@ resource "aws_lambda_function" "privilege_grantor_fn" {
   }
 }
 
-resource "aws_lambda_event_source_mapping" "sqs_ecs_mapping" {
+resource "aws_lambda_event_source_mapping" "sqs_lambda_mapping" {
   batch_size       = 1
   event_source_arn = "${aws_sqs_queue.privilege_grantor_sqs_queue.arn}"
   function_name    = "${aws_lambda_function.privilege_grantor_fn.arn}"

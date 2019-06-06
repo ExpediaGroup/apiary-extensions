@@ -40,6 +40,11 @@ variable "pg_metastore_uri" {
   type        = "string"
 }
 
+variable "metastore_events_sns_topic" {
+  description = "SNS Topic for Hive Metastore events."
+  type        = "string"
+}
+
 # Tags
 variable "tags" {
   description = "A map of tags to apply to resources."
