@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
-import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClient;
 
 /**
  * Grants privileges to a table using Hive Metastore Thrift Client.
@@ -35,10 +34,10 @@ import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrif
 public class PrivilegesGrantor {
 
   private static final Logger log = LoggerFactory.getLogger(PrivilegesGrantor.class);
-  private IMetaStoreClient client;
+  private final IMetaStoreClient client;
 
-  public PrivilegesGrantor(ThriftHiveClient thriftHiveClient) {
-    this.client = thriftHiveClient.getMetaStoreClient();
+  public PrivilegesGrantor(IMetaStoreClient client) {
+    this.client = client;
   }
 
   /**
@@ -50,9 +49,7 @@ public class PrivilegesGrantor {
     log.info("Granting Public Select Privileges to the table: " + tableName);
     try {
       if (isSelectPrivilegeGranted(dbName, tableName)) {
-        log.info(
-            "Skipping Granting Public privileges, the privilege is already granted on the table: "
-                + tableName);
+        log.info("Skipping Granting Public privileges, the privilege is already granted on the table: " + tableName);
       } else {
         PrivilegeBag privilegeBag = new PrivilegeBag();
         privilegeBag.addToPrivileges(getPublicSelectPrivilege(dbName, tableName));
@@ -60,8 +57,7 @@ public class PrivilegesGrantor {
         log.info("Successfully granted Public Select Privileges to the table: " + tableName);
       }
     } catch (TException e) {
-      throw new HiveClientException(
-          ("Error Granting Public Select Privileges to the table: " + tableName), e);
+      throw new HiveClientException(("Error Granting Public Select Privileges to the table: " + tableName), e);
     }
   }
 
@@ -82,12 +78,9 @@ public class PrivilegesGrantor {
       return client
           .list_privileges(PrincipalName.PUBLIC.toString(), PrincipalType.ROLE, hiveObjectRef)
           .stream()
-          .anyMatch(
-              privilege ->
-                  privilege.getGrantInfo().getPrivilege().equals(Privilege.SELECT.toString()));
+          .anyMatch(privilege -> privilege.getGrantInfo().getPrivilege().equals(Privilege.SELECT.toString()));
     } catch (TException e) {
-      throw new HiveClientException(
-          ("Error checking if Select Privilege is granted on the table: " + tableName), e);
+      throw new HiveClientException(("Error checking if Select Privilege is granted on the table: " + tableName), e);
     }
   }
 
@@ -97,9 +90,8 @@ public class PrivilegesGrantor {
     hiveObjectRef.setObjectType(HiveObjectType.TABLE);
     hiveObjectRef.setObjectName(tableName);
 
-    PrivilegeGrantInfo privilegeGrantInfo =
-        new PrivilegeGrantInfo(
-            Privilege.SELECT.toString(), 0, Grantor.APIARY_PRIVILEGE_GRANTOR.toString(), PrincipalType.ROLE, false);
+    PrivilegeGrantInfo privilegeGrantInfo = new PrivilegeGrantInfo(Privilege.SELECT.toString(), 0,
+        Grantor.APIARY_PRIVILEGE_GRANTOR.toString(), PrincipalType.ROLE, false);
 
     HiveObjectPrivilege hiveObjectPrivilege = new HiveObjectPrivilege();
     hiveObjectPrivilege.setHiveObject(hiveObjectRef);

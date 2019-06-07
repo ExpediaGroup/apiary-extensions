@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## 4.1.0 - TBD
 ### Added
+- `privileges-grantor-lambda` supports granting access to tables that were renamed.
 - `apiary-metastore-consumers` sub-module of `apiary-metastore-events`.
 - `metastore-consumer-common` module that contains common metastore consumer classes.
 - `privileges-grantor-core` module that grants "SELECT" privileges on a table.
