@@ -21,7 +21,7 @@ variable "security_groups" {
 }
 
 variable "pg_lambda_bucket" {
-  description = "Bucket where the Lambda zip can be found, for example 'bucket_name' (Note with s3://). Used together with `pg_jars_s3_key`."
+  description = "Bucket where the Lambda zip can be found, for example 'bucket_name'. Used together with `pg_jars_s3_key`."
   type        = "string"
 }
 
