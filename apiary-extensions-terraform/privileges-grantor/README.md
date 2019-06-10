@@ -8,15 +8,18 @@ For more information please refer to the main [Apiary](https://github.com/Expedi
 
 | Name | Description | Type | Default | Required |
 |------|-------------|:----:|:-----:|:-----:|
+| aws\_profile | AWS CLI profile name. | string | n/a | yes |
+| aws\_region | AWS region. | string | n/a | yes |
+| backend\_main\_subnets | Main VPC backend subnets. | list | `<list>` | no |
 | instance\_name | Privilege Grantor instance name to identify resources in multi-instance deployments. | string | `""` | no |
 | memory | The amount of memory (in MiB) to be used by Lambda | string | `"512"` | no |
+| metastore\_events\_filter | List of metastore event types to be added to SNS filter. Supported format: `<<EOD "CREATE_TABLE","ALTER_TABLE" EOD` | string | n/a | yes |
 | metastore\_events\_sns\_topic | SNS Topic for Hive Metastore events. | string | n/a | yes |
 | pg\_jars\_s3\_key | S3 key where zip file is located. | string | n/a | yes |
-| pg\_lambda\_bucket | Bucket where the Lambda zip can be found, for example 'bucket_name' (Note with s3://). Used together with `pg_jars_s3_key`. | string | n/a | yes |
-| pg\_lambda\_version | Version of the Privilege Grantor Lambda. | string | n/a | yes |
+| pg\_lambda\_bucket | Bucket where the Lambda zip can be found, for example 'bucket_name' (Note with s3://). Used together with pg_jars_s3_key. | string | n/a | yes |
+| pg\_lambda\_version | Version of the Privilege Grantor Lambda | string | n/a | yes |
 | pg\_metastore\_uri | Thrift URI of the metastore to which Lambda will connect to. | string | n/a | yes |
-| security\_groups | Security groups in which Lambda will have access to. | list | n/a | yes |
-| subnets | Subnets in which Lambda will have access to. | list | n/a | yes |
+| security\_groups | Security groups in which Lambda will have access to. | list | `<list>` | no |
 | tags | A map of tags to apply to resources. | map | `<map>` | no |
 
 ## Usage

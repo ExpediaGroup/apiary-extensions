@@ -45,6 +45,11 @@ variable "metastore_events_sns_topic" {
   type        = "string"
 }
 
+variable "metastore_events_filter" {
+  description = "List of metastore event types to be added to SNS filter. Supported format: `<<EOD \"CREATE_TABLE\",\"ALTER_TABLE\" EOD`"
+  type        = "string"
+}
+
 # Tags
 variable "tags" {
   description = "A map of tags to apply to resources."

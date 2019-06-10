@@ -79,7 +79,7 @@ resource "aws_sns_topic_subscription" "sqs_hive_metastore_sns_subscription" {
 
   filter_policy = <<EOF
 {
-   "eventType": ["CREATE_TABLE", "ALTER_TABLE"]
+   "eventType": [${var.metastore_events_filter}]
 }
 EOF
 }
@@ -92,7 +92,7 @@ resource "aws_lambda_function" "privilege_grantor_fn" {
   handler       = "com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.lambda.PrivilegesGrantorLambda::handleRequest"
   runtime       = "java8"
   memory_size   = "${var.memory}"
-  timeout       = "15"
+  timeout       = "200"
   publish       = true
 
   environment {

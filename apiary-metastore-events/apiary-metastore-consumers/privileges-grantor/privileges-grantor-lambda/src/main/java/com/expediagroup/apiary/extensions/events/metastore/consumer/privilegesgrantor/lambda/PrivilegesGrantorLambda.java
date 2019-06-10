@@ -25,10 +25,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
-
 import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
 import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClient;
 import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClientFactory;
@@ -40,6 +36,9 @@ import com.expediagroup.apiary.extensions.events.receiver.common.event.EventType
 import com.expediagroup.apiary.extensions.events.receiver.common.event.ListenerEvent;
 import com.expediagroup.apiary.extensions.events.receiver.common.messaging.JsonMetaStoreEventDeserializer;
 import com.expediagroup.apiary.extensions.events.receiver.common.messaging.MetaStoreEventDeserializer;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Consumes events from the SQS queue and grants Public privileges to a table.
@@ -105,8 +104,7 @@ public class PrivilegesGrantorLambda implements RequestHandler<SQSEvent, Respons
       if (listenerEvent.getEventType() == EventType.CREATE_TABLE) {
         privilegesGrantor.grantSelectPrivileges(listenerEvent.getDbName(), listenerEvent.getTableName());
         successfulTableNames.add(listenerEvent.getTableName());
-      }
-      if (listenerEvent.getEventType() == EventType.ALTER_TABLE) {
+      } else if (listenerEvent.getEventType() == EventType.ALTER_TABLE) {
         AlterTableEvent alterTableEvent = (AlterTableEvent) listenerEvent;
         if (!alterTableEvent.getTableName().equals(alterTableEvent.getOldTableName())) {
           privilegesGrantor.grantSelectPrivileges(listenerEvent.getDbName(), listenerEvent.getTableName());
