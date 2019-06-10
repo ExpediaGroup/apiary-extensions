@@ -48,6 +48,7 @@ variable "metastore_events_sns_topic" {
 variable "metastore_events_filter" {
   description = "List of metastore event types to be added to SNS filter. Supported format: `<<EOD \"CREATE_TABLE\",\"ALTER_TABLE\" EOD`"
   type        = "string"
+  default     = "\"CREATE_TABLE\",\"ALTER_TABLE\""
 }
 
 # Tags
@@ -66,4 +67,10 @@ variable "memory" {
   description = "The amount of memory (in MiB) to be used by Lambda"
   type        = "string"
   default     = "512"
+}
+
+variable "lambda_timeout" {
+  description = "The time after which the lambda execution stops."
+  type        = "string"
+  default     = "200"
 }

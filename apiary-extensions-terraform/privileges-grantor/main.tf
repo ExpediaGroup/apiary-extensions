@@ -49,7 +49,8 @@ resource "aws_iam_role_policy_attachment" "privilege_grantor_role_policy_attach"
 }
 
 resource "aws_sqs_queue" "privilege_grantor_sqs_queue" {
-  name = "${local.instance_alias}-sqs-queue"
+  name                       = "${local.instance_alias}-sqs-queue"
+  visibility_timeout_seconds = "${var.lambda_timeout}"
 }
 
 resource "aws_iam_role_policy" "sqs_for_privilege_grantor" {
@@ -92,7 +93,7 @@ resource "aws_lambda_function" "privilege_grantor_fn" {
   handler       = "com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.lambda.PrivilegesGrantorLambda::handleRequest"
   runtime       = "java8"
   memory_size   = "${var.memory}"
-  timeout       = "200"
+  timeout       = "${var.lambda_timeout}"
   publish       = true
 
   environment {
