@@ -4,9 +4,9 @@ A bunch of useful extensions to Apiary. These optional extensions can be seamles
 
 More details about each extension can be found in their respective README files.
 
-## Deployment
+# Deployment
 
-Easy to deploy terraform modules for these extensions can be found in [Apiary-extensions-terraform](https://github.com/ExpediaGroup/apiary-extensions-terraform).
+Easy to deploy terraform modules for these extensions are available in [Apiary-extensions-terraform](https://github.com/ExpediaGroup/apiary-extensions-terraform).
 
 For more information about Apiary, please refer to the main [Apiary](https://github.com/ExpediaGroup/apiary) project page.
 
