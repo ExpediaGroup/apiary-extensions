@@ -1,6 +1,6 @@
 # Overview
 
-A bunch of useful extensions to Apiary. These optional extensions can be seamlessly integrated with Apiary components.
+A collection of useful extensions to Apiary. These optional extensions can be seamlessly integrated with Apiary components.
 
 More details about each extension can be found in their respective README files.
 
