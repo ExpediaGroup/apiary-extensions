@@ -1,7 +1,14 @@
-
 # Overview
 
-For more information please refer to the main [Apiary](https://github.com/ExpediaGroup/apiary) project page.
+A collection of useful extensions to Apiary. These optional extensions can be seamlessly integrated with Apiary components.
+
+More details about each extension can be found in their respective README files.
+
+# Deployment
+
+Easy to deploy terraform modules for these extensions are available in [Apiary-extensions-terraform](https://github.com/ExpediaGroup/apiary-extensions-terraform).
+
+For more information about Apiary, please refer to the main [Apiary](https://github.com/ExpediaGroup/apiary) project page.
 
 # Contact
 
