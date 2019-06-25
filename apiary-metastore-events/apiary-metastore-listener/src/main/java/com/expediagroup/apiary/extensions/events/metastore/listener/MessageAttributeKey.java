@@ -17,7 +17,9 @@ package com.expediagroup.apiary.extensions.events.metastore.listener;
 
 public enum MessageAttributeKey {
 
-  EVENT_TYPE("eventType");
+  EVENT_TYPE("eventType"),
+  DB_NAME("dbName"),
+  TABLE_NAME("tableName");
 
   private final String attribute;
 
