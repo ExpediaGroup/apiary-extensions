@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - `metastore-consumer-common` module that contains common metastore consumer classes.
 - `privileges-grantor-core` module that grants "SELECT" privileges on a table.
 - `privileges-grantor-lambda` module that triggers `privileges-grantor-core` logic from an AWS Lambda.
+- `DbName` and `TableName` as additional message attributes for SNS.
 
 ## [4.0.0] - 2019-05-08
 ### Added
