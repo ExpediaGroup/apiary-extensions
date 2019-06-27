@@ -135,14 +135,13 @@ public class ApiarySnsListenerTest {
     snsListener.onCreateTable(event);
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
-    assertThat(publishRequest.getMessage(),
-        is("{\"protocolVersion\":\""
-            + PROTOCOL_VERSION
-            + "\",\"eventType\":\""
-            + EventType.CREATE_TABLE.toString()
-            + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"}}"));
+    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
+        + PROTOCOL_VERSION
+        + "\",\"eventType\":\""
+        + EventType.CREATE_TABLE.toString()
+        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"}}"));
 
-    verifyMessageAttributes(publishRequest,  EventType.CREATE_TABLE.toString());
+    verifyMessageAttributes(publishRequest, EventType.CREATE_TABLE.toString(), "some_db", "some_table");
   }
 
   @Test
@@ -191,11 +190,12 @@ public class ApiarySnsListenerTest {
     snsListener.onCreateTable(event);
     verify(snsClient).publish(requestCaptor.capture());
     PublishRequest publishRequest = requestCaptor.getValue();
-    assertThat(publishRequest.getMessage(), is("{\"protocolVersion\":\""
-        + PROTOCOL_VERSION
-        + "\",\"eventType\":\""
-        + EventType.CREATE_TABLE.toString()
-        + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\"}"));
+    assertThat(publishRequest.getMessage(),
+        is("{\"protocolVersion\":\""
+            + PROTOCOL_VERSION
+            + "\",\"eventType\":\""
+            + EventType.CREATE_TABLE.toString()
+            + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\"}"));
   }
 
   @Test
@@ -268,7 +268,7 @@ public class ApiarySnsListenerTest {
         + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"files\":[\"file:/a/b.txt\",\"file:/a/c.txt\"],"
         + "\"fileChecksums\":[\"123\",\"456\"],\"partitionKeyValues\":{\"load_date\":\"2013-03-24\",\"variant_code\":\"EN\"}}"));
 
-    verifyMessageAttributes(publishRequest, EventType.INSERT.toString());
+    verifyMessageAttributes(publishRequest, EventType.INSERT.toString(), "some_db", "some_table");
   }
 
   @Test
@@ -295,7 +295,7 @@ public class ApiarySnsListenerTest {
         + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"},"
         + "\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
 
-    verifyMessageAttributes(publishRequest, EventType.ADD_PARTITION.toString() );
+    verifyMessageAttributes(publishRequest, EventType.ADD_PARTITION.toString(), "some_db", "some_table");
   }
 
   @Test
@@ -321,7 +321,7 @@ public class ApiarySnsListenerTest {
         + EventType.DROP_PARTITION.toString()
         + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"},\"partitionKeys\":{\"column_1\":\"string\",\"column_2\":\"int\",\"column_3\":\"string\"},\"partitionValues\":[\"value_1\",\"1000\",\"value_2\"],\"partitionLocation\":\"s3://table_location/partition_location=2\"}"));
 
-    verifyMessageAttributes(publishRequest,  EventType.DROP_PARTITION.toString());
+    verifyMessageAttributes(publishRequest, EventType.DROP_PARTITION.toString(), "some_db", "some_table");
   }
 
   @Test
@@ -340,7 +340,7 @@ public class ApiarySnsListenerTest {
         + EventType.DROP_TABLE.toString()
         + "\",\"dbName\":\"some_db\",\"tableName\":\"some_table\",\"tableLocation\":\"s3://table_location\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"}}"));
 
-    verifyMessageAttributes(publishRequest,  EventType.DROP_TABLE.toString());
+    verifyMessageAttributes(publishRequest, EventType.DROP_TABLE.toString(), "some_db", "some_table");
   }
 
   @Test
@@ -415,14 +415,27 @@ public class ApiarySnsListenerTest {
         + "\",\"eventType\":\""
         + EventType.ALTER_TABLE.toString()
         + "\",\"dbName\":\"some_db\",\"tableName\":\"new_some_table\",\"tableLocation\":\"s3://table_location_1\",\"tableParameters\":{\"MY_VAR_TWO\":\"5\",\"MY_VAR_ONE\":\"true\"},\"oldTableName\":\"some_table\",\"oldTableLocation\":\"s3://table_location\"}"));
-    verifyMessageAttributes(publishRequest,  EventType.ALTER_TABLE.toString());
+    verifyMessageAttributes(publishRequest, EventType.ALTER_TABLE.toString(), "some_db", "new_some_table");
   }
 
-  private void verifyMessageAttributes(PublishRequest publishRequest, String eventType) {
+  private void verifyMessageAttributes(
+      PublishRequest publishRequest,
+      String eventType,
+      String dbName,
+      String tableName) {
     Map<String, MessageAttributeValue> messageAttributes = publishRequest.getMessageAttributes();
-    assertThat(messageAttributes.size(), is(1));
+    assertThat(messageAttributes.size(), is(3));
     assertThat(messageAttributes.get(MessageAttributeKey.EVENT_TYPE.toString()).getStringValue(), is(eventType));
-    assertThat(messageAttributes.get(MessageAttributeKey.EVENT_TYPE.toString()).getDataType(), is(MessageAttributeDataType.STRING.toString()));
+    assertThat(messageAttributes.get(MessageAttributeKey.DB_NAME.toString()).getStringValue(), is(dbName));
+    assertThat(messageAttributes.get(MessageAttributeKey.TABLE_NAME.toString()).getStringValue(), is(tableName));
+
+    assertThat(messageAttributes.get(MessageAttributeKey.EVENT_TYPE.toString()).getDataType(),
+        is(MessageAttributeDataType.STRING.toString()));
+    assertThat(messageAttributes.get(MessageAttributeKey.DB_NAME.toString()).getDataType(),
+        is(MessageAttributeDataType.STRING.toString()));
+    assertThat(messageAttributes.get(MessageAttributeKey.TABLE_NAME.toString()).getDataType(),
+        is(MessageAttributeDataType.STRING.toString()));
+
   }
 
   private StorageDescriptor createStorageDescriptor(List<FieldSchema> partitionKeys, String tableLocation) {

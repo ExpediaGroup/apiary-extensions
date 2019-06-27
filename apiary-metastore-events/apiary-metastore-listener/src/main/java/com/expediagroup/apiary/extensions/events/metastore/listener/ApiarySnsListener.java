@@ -188,7 +188,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
       json.put("oldPartitionLocation", oldpartition.getSd().getLocation());
     }
 
-    sendMessage(json, getMessageAttributes(eventType));
+    sendMessage(json, getMessageAttributes(eventType, table.getDbName(), table.getTableName()));
   }
 
   private void publishInsertEvent(
@@ -207,14 +207,30 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     JSONObject partitionKeyValuesObject = new JSONObject(partitionKeyValues);
     json.put("partitionKeyValues", partitionKeyValuesObject);
 
-    sendMessage(json, getMessageAttributes(eventType));
+    sendMessage(json, getMessageAttributes(eventType, dbName, tableName));
   }
 
-  private Map<String, MessageAttributeValue> getMessageAttributes(EventType eventType) {
+  private Map<String, MessageAttributeValue> getMessageAttributes(
+      EventType eventType,
+      String dbName,
+      String tableName) {
     Map<String, MessageAttributeValue> map = new HashMap<>();
-    map.put(MessageAttributeKey.EVENT_TYPE.toString(), new MessageAttributeValue()
-        .withStringValue(eventType.toString())
-        .withDataType(MessageAttributeDataType.STRING.toString()));
+    map
+        .put(MessageAttributeKey.EVENT_TYPE.toString(),
+            new MessageAttributeValue()
+                .withStringValue(eventType.toString())
+                .withDataType(MessageAttributeDataType.STRING.toString()));
+    map
+        .put(MessageAttributeKey.DB_NAME.toString(),
+            new MessageAttributeValue()
+                .withStringValue(dbName.toString())
+                .withDataType(MessageAttributeDataType.STRING.toString()));
+    map
+        .put(MessageAttributeKey.TABLE_NAME.toString(),
+            new MessageAttributeValue()
+                .withStringValue(tableName.toString())
+                .withDataType(MessageAttributeDataType.STRING.toString()));
+
     return map;
   }
 
