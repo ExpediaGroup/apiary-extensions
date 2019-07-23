@@ -1,0 +1,12 @@
+language: java
+jdk:
+  - openjdk8
+os:
+  - linux
+cache:
+  directories:
+    - ~/.m2/repository
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true --quiet --batch-mode --show-version --activate-profiles travis
+script:
+  - mvn package --batch-mode --show-version --activate-profiles travis
