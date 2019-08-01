@@ -83,13 +83,13 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
     plugin = new RangerBasePlugin("hive", "metastore");
     plugin.init();
     plugin.setResultProcessor(new RangerDefaultAuditHandler());
-    log.debug("ApiaryRangerAuthPreEventListener created");
+    log.info("ApiaryRangerAuthPreEventListener created");
   }
 
   public ApiaryRangerAuthPreEventListener(Configuration config, RangerBasePlugin plugin) throws HiveException {
     super(config);
     this.plugin = plugin;
-    log.debug("ApiaryRangerAuthPreEventListener created");
+    log.info("ApiaryRangerAuthPreEventListener created");
   }
 
   @Override
@@ -229,5 +229,4 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
     }
 
   }
-
 }
