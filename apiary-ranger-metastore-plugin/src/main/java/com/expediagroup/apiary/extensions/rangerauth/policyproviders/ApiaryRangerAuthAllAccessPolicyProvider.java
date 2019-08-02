@@ -17,6 +17,7 @@ package com.expediagroup.apiary.extensions.rangerauth.policyproviders;
 
 import com.expediagroup.apiary.extensions.rangerauth.listener.ApiaryRangerAuthPreEventListener;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import org.apache.ranger.admin.client.RangerAdminClient;
 import org.apache.ranger.admin.client.RangerAdminRESTClient;
 import org.apache.ranger.plugin.model.RangerPolicy;
@@ -37,19 +38,18 @@ import java.util.Map;
 /**
  * Class to return a list of Ranger authorization policies that permits all access.  If this is configured in
  * ranger-hive-security.xml in the "ranger.plugin.hive.policy.source.impl" property, Ranger will allow all actions.
- * <p>
+ * <p></p>
  * The intent of this class is to only configure it on the Apiary read-only metastore so that Ranger auditing can still
  * be used without Ranger authorization policies.  We have to do it this way, because Ranger auditing is down in the
  * guts of the policy evaluation code, so there isn't a cleaner way to audit without policies that I can find.
  */
-
 public class ApiaryRangerAuthAllAccessPolicyProvider implements RangerAdminClient {
   @VisibleForTesting
   static final List<String> ACCESS_NAMES =
-      Arrays.asList("select", "update", "create", "drop", "alter", "index", "lock", "all", "read", "write");
+      ImmutableList.of("select", "update", "create", "drop", "alter", "index", "lock", "all", "read", "write");
 
   @VisibleForTesting
-  static final List<String> POLICY_RESOURCES = Arrays.asList("database", "column", "table");
+  static final List<String> POLICY_RESOURCES = ImmutableList.of("database", "column", "table");
 
   @VisibleForTesting
   static final String ALL_USERS_GROUP = "public";
@@ -57,17 +57,16 @@ public class ApiaryRangerAuthAllAccessPolicyProvider implements RangerAdminClien
   private static final Logger log = LoggerFactory.getLogger(ApiaryRangerAuthPreEventListener.class);
 
   private ServicePolicies servicePolicies;
-  private RangerAdminRESTClient rangerAdminRESTClient;
+  private RangerAdminClient rangerAdminClient;
 
 
   public ApiaryRangerAuthAllAccessPolicyProvider() {
-    log.info("Creating instance of ApiaryRangerAuthAllAccessPolicyProvider for Apiary read-only metastore");
-    this.rangerAdminRESTClient = new RangerAdminRESTClient();
+    this(new RangerAdminRESTClient());
   }
 
-  public ApiaryRangerAuthAllAccessPolicyProvider(RangerAdminRESTClient rangerAdminRESTClient) {
-    log.info("Creating instance of ApiaryRangerAuthAllAccessPolicyProvider for Apiary read-only metastore");
-    this.rangerAdminRESTClient = rangerAdminRESTClient;
+  public ApiaryRangerAuthAllAccessPolicyProvider(RangerAdminClient rangerAdminClient) {
+    log.debug("Creating instance of ApiaryRangerAuthAllAccessPolicyProvider for Apiary read-only metastore");
+    this.rangerAdminClient = rangerAdminClient;
   }
 
   @Override
@@ -82,13 +81,13 @@ public class ApiaryRangerAuthAllAccessPolicyProvider implements RangerAdminClien
     policies.add(getPolicy(1L, serviceName, POLICY_RESOURCES));
     servicePolicies.setPolicies(policies);
 
-    rangerAdminRESTClient.init(serviceName, appId, configPropertyPrefix);
-    log.info("Successfully initialized ApiaryRangerAuthAllAccessPolicyProvider");
+    rangerAdminClient.init(serviceName, appId, configPropertyPrefix);
+    log.debug("Successfully initialized ApiaryRangerAuthAllAccessPolicyProvider");
   }
 
   @Override
   public ServicePolicies getServicePoliciesIfUpdated(long lastKnownVersion, long lastActivationTimeInMillis) throws Exception {
-    ServicePolicies realServicePolicies = rangerAdminRESTClient.getServicePoliciesIfUpdated(lastKnownVersion, lastActivationTimeInMillis);
+    ServicePolicies realServicePolicies = rangerAdminClient.getServicePoliciesIfUpdated(lastKnownVersion, lastActivationTimeInMillis);
 
     // Use the real Service Definition from Ranger Admin in our hardcoded policies so our policies match the real service def.
     servicePolicies.setServiceDef(realServicePolicies.getServiceDef());
@@ -145,7 +144,7 @@ public class ApiaryRangerAuthAllAccessPolicyProvider implements RangerAdminClien
       accesses.add(new RangerPolicy.RangerPolicyItemAccess(accessName, true));
     }
     policyItem.setAccesses(accesses);
-    policyItem.setGroups(Arrays.asList(ALL_USERS_GROUP));
+    policyItem.setGroups(ImmutableList.of(ALL_USERS_GROUP));
     policyItem.setUsers(Collections.emptyList());
     policyItem.setConditions(Collections.emptyList());
     policyItem.setDelegateAdmin(false);
