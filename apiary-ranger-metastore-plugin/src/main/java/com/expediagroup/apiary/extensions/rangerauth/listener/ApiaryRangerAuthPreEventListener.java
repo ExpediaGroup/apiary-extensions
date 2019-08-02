@@ -15,7 +15,9 @@
  */
 package com.expediagroup.apiary.extensions.rangerauth.listener;
 
-import com.google.common.collect.Sets;
+import java.util.Date;
+import java.util.Set;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStorePreEventListener;
 import org.apache.hadoop.hive.metastore.api.Database;
@@ -48,8 +50,8 @@ import org.apache.ranger.plugin.policyengine.RangerAccessResult;
 import org.apache.ranger.plugin.service.RangerBasePlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Date;
-import java.util.Set;
+
+import com.google.common.collect.Sets;
 
 enum HiveAccessType {
   NONE,
@@ -227,4 +229,5 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
     }
 
   }
+
 }

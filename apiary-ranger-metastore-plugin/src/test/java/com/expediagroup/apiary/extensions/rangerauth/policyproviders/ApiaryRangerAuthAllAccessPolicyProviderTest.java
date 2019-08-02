@@ -55,7 +55,7 @@ public class ApiaryRangerAuthAllAccessPolicyProviderTest {
   private String configPropertyPrefix = "prefix";
 
   @Test
-  public void test_init() {
+  public void init() {
     ApiaryRangerAuthAllAccessPolicyProvider apiaryRangerAuthAllAccessPolicyProvider =
         new ApiaryRangerAuthAllAccessPolicyProvider(rangerAdminRESTClient);
 
@@ -75,7 +75,7 @@ public class ApiaryRangerAuthAllAccessPolicyProviderTest {
   }
 
   @Test
-  public void test_getServicePoliciesIfUpdated() throws Exception {
+  public void getServicePoliciesIfUpdated() throws Exception {
 
     RangerAdminClientImpl testImpl = new RangerAdminClientImpl();
     testImpl.init(serviceName, appId, "ranger.plugin.hive");
@@ -99,7 +99,7 @@ public class ApiaryRangerAuthAllAccessPolicyProviderTest {
   }
 
   @Test
-  public void test_pluginAllowsAllAccess() throws Exception {
+  public void pluginAllowsAllAccess() throws Exception {
     RangerAdminClientImpl testImpl = new RangerAdminClientImpl();
     testImpl.init(serviceName, appId, "ranger.plugin.hive");
     ServicePolicies jsonPolicies = testImpl.getServicePoliciesIfUpdated(1L, 1L);
