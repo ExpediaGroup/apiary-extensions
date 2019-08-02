@@ -5,8 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## 4.2.0 - TBD
 ### Added
-- `apiary-ranger-metastore-plugin` module has an `ApiaryRangerAuthAllAccessPolicyProvider` class that can be configured in ranger-hive-security.xml to allow for an audit-only Ranger pre-event listener. Intent is to configure it on the Apiary read-only HMS instances.
-
+- `apiary-ranger-metastore-plugin` module has an `ApiaryRangerAuthAllAccessPolicyProvider` class that can be configured in `ranger-hive-security.xml` to allow for an audit-only Ranger pre-event listener. Intent is to configure it on the Apiary read-only HMS instances.
 
 ## 4.1.0 - 2019-06-27
 ### Added
