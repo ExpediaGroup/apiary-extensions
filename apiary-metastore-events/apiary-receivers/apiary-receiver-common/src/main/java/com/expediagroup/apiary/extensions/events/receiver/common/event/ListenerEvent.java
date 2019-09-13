@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
-import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 
 public abstract class ListenerEvent implements Serializable {
   private static final long serialVersionUID = 1L;
@@ -34,11 +33,6 @@ public abstract class ListenerEvent implements Serializable {
    * Unmodifiable parameters in {@link ListenerEvent}
    */
   private final Map<String, String> tableParameters = new HashMap<>();
-
-  /**
-   * Properties passed by the client, to be used in execution hooks. EnvironmentContext in {@link ListenerEvent}
-   */
-  private EnvironmentContext environmentContext;
 
   protected ListenerEvent() {}
 
@@ -60,10 +54,6 @@ public abstract class ListenerEvent implements Serializable {
 
   public Map<String, String> getTableParameters() {
     return tableParameters;
-  }
-
-  public EnvironmentContext getEnvironmentContext() {
-    return environmentContext;
   }
 
   @Override
