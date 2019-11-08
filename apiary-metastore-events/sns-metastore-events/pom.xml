@@ -3,15 +3,17 @@
 
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
-    <artifactId>apiary-extensions-parent</artifactId>
+    <artifactId>apiary-metastore-events-parent</artifactId>
     <version>4.2.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>apiary-metastore-events-parent</artifactId>
+  <artifactId>sns-metastore-events-parent</artifactId>
   <packaging>pom</packaging>
 
   <modules>
-    <module>sns-metastore-events</module>
+    <module>apiary-metastore-listener</module>
+    <module>apiary-receivers</module>
+    <module>apiary-metastore-consumers</module>
   </modules>
 
 </project>

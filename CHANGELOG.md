@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## 5.0.0 - TBD
 ### Changed
 - Moved `apiary-gluesync-listener`, `apiary-metastore-auth` and `apiary-ranger-metastore-plugin` (all previously top-level modules) to be submodules under a new top-level module named `hive-metastore-events`.
+- Grouped `apiary-metastore-consumers`, `apiary-metastore-listener` and `apiary-receivers` (all previously submodules in `apiary-metastore-events`) in a new module named `sns-metastore-events`, itself a submodule of `apiary-metastore-events`.
 
 ## 4.2.0 - 2019-08-02
 ### Added

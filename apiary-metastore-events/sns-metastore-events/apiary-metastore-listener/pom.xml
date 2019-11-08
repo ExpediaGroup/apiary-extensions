@@ -3,7 +3,7 @@
 
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
-    <artifactId>apiary-metastore-events-parent</artifactId>
+    <artifactId>sns-metastore-events-parent</artifactId>
     <version>4.2.1-SNAPSHOT</version>
   </parent>
 
