@@ -3,7 +3,7 @@
 
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
-    <artifactId>apiary-extensions-parent</artifactId>
+    <artifactId>hive-metastore-events</artifactId>
     <version>4.2.1-SNAPSHOT</version>
   </parent>
 
