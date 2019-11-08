@@ -38,10 +38,8 @@
 
   <modules>
     <module>apiary-metastore-events</module>
-    <module>apiary-gluesync-listener</module>
-    <module>apiary-ranger-metastore-plugin</module>
     <module>apiary-metastore-metrics</module>
-    <module>apiary-metastore-auth</module>
+    <module>hive-metastore-events</module>
   </modules>
 
   <dependencyManagement>

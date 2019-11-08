@@ -22,3 +22,5 @@ target/
 # MAC stuff
 .DS_Store
 
+# Jenv file
+.java-version
