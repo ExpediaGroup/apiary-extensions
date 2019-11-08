@@ -1,7 +1,7 @@
 # Apiary GlueSync event listener
 
 ## Overview
-The GlueSync event listener is an optional Apiary component which, if enabled, will push metadata updates to AWS Glue catalog.
+The GlueSync event listener is an optional Apiary component which, if enabled, will push metadata updates to an AWS Glue catalog.
 
 ## Installation
 The listener can be activated by placing its jar file on the Hive metastore classpath and configuring Hive accordingly. For Apiary 
