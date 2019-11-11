@@ -13,8 +13,14 @@
     <dependencies>
         <dependency>
             <groupId>com.expediagroup.apiary</groupId>
-            <artifactId>kafka-serialized-events</artifactId>
+            <artifactId>kafka-events-common</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>${kafka.version}</version>
         </dependency>
     </dependencies>
 
