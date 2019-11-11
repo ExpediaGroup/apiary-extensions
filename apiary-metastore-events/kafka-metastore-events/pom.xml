@@ -3,16 +3,16 @@
 
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
-    <artifactId>apiary-extensions-parent</artifactId>
+    <artifactId>apiary-metastore-events-parent</artifactId>
     <version>4.2.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>apiary-metastore-events-parent</artifactId>
+  <artifactId>kafka-metastore-events-parent</artifactId>
   <packaging>pom</packaging>
 
   <modules>
-    <module>kafka-metastore-events</module>
-    <module>sns-metastore-events</module>
+    <module>kafka-metastore-listener</module>
+    <module>kafka-serialized-events</module>
   </modules>
 
 </project>
