@@ -9,4 +9,13 @@
 
     <artifactId>kafka-metastore-listener</artifactId>
 
+
+    <dependencies>
+        <dependency>
+            <groupId>com.expediagroup.apiary</groupId>
+            <artifactId>kafka-serialized-events</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
 </project>
