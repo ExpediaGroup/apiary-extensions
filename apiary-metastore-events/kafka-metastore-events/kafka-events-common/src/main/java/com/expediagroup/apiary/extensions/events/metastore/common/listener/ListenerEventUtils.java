@@ -18,8 +18,6 @@ package com.expediagroup.apiary.extensions.events.metastore.common.listener;
 import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
 
-//TODO MJ: candidate for deletion?
-
 public final class ListenerEventUtils {
 
   private ListenerEventUtils() {}
