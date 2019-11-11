@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.common.emitter;
+package com.expediagroup.apiary.extensions.events.metastore.common.listener;
 
-import static com.expediagroup.apiary.extensions.events.metastore.common.emitter.EmitterUtils.error;
-import static com.expediagroup.apiary.extensions.events.metastore.common.emitter.EmitterUtils.success;
+import static com.expediagroup.apiary.extensions.events.metastore.common.listener.ListenerUtils.error;
+import static com.expediagroup.apiary.extensions.events.metastore.common.listener.ListenerUtils.success;
 
 import java.util.Objects;
 

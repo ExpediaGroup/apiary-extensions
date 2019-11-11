@@ -17,7 +17,7 @@ package com.expediagroup.apiary.extensions.events.metastore.common.event;
 
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREURIS;
 
-import static com.hotels.shunting.yard.common.event.CustomEventParameters.HIVE_VERSION;
+import static com.expediagroup.apiary.extensions.events.metastore.common.event.CustomEventParameters.HIVE_VERSION;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;

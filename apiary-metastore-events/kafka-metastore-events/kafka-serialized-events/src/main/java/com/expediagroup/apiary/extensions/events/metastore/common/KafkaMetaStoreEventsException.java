@@ -15,18 +15,18 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.common;
 
-public class ShuntingYardException extends RuntimeException {
+public class KafkaMetaStoreEventsException extends RuntimeException {
   private static final long serialVersionUID = 1L;
 
-  public ShuntingYardException(String message) {
+  public KafkaMetaStoreEventsException(String message) {
     super(message);
   }
 
-  public ShuntingYardException(String message, Throwable cause) {
+  public KafkaMetaStoreEventsException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  public ShuntingYardException(Throwable cause) {
+  public KafkaMetaStoreEventsException(Throwable cause) {
     super(cause);
   }
 

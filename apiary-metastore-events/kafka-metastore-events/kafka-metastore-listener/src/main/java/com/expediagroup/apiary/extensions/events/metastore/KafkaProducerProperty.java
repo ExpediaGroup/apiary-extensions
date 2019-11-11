@@ -30,7 +30,7 @@ public enum KafkaProducerProperty implements Property {
   BUFFER_MEMORY("buffer.memory", 33554432L),
   SERDE_CLASS("serde.class", JsonMetaStoreEventSerDe.class.getName());
 
-  private static final String PROPERTY_PREFIX = "com.hotels.shunting.yard.event.emitter.kafka.";
+  private static final String PROPERTY_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.";
 
   private final String unPrefixedKey;
   private final Object defaultValue;

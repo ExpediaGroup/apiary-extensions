@@ -17,7 +17,7 @@ package com.expediagroup.apiary.extensions.events.metastore.common.io;
 
 import org.apache.hadoop.hive.metastore.api.MetaException;
 
-import com.expediagroup.apiary.extensions.events.metastore.common.ShuntingYardException;
+import com.expediagroup.apiary.extensions.events.metastore.common.KafkaMetaStoreEventsException;
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableListenerEvent;
 
 public interface MetaStoreEventSerDe {
@@ -27,7 +27,7 @@ public interface MetaStoreEventSerDe {
       Class<T> clazz = (Class<T>) Class.forName(className);
       return clazz.newInstance();
     } catch (Exception e) {
-      throw new ShuntingYardException("Unable to instantiate MetaStoreEventSerDe of class " + className, e);
+      throw new KafkaMetaStoreEventsException("Unable to instantiate MetaStoreEventSerDe of class " + className, e);
     }
   }
 

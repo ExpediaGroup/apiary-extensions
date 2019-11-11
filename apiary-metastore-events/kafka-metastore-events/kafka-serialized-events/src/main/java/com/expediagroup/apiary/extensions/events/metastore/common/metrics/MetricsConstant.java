@@ -17,11 +17,8 @@ package com.expediagroup.apiary.extensions.events.metastore.common.metrics;
 
 public final class MetricsConstant {
 
-  public static final String EMITTER_FAILURES = "shunting_yard_emitter_failures";
-  public static final String EMITTER_SUCCESSES = "shunting_yard_emitter_successes";
-
-  public static final String RECEIVER_FAILURES = "shunting_yard_receiver_failures";
-  public static final String RECEIVER_SUCCESSES = "shunting_yard_receiver_successes";
+  public static final String LISTENER_FAILURES = "kafka_listener_failures";
+  public static final String LISTENER_SUCCESSES = "kafka_listener_successes";
 
   private MetricsConstant() {}
 

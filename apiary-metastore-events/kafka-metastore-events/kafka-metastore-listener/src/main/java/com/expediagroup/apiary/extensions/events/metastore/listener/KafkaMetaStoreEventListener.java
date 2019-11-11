@@ -26,7 +26,7 @@ import org.apache.hadoop.conf.Configuration;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import com.expediagroup.apiary.extensions.events.metastore.common.emitter.AbstractMetaStoreEventListener;
+import com.expediagroup.apiary.extensions.events.metastore.common.listener.AbstractMetaStoreEventListener;
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableListenerEventFactory;
 import com.expediagroup.apiary.extensions.events.metastore.common.io.MetaStoreEventSerDe;
 import com.expediagroup.apiary.extensions.events.metastore.common.messaging.MessageTaskFactory;

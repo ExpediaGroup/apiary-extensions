@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.common.emitter;
+package com.expediagroup.apiary.extensions.events.metastore.common.listener;
 
 import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
+
+//TODO MJ: candidate for deletion?
 
 public final class ListenerEventUtils {
 

@@ -17,7 +17,7 @@ package com.expediagroup.apiary.extensions.events.metastore.common.messaging;
 
 import org.apache.hadoop.conf.Configuration;
 
-import com.expediagroup.apiary.extensions.events.metastore.common.ShuntingYardException;
+import com.expediagroup.apiary.extensions.events.metastore.common.KafkaMetaStoreEventsException;
 import com.expediagroup.apiary.extensions.events.metastore.common.io.MetaStoreEventSerDe;
 
 public interface MessageReaderFactory {
@@ -29,10 +29,10 @@ public interface MessageReaderFactory {
           .forName(messageReaderFactoryClassName);
       return clazz.newInstance();
     } catch (ClassCastException e) {
-      throw new ShuntingYardException(
+      throw new KafkaMetaStoreEventsException(
           "Class " + messageReaderFactoryClassName + " does not seem to be a MessageReaderFactory implementation", e);
     } catch (Exception e) {
-      throw new ShuntingYardException(
+      throw new KafkaMetaStoreEventsException(
           "Unable to instantiate a MessageReaderFactory of class " + messageReaderFactoryClassName, e);
     }
   }

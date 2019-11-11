@@ -15,9 +15,9 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.common.io;
 
-import com.expediagroup.apiary.extensions.events.metastore.common.ShuntingYardException;
+import com.expediagroup.apiary.extensions.events.metastore.common.KafkaMetaStoreEventsException;
 
-public class SerDeException extends ShuntingYardException {
+public class SerDeException extends KafkaMetaStoreEventsException {
   private static final long serialVersionUID = 1L;
 
   public SerDeException(String message) {

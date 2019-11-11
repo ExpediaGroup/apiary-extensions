@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.common.emitter;
+package com.expediagroup.apiary.extensions.events.metastore.common.listener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,19 +21,18 @@ import org.slf4j.LoggerFactory;
 import com.expediagroup.apiary.extensions.events.metastore.common.metrics.HiveMetricsHelper;
 import com.expediagroup.apiary.extensions.events.metastore.common.metrics.MetricsConstant;
 
-public final class EmitterUtils {
-  private static final Logger log = LoggerFactory.getLogger(EmitterUtils.class);
+public final class ListenerUtils {
+  private static final Logger log = LoggerFactory.getLogger(ListenerUtils.class);
 
-  private EmitterUtils() {}
+  private ListenerUtils() {}
 
   public static void success() {
-    HiveMetricsHelper.incrementCounter(MetricsConstant.EMITTER_SUCCESSES);
+    HiveMetricsHelper.incrementCounter(MetricsConstant.LISTENER_SUCCESSES);
   }
 
   public static void error(Exception e) {
-    // ERROR, ShuntingYard and Emitter are keywords
-    log.error("Error in ShuntingYard Emitter", e);
-    HiveMetricsHelper.incrementCounter(MetricsConstant.EMITTER_FAILURES);
+    log.error("Error in Kafka Listener", e);
+    HiveMetricsHelper.incrementCounter(MetricsConstant.LISTENER_FAILURES);
   }
 
 }
