@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.expediagroup.apiary.extensions.events.metastore.common.event.EventType;
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableListenerEvent;
 import com.expediagroup.apiary.extensions.events.metastore.common.io.MetaStoreEventSerDe;
+import com.expediagroup.apiary.extensions.events.metastore.common.io.SerDeException;
 
 public class JsonMetaStoreEventSerDe implements MetaStoreEventSerDe {
   private static final Logger log = LoggerFactory.getLogger(JsonMetaStoreEventSerDe.class);
@@ -60,7 +61,7 @@ public class JsonMetaStoreEventSerDe implements MetaStoreEventSerDe {
   }
 
   @Override
-  public byte[] marshal(SerializableListenerEvent listenerEvent) throws MetaException {
+  public byte[] marshal(SerializableListenerEvent listenerEvent) throws SerDeException {
     try {
       log.debug("Marshalling event: {}", listenerEvent);
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -71,14 +72,12 @@ public class JsonMetaStoreEventSerDe implements MetaStoreEventSerDe {
       }
       return bytes;
     } catch (IOException e) {
-      String message = "Unable to marshal event " + listenerEvent;
-      log.error(message, e);
-      throw new MetaException(message);
+      throw new SerDeException("Unable to marshal event " + listenerEvent);
     }
   }
 
   @Override
-  public <T extends SerializableListenerEvent> T unmarshal(byte[] payload) throws MetaException {
+  public <T extends SerializableListenerEvent> T unmarshal(byte[] payload) throws SerDeException {
     try {
       if (log.isDebugEnabled()) {
         log.debug("Marshalled event is: {}", new String(payload));
@@ -94,9 +93,7 @@ public class JsonMetaStoreEventSerDe implements MetaStoreEventSerDe {
       log.debug("Unmarshalled event is: {}", event);
       return event;
     } catch (Exception e) {
-      String message = "Unable to unmarshal event from payload";
-      log.error(message, e);
-      throw new MetaException(message);
+      throw new SerDeException("Unable to unmarshal event from payload");
     }
   }
 

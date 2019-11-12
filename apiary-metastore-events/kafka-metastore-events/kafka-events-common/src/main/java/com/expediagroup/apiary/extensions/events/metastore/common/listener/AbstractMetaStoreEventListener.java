@@ -59,7 +59,7 @@ public abstract class AbstractMetaStoreEventListener extends MetaStoreEventListe
       SerializableListenerEventFactory serializableListenerEventFactory,
       ExecutorService executorService) {
     super(config);
-    log.info("Creating MetaStoreEventListener of class {}", this.getClass().getName());
+    log.debug("Creating MetaStoreEventListener of class {}", this.getClass().getName());
     this.serializableListenerEventFactory = serializableListenerEventFactory;
     this.executorService = executorService;
   }
@@ -83,7 +83,7 @@ public abstract class AbstractMetaStoreEventListener extends MetaStoreEventListe
 
   @Override
   public void onCreateTable(CreateTableEvent tableEvent) throws MetaException {
-    log.info("Create table event received");
+    log.debug("Create table event received");
     try {
       executorService.submit(message(withPayload(serializableListenerEventFactory.create(tableEvent))));
     } catch (Exception e) {
@@ -93,7 +93,7 @@ public abstract class AbstractMetaStoreEventListener extends MetaStoreEventListe
 
   @Override
   public void onDropTable(DropTableEvent tableEvent) throws MetaException {
-    log.info("Drop table event received");
+    log.debug("Drop table event received");
     try {
       executorService.submit(message(withPayload(serializableListenerEventFactory.create(tableEvent))));
     } catch (Exception e) {
@@ -103,7 +103,7 @@ public abstract class AbstractMetaStoreEventListener extends MetaStoreEventListe
 
   @Override
   public void onAlterTable(AlterTableEvent tableEvent) throws MetaException {
-    log.info("Alter table event received");
+    log.debug("Alter table event received");
     try {
       executorService.submit(message(withPayload(serializableListenerEventFactory.create(tableEvent))));
     } catch (Exception e) {
@@ -113,7 +113,7 @@ public abstract class AbstractMetaStoreEventListener extends MetaStoreEventListe
 
   @Override
   public void onAddPartition(AddPartitionEvent partitionEvent) throws MetaException {
-    log.info("Add partition event received");
+    log.debug("Add partition event received");
     try {
       executorService.submit(message(withPayload(serializableListenerEventFactory.create(partitionEvent))));
     } catch (Exception e) {
@@ -123,7 +123,7 @@ public abstract class AbstractMetaStoreEventListener extends MetaStoreEventListe
 
   @Override
   public void onDropPartition(DropPartitionEvent partitionEvent) throws MetaException {
-    log.info("Drop partition event received");
+    log.debug("Drop partition event received");
     try {
       executorService.submit(message(withPayload(serializableListenerEventFactory.create(partitionEvent))));
     } catch (Exception e) {
@@ -133,7 +133,7 @@ public abstract class AbstractMetaStoreEventListener extends MetaStoreEventListe
 
   @Override
   public void onAlterPartition(AlterPartitionEvent partitionEvent) throws MetaException {
-    log.info("Alter partition event received");
+    log.debug("Alter partition event received");
     try {
       executorService.submit(message(withPayload(serializableListenerEventFactory.create(partitionEvent))));
     } catch (Exception e) {
@@ -143,7 +143,7 @@ public abstract class AbstractMetaStoreEventListener extends MetaStoreEventListe
 
   @Override
   public void onInsert(InsertEvent insertEvent) throws MetaException {
-    log.info("Insert event received");
+    log.debug("Insert event received");
     try {
       executorService.submit(message(withPayload(serializableListenerEventFactory.create(insertEvent))));
     } catch (Exception e) {

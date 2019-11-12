@@ -69,7 +69,7 @@ public class SerializableInsertEventTest {
 
   @Test
   public void keyValues() {
-    assertThat(event.getKeyValues()).isEqualTo(ImmutableMap.of(KEY, VALUE));
+    assertThat(event.getPartitionKeyValues()).isEqualTo(ImmutableMap.of(KEY, VALUE));
   }
 
   @Test

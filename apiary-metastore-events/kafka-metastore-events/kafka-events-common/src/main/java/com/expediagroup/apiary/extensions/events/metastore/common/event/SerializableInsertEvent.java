@@ -26,7 +26,7 @@ public class SerializableInsertEvent extends SerializableListenerEvent {
 
   private String databaseName;
   private String tableName;
-  private Map<String, String> keyValues;
+  private Map<String, String> partitionKeyValues;
   private List<String> files;
   private List<String> fileChecksums;
 
@@ -36,7 +36,7 @@ public class SerializableInsertEvent extends SerializableListenerEvent {
     super(event);
     databaseName = event.getDb();
     tableName = event.getTable();
-    keyValues = event.getPartitionKeyValues();
+    partitionKeyValues = event.getPartitionKeyValues();
     files = event.getFiles();
     fileChecksums = event.getFileChecksums();
   }
@@ -51,8 +51,8 @@ public class SerializableInsertEvent extends SerializableListenerEvent {
     return tableName;
   }
 
-  public Map<String, String> getKeyValues() {
-    return keyValues;
+  public Map<String, String> getPartitionKeyValues() {
+    return partitionKeyValues;
   }
 
   public List<String> getFiles() {
@@ -75,7 +75,7 @@ public class SerializableInsertEvent extends SerializableListenerEvent {
     return super.equals(other)
         && Objects.equals(databaseName, other.databaseName)
         && Objects.equals(tableName, other.tableName)
-        && Objects.equals(keyValues, other.keyValues)
+        && Objects.equals(partitionKeyValues, other.partitionKeyValues)
         && Objects.equals(files, other.files)
         && Objects.equals(fileChecksums, other.fileChecksums);
   }

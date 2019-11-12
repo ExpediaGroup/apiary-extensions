@@ -27,32 +27,29 @@ import org.slf4j.LoggerFactory;
 
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableListenerEvent;
 import com.expediagroup.apiary.extensions.events.metastore.common.io.MetaStoreEventSerDe;
+import com.expediagroup.apiary.extensions.events.metastore.common.io.SerDeException;
 
 public class JavaMetaStoreEventSerDe implements MetaStoreEventSerDe {
   private static final Logger log = LoggerFactory.getLogger(JavaMetaStoreEventSerDe.class);
 
   @Override
-  public byte[] marshal(SerializableListenerEvent listenerEvent) throws MetaException {
+  public byte[] marshal(SerializableListenerEvent listenerEvent) throws SerDeException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     try (ObjectOutputStream out = new ObjectOutputStream(buffer)) {
       out.writeObject(listenerEvent);
       return buffer.toByteArray();
     } catch (IOException e) {
-      String message = "Unable to serialize event " + listenerEvent;
-      log.error(message, e);
-      throw new MetaException(message);
+      throw new SerDeException("Unable to serialize event " + listenerEvent);
     }
   }
 
   @Override
-  public <T extends SerializableListenerEvent> T unmarshal(byte[] payload) throws MetaException {
+  public <T extends SerializableListenerEvent> T unmarshal(byte[] payload) throws SerDeException {
     ByteArrayInputStream buffer = new ByteArrayInputStream(payload);
     try (ObjectInputStream in = new ObjectInputStream(buffer)) {
       return (T) in.readObject();
     } catch (Exception e) {
-      String message = "Unable to deserialize event from payload";
-      log.error(message, e);
-      throw new MetaException(message);
+      throw new SerDeException("Unable to deserialize event from payload");
     }
   }
 

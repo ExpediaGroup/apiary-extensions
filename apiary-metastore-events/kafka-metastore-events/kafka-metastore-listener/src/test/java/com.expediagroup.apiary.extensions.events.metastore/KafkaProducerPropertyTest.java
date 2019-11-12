@@ -61,7 +61,7 @@ public class KafkaProducerPropertyTest {
   public void clientId() {
     assertThat(CLIENT_ID.unPrefixedKey()).isEqualTo("client.id");
     assertThat(CLIENT_ID.key()).isEqualTo(prefixedKey("client.id"));
-    assertThat(CLIENT_ID.defaultValue()).isEqualTo("CircusTrainEventDrivenEmitter");
+    assertThat(CLIENT_ID.defaultValue()).isEqualTo("ApiaryKafkaMetaStoreListener");
   }
 
   @Test
