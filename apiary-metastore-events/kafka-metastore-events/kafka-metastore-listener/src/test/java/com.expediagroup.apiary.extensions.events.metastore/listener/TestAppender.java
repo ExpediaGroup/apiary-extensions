@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.common.listener;
+package com.expediagroup.apiary.extensions.events.metastore.listener;
 
 import java.util.ArrayList;
 import java.util.List;

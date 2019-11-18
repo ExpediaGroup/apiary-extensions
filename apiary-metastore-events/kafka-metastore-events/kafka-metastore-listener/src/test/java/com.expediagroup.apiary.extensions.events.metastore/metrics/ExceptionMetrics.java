@@ -1,4 +1,4 @@
-package com.expediagroup.apiary.extensions.events.metastore.common.metrics;
+package com.expediagroup.apiary.extensions.events.metastore.metrics;
 
 import org.apache.hadoop.hive.common.metrics.metrics2.CodahaleMetrics;
 import org.apache.hadoop.hive.conf.HiveConf;

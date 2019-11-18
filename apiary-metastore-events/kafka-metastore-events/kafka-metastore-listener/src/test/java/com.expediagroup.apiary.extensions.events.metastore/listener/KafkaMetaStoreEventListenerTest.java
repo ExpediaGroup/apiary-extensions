@@ -16,13 +16,10 @@
 package com.expediagroup.apiary.extensions.events.metastore.listener;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.events.AddIndexEvent;
@@ -45,9 +42,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableAddPartitionEvent;
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableAlterPartitionEvent;
@@ -59,9 +54,7 @@ import com.expediagroup.apiary.extensions.events.metastore.common.event.Serializ
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableListenerEvent;
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableListenerEventFactory;
 import com.expediagroup.apiary.extensions.events.metastore.common.io.MetaStoreEventSerDe;
-import com.expediagroup.apiary.extensions.events.metastore.common.messaging.Message;
-import com.expediagroup.apiary.extensions.events.metastore.common.messaging.MessageTask;
-import com.expediagroup.apiary.extensions.events.metastore.common.messaging.MessageTaskFactory;
+import com.expediagroup.apiary.extensions.events.metastore.messaging.KafkaMessageSender;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KafkaMetaStoreEventListenerTest {
@@ -71,166 +64,155 @@ public class KafkaMetaStoreEventListenerTest {
   private static final byte[] PAYLOAD = "payload".getBytes();
 
   private @Mock MetaStoreEventSerDe eventSerDe;
-  private @Mock MessageTask messageTask;
-  private @Mock MessageTaskFactory messageTaskFactory;
   private @Mock SerializableListenerEventFactory serializableListenerEventFactory;
-  private @Mock ExecutorService executorService;
+  private @Mock KafkaMessageSender kafkaMessageSender;
 
   private final Configuration config = new Configuration();
   private KafkaMetaStoreEventListener listener;
 
   @Before
-  public void init() throws Exception {
+  public void init() {
     when(eventSerDe.marshal(any(SerializableListenerEvent.class))).thenReturn(PAYLOAD);
-    when(messageTaskFactory.newTask(any(Message.class))).thenReturn(messageTask);
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        ((Runnable) invocation.getArgument(0)).run();
-        return null;
-      }
-    }).when(executorService).submit(any(Runnable.class));
-    listener = new KafkaMetaStoreEventListener(config, serializableListenerEventFactory, eventSerDe, messageTaskFactory,
-        executorService);
+    listener = new KafkaMetaStoreEventListener(config, serializableListenerEventFactory, eventSerDe, kafkaMessageSender);
   }
 
   @Test
-  public void onCreateTable() throws Exception {
+  public void onCreateTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
     SerializableCreateTableEvent serializableEvent = mock(SerializableCreateTableEvent.class);
     when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onCreateTable(event);
-    verify(messageTask).run();
+    verify(kafkaMessageSender).send(any());
   }
 
   @Test
-  public void onAlterTable() throws Exception {
+  public void onAlterTable() {
     AlterTableEvent event = mock(AlterTableEvent.class);
     SerializableAlterTableEvent serializableEvent = mock(SerializableAlterTableEvent.class);
     when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onAlterTable(event);
-    verify(messageTask).run();
+    verify(kafkaMessageSender).send(any());
   }
 
   @Test
-  public void onDropTable() throws Exception {
+  public void onDropTable() {
     DropTableEvent event = mock(DropTableEvent.class);
     SerializableDropTableEvent serializableEvent = mock(SerializableDropTableEvent.class);
     when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onDropTable(event);
-    verify(messageTask).run();
+    verify(kafkaMessageSender).send(any());
   }
 
   @Test
-  public void onAddPartition() throws Exception {
+  public void onAddPartition() {
     AddPartitionEvent event = mock(AddPartitionEvent.class);
     SerializableAddPartitionEvent serializableEvent = mock(SerializableAddPartitionEvent.class);
     when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onAddPartition(event);
-    verify(messageTask).run();
+    verify(kafkaMessageSender).send(any());
   }
 
   @Test
-  public void onAlterPartition() throws Exception {
+  public void onAlterPartition() {
     AlterPartitionEvent event = mock(AlterPartitionEvent.class);
     SerializableAlterPartitionEvent serializableEvent = mock(SerializableAlterPartitionEvent.class);
     when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onAlterPartition(event);
-    verify(messageTask).run();
+    verify(kafkaMessageSender).send(any());
   }
 
   @Test
-  public void onDropPartition() throws Exception {
+  public void onDropPartition() {
     DropPartitionEvent event = mock(DropPartitionEvent.class);
     SerializableDropPartitionEvent serializableEvent = mock(SerializableDropPartitionEvent.class);
     when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onDropPartition(event);
-    verify(messageTask).run();
+    verify(kafkaMessageSender).send(any());
   }
 
   @Test
-  public void onInsert() throws Exception {
+  public void onInsert() {
     InsertEvent event = mock(InsertEvent.class);
     SerializableInsertEvent serializableEvent = mock(SerializableInsertEvent.class);
     when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onInsert(event);
-    verify(messageTask).run();
+    verify(kafkaMessageSender).send(any());
   }
 
   @Test
-  public void onConfigChange() throws Exception {
+  public void onConfigChange() {
     listener.onConfigChange(mock(ConfigChangeEvent.class));
-    verify(executorService, never()).submit(any(Runnable.class));
+    verify(kafkaMessageSender, never()).send(any());
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
-  public void onCreateDatabase() throws Exception {
+  public void onCreateDatabase() {
     listener.onCreateDatabase(mock(CreateDatabaseEvent.class));
-    verify(executorService, never()).submit(any(Runnable.class));
+    verify(kafkaMessageSender, never()).send(any());
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
-  public void onDropDatabase() throws Exception {
+  public void onDropDatabase() {
     listener.onDropDatabase(mock(DropDatabaseEvent.class));
-    verify(executorService, never()).submit(any(Runnable.class));
+    verify(kafkaMessageSender, never()).send(any());
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
-  public void onLoadPartitionDone() throws Exception {
+  public void onLoadPartitionDone() {
     listener.onLoadPartitionDone(mock(LoadPartitionDoneEvent.class));
-    verify(executorService, never()).submit(any(Runnable.class));
+    verify(kafkaMessageSender, never()).send(any());
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
-  public void onAddIndex() throws Exception {
+  public void onAddIndex() {
     listener.onAddIndex(mock(AddIndexEvent.class));
-    verify(executorService, never()).submit(any(Runnable.class));
+    verify(kafkaMessageSender, never()).send(any());
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
-  public void onDropIndex() throws Exception {
+  public void onDropIndex() {
     listener.onDropIndex(mock(DropIndexEvent.class));
-    verify(executorService, never()).submit(any(Runnable.class));
+    verify(kafkaMessageSender, never()).send(any());
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
-  public void onAlterIndex() throws Exception {
+  public void onAlterIndex() {
     listener.onAlterIndex(mock(AlterIndexEvent.class));
-    verify(executorService, never()).submit(any(Runnable.class));
+    verify(kafkaMessageSender, never()).send(any());
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
-  public void onCreateFunction() throws Exception {
+  public void onCreateFunction() {
     listener.onCreateFunction(mock(CreateFunctionEvent.class));
-    verify(executorService, never()).submit(any(Runnable.class));
+    verify(kafkaMessageSender, never()).send(any());
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
-  public void onDropFunction() throws Exception {
+  public void onDropFunction() {
     listener.onDropFunction(mock(DropFunctionEvent.class));
-    verify(executorService, never()).submit(any(Runnable.class));
+    verify(kafkaMessageSender, never()).send(any());
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 

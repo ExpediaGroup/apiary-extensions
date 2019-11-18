@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.common.listener;
+package com.expediagroup.apiary.extensions.events.metastore.listener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.expediagroup.apiary.extensions.events.metastore.common.metrics.HiveMetricsHelper;
-import com.expediagroup.apiary.extensions.events.metastore.common.metrics.MetricsConstant;
+import com.expediagroup.apiary.extensions.events.metastore.metrics.HiveMetricsHelper;
+import com.expediagroup.apiary.extensions.events.metastore.metrics.MetricsConstant;
 
 public final class ListenerUtils {
   private static final Logger log = LoggerFactory.getLogger(ListenerUtils.class);

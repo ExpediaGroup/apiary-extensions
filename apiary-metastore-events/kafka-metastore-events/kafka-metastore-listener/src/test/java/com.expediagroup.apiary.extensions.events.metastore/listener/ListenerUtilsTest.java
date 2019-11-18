@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.common.listener;
+package com.expediagroup.apiary.extensions.events.metastore.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,7 +29,7 @@ import org.junit.Test;
 
 import com.codahale.metrics.Counter;
 
-import com.expediagroup.apiary.extensions.events.metastore.common.metrics.MetricsConstant;
+import com.expediagroup.apiary.extensions.events.metastore.metrics.MetricsConstant;
 
 public class ListenerUtilsTest {
 

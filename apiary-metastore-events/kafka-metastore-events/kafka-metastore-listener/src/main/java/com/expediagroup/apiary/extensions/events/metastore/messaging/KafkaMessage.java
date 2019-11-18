@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.common.messaging;
+package com.expediagroup.apiary.extensions.events.metastore.messaging;
 
-public class Message {
+import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkEmpty;
+import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotNull;
+
+public class KafkaMessage {
 
   public static class Builder {
     private String database;
@@ -24,20 +27,6 @@ public class Message {
     private byte[] payload;
 
     private Builder() {}
-
-    private static String checkEmpty(String string, String message) {
-      if (string == null || string.trim().isEmpty()) {
-        throw new IllegalArgumentException(message);
-      }
-      return string.trim();
-    }
-
-    private static <T> T checkNull(T object, String message) {
-      if (object == null) {
-        throw new IllegalArgumentException(message);
-      }
-      return object;
-    }
 
     public Builder database(String database) {
       this.database = database;
@@ -59,10 +48,10 @@ public class Message {
       return this;
     }
 
-    public Message build() {
-      return new Message(checkEmpty(database, "Parameter 'database' is required"),
+    public KafkaMessage build() {
+      return new KafkaMessage(checkEmpty(database, "Parameter 'database' is required"),
           checkEmpty(table, "Parameter 'table' is required"), timestamp,
-          checkNull(payload, "Parameter 'payload' is required"));
+          checkNotNull(payload, "Parameter 'payload' is required"));
     }
   }
 
@@ -75,7 +64,7 @@ public class Message {
   private final long timestamp;
   private final byte[] payload;
 
-  private Message(String database, String table, long timestamp, byte[] payload) {
+  private KafkaMessage(String database, String table, long timestamp, byte[] payload) {
     this.database = database;
     this.table = table;
     this.timestamp = timestamp;

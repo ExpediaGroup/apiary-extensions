@@ -16,7 +16,6 @@
 package com.expediagroup.apiary.extensions.events.metastore.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 import static com.expediagroup.apiary.extensions.events.metastore.KafkaProducerProperty.ACKS;
 import static com.expediagroup.apiary.extensions.events.metastore.KafkaProducerProperty.BATCH_SIZE;
@@ -26,39 +25,23 @@ import static com.expediagroup.apiary.extensions.events.metastore.KafkaProducerP
 import static com.expediagroup.apiary.extensions.events.metastore.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
 import static com.expediagroup.apiary.extensions.events.metastore.KafkaProducerProperty.RETRIES;
 import static com.expediagroup.apiary.extensions.events.metastore.KafkaProducerProperty.TOPIC;
-import static com.expediagroup.apiary.extensions.events.metastore.messaging.KafkaMessageTaskFactory.kafkaProperties;
-import static com.expediagroup.apiary.extensions.events.metastore.messaging.KafkaMessageTaskFactory.topic;
+import static com.expediagroup.apiary.extensions.events.metastore.messaging.KafkaMessageSender.kafkaProperties;
+import static com.expediagroup.apiary.extensions.events.metastore.messaging.KafkaMessageSender.topic;
 
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.expediagroup.apiary.extensions.events.metastore.common.messaging.Message;
-import com.expediagroup.apiary.extensions.events.metastore.common.messaging.MessageTask;
-
 @RunWith(MockitoJUnitRunner.class)
-public class KafkaMessageTaskFactoryTest {
+public class KafkaMessageSenderTest {
 
   private static final String TOPIC_NAME = "topic";
-
-  private @Mock Message message;
-
   private final Configuration conf = new Configuration();
-
-  @Test
-  public void taskType() {
-    @SuppressWarnings("unchecked")
-    KafkaProducer<Long, byte[]> producer = mock(KafkaProducer.class);
-    MessageTask task = new KafkaMessageTaskFactory(TOPIC_NAME, producer).newTask(message);
-    assertThat(task).isInstanceOf(KafkaMessageTask.class);
-  }
 
   @Test
   public void populateKafkaProperties() {

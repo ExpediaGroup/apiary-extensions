@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.common.metrics;
+package com.expediagroup.apiary.extensions.events.metastore.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,8 +45,8 @@ public class HiveMetricsHelperTest {
 
   @Test
   public void metricsThrowsException() throws Exception {
-    conf.setVar(HiveConf.ConfVars.HIVE_METRICS_CLASS, "com.expediagroup.apiary.extensions.events.metastore.common"
-      + ".metrics.ExceptionMetrics");
+    conf.setVar(HiveConf.ConfVars.HIVE_METRICS_CLASS, "com.expediagroup.apiary.extensions.events.metastore.metrics."
+      + "ExceptionMetrics");
     MetricsFactory.init(conf);
     assertThat(HiveMetricsHelper.incrementCounter("name")).isNotPresent();
   }

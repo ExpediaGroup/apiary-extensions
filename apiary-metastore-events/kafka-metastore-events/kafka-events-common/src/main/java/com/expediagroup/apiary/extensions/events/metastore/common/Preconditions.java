@@ -19,6 +19,13 @@ public final class Preconditions {
 
   private Preconditions() {}
 
+  public static String checkEmpty(String string, String message) {
+    if (string == null || string.trim().isEmpty()) {
+      throw new IllegalArgumentException(message);
+    }
+    return string.trim();
+  }
+
   public static <T> T checkNotNull(T t, String message) {
     if (t == null) {
       throw new NullPointerException(message);

@@ -33,37 +33,34 @@ import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import com.expediagroup.apiary.extensions.events.metastore.common.messaging.Message;
-import com.expediagroup.apiary.extensions.events.metastore.common.messaging.MessageTask;
-import com.expediagroup.apiary.extensions.events.metastore.common.messaging.MessageTaskFactory;
-
 /**
- * A {@link MessageTaskFactory} that create a task to post message to a Kafka topic. Note that in order to preserve the
+ * Sends messages to a Kafka topic. Note that in order to preserve the
  * order of the events the topic must have only single partition.
  */
-public class KafkaMessageTaskFactory implements MessageTaskFactory {
+public class KafkaMessageSender {
 
   private final KafkaProducer<Long, byte[]> producer;
   private final String topic;
   private final int numberOfPartitions;
 
-  public KafkaMessageTaskFactory(Configuration conf) {
+  public KafkaMessageSender(Configuration conf) {
     this(topic(conf), new KafkaProducer<Long, byte[]>(kafkaProperties(conf)));
   }
 
   @VisibleForTesting
-  KafkaMessageTaskFactory(String topic, KafkaProducer<Long, byte[]> producer) {
+  KafkaMessageSender(String topic, KafkaProducer<Long, byte[]> producer) {
     this.producer = producer;
     this.topic = topic;
     numberOfPartitions = producer.partitionsFor(topic).size();
   }
 
-  @Override
-  public MessageTask newTask(Message message) {
-    return new KafkaMessageTask(producer, topic, numberOfPartitions, message);
+  public void send(KafkaMessage kafkaMessage) {
+    int partition = Math.abs(kafkaMessage.getQualifiedTableName().hashCode() % numberOfPartitions);
+    producer.send(new ProducerRecord<>(topic, partition, kafkaMessage.getTimestamp(), kafkaMessage.getPayload()));
   }
 
   @VisibleForTesting

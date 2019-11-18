@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.common.metrics;
+package com.expediagroup.apiary.extensions.events.metastore.metrics;
 
 import java.util.Optional;
 
