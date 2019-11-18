@@ -54,6 +54,7 @@ import com.expediagroup.apiary.extensions.events.metastore.common.event.Serializ
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableListenerEvent;
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableListenerEventFactory;
 import com.expediagroup.apiary.extensions.events.metastore.common.io.MetaStoreEventSerDe;
+import com.expediagroup.apiary.extensions.events.metastore.messaging.KafkaMessage;
 import com.expediagroup.apiary.extensions.events.metastore.messaging.KafkaMessageSender;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -84,7 +85,7 @@ public class KafkaMetaStoreEventListenerTest {
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onCreateTable(event);
-    verify(kafkaMessageSender).send(any());
+    verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
 
   @Test
@@ -95,7 +96,7 @@ public class KafkaMetaStoreEventListenerTest {
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onAlterTable(event);
-    verify(kafkaMessageSender).send(any());
+    verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
 
   @Test
@@ -106,7 +107,7 @@ public class KafkaMetaStoreEventListenerTest {
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onDropTable(event);
-    verify(kafkaMessageSender).send(any());
+    verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
 
   @Test
@@ -117,7 +118,7 @@ public class KafkaMetaStoreEventListenerTest {
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onAddPartition(event);
-    verify(kafkaMessageSender).send(any());
+    verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
 
   @Test
@@ -128,7 +129,7 @@ public class KafkaMetaStoreEventListenerTest {
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onAlterPartition(event);
-    verify(kafkaMessageSender).send(any());
+    verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
 
   @Test
@@ -139,7 +140,7 @@ public class KafkaMetaStoreEventListenerTest {
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onDropPartition(event);
-    verify(kafkaMessageSender).send(any());
+    verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
 
   @Test
@@ -150,69 +151,69 @@ public class KafkaMetaStoreEventListenerTest {
     when(serializableEvent.getTableName()).thenReturn(TABLE);
     when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
     listener.onInsert(event);
-    verify(kafkaMessageSender).send(any());
+    verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
 
   @Test
   public void onConfigChange() {
     listener.onConfigChange(mock(ConfigChangeEvent.class));
-    verify(kafkaMessageSender, never()).send(any());
+    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
   public void onCreateDatabase() {
     listener.onCreateDatabase(mock(CreateDatabaseEvent.class));
-    verify(kafkaMessageSender, never()).send(any());
+    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
   public void onDropDatabase() {
     listener.onDropDatabase(mock(DropDatabaseEvent.class));
-    verify(kafkaMessageSender, never()).send(any());
+    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
   public void onLoadPartitionDone() {
     listener.onLoadPartitionDone(mock(LoadPartitionDoneEvent.class));
-    verify(kafkaMessageSender, never()).send(any());
+    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
   public void onAddIndex() {
     listener.onAddIndex(mock(AddIndexEvent.class));
-    verify(kafkaMessageSender, never()).send(any());
+    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
   public void onDropIndex() {
     listener.onDropIndex(mock(DropIndexEvent.class));
-    verify(kafkaMessageSender, never()).send(any());
+    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
   public void onAlterIndex() {
     listener.onAlterIndex(mock(AlterIndexEvent.class));
-    verify(kafkaMessageSender, never()).send(any());
+    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
   public void onCreateFunction() {
     listener.onCreateFunction(mock(CreateFunctionEvent.class));
-    verify(kafkaMessageSender, never()).send(any());
+    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
   @Test
   public void onDropFunction() {
     listener.onDropFunction(mock(DropFunctionEvent.class));
-    verify(kafkaMessageSender, never()).send(any());
+    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
   }
 
