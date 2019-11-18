@@ -23,6 +23,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.SortedMap;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
@@ -348,9 +349,9 @@ public class AbstractMetaStoreEventListenerTest {
 
   private void verifyMetrics(String metricName) {
     CodahaleMetrics metrics = (CodahaleMetrics) MetricsFactory.getInstance();
-    Counter counter = metrics.getMetricRegistry()
-      .counter(metricName);
-    assertThat(counter.getCount()).isEqualTo(1L);
+    SortedMap<String, Counter> counters = metrics.getMetricRegistry().getCounters();
+    assertThat(counters).hasSize(1);
+    assertThat(counters.get(metricName).getCount()).isEqualTo(1);
   }
 
 }

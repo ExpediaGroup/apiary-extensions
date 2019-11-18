@@ -40,7 +40,6 @@ public class HiveMetricsHelperTest {
 
   @Test
   public void nullMetricsClass() {
-    conf.setVar(HiveConf.ConfVars.HIVE_METRICS_CLASS, "org.apache.hadoop.hive.common.metrics.nullMetrics");
     assertThat(HiveMetricsHelper.incrementCounter("name")).isNotPresent();
   }
 
