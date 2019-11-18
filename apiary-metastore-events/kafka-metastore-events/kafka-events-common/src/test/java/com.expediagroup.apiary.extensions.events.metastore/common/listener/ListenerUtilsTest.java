@@ -16,55 +16,56 @@
 package com.expediagroup.apiary.extensions.events.metastore.common.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-import org.apache.log4j.AppenderSkeleton;
+import java.util.List;
+
+import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
+import org.apache.hadoop.hive.common.metrics.metrics2.CodahaleMetrics;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import com.expediagroup.apiary.extensions.events.metastore.common.metrics.HiveMetricsHelper;
+import com.codahale.metrics.Counter;
+
 import com.expediagroup.apiary.extensions.events.metastore.common.metrics.MetricsConstant;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(HiveMetricsHelper.class)
 public class ListenerUtilsTest {
 
-  private @Mock AppenderSkeleton appender;
-  private @Captor ArgumentCaptor<LoggingEvent> logCaptor;
+  private TestAppender appender = new TestAppender();
+  private HiveConf conf = new HiveConf();
 
   @Before
-  public void init() {
-    mockStatic(HiveMetricsHelper.class);
+  public void init() throws Exception {
+    MetricsFactory.close();
+    MetricsFactory.init(conf);
+    Logger.getRootLogger().removeAllAppenders();
     Logger.getRootLogger().addAppender(appender);
+    appender.clear();
   }
 
   @Test
   public void success() {
     ListenerUtils.success();
-    verifyStatic(HiveMetricsHelper.class);
-    HiveMetricsHelper.incrementCounter(MetricsConstant.LISTENER_SUCCESSES);
+    CodahaleMetrics metrics = (CodahaleMetrics) MetricsFactory.getInstance();
+    Counter counter = metrics.getMetricRegistry()
+      .counter(MetricsConstant.LISTENER_SUCCESSES);
+    assertThat(counter.getCount()).isEqualTo(1L);
   }
 
   @Test
   public void error() {
     Exception e = new RuntimeException("ABC");
     ListenerUtils.error(e);
-    verifyStatic(HiveMetricsHelper.class);
-    HiveMetricsHelper.incrementCounter(MetricsConstant.LISTENER_FAILURES);
+    CodahaleMetrics metrics = (CodahaleMetrics) MetricsFactory.getInstance();
+    Counter counter = metrics.getMetricRegistry()
+      .counter(MetricsConstant.LISTENER_FAILURES);
+    assertThat(counter.getCount()).isEqualTo(1L);
     // We want to make sure these keywords are logged
-    verify(appender).doAppend(logCaptor.capture());
-    assertThat(logCaptor.getValue().getRenderedMessage()).startsWith("Error in Kafka Listener");
-    assertThat(logCaptor.getValue().getThrowableInformation().getThrowable()).isEqualTo(e);
+    List<LoggingEvent> events = appender.getEvents();
+    assertThat(events).hasSize(1);
+    assertThat(events).extracting("renderedMessage").containsExactly("Error in Kafka Listener");
   }
 
 }
