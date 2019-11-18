@@ -16,47 +16,39 @@
 package com.expediagroup.apiary.extensions.events.metastore.common.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
-import org.apache.hadoop.hive.common.metrics.common.Metrics;
 import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(MetricsFactory.class)
 public class HiveMetricsHelperTest {
 
-  private @Mock Metrics metrics;
+  private HiveConf conf = new HiveConf();
 
   @Before
-  public void init() throws Exception {
-    mockStatic(MetricsFactory.class);
+  public void setup() throws Exception {
+    MetricsFactory.close();
   }
 
   @Test
-  public void nullMetricsFactory() {
-    when(MetricsFactory.getInstance()).thenReturn(null);
+  public void incrementCounter() throws Exception {
+    conf.setVar(HiveConf.ConfVars.HIVE_METRICS_CLASS, "org.apache.hadoop.hive.common.metrics.metrics2.CodahaleMetrics");
+    MetricsFactory.init(conf);
+    assertThat(HiveMetricsHelper.incrementCounter("name")).get().isEqualTo(1L);
+  }
+
+  @Test
+  public void nullMetricsClass() {
     assertThat(HiveMetricsHelper.incrementCounter("name")).isNotPresent();
   }
 
   @Test
-  public void exceptionInIncrementCounter() {
-    when(MetricsFactory.getInstance()).thenReturn(metrics);
-    when(metrics.incrementCounter("name")).thenThrow(RuntimeException.class);
+  public void metricsThrowsException() throws Exception {
+    conf.setVar(HiveConf.ConfVars.HIVE_METRICS_CLASS, "com.expediagroup.apiary.extensions.events.metastore.common"
+      + ".metrics.ExceptionMetrics");
+    MetricsFactory.init(conf);
     assertThat(HiveMetricsHelper.incrementCounter("name")).isNotPresent();
-  }
-
-  @Test
-  public void incrementCounter() {
-    when(MetricsFactory.getInstance()).thenReturn(metrics);
-    when(metrics.incrementCounter("name")).thenReturn(123L);
-    assertThat(HiveMetricsHelper.incrementCounter("name")).get().isEqualTo(123L);
   }
 
 }

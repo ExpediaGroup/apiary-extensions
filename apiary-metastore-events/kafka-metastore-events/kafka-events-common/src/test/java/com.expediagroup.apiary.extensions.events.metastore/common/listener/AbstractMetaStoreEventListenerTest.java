@@ -22,12 +22,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
+import java.util.SortedMap;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
+import org.apache.hadoop.hive.common.metrics.metrics2.CodahaleMetrics;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.events.AddIndexEvent;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterIndexEvent;
@@ -50,8 +52,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import com.codahale.metrics.Counter;
 
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableAddPartitionEvent;
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableAlterPartitionEvent;
@@ -66,9 +69,9 @@ import com.expediagroup.apiary.extensions.events.metastore.common.io.MetaStoreEv
 import com.expediagroup.apiary.extensions.events.metastore.common.messaging.Message;
 import com.expediagroup.apiary.extensions.events.metastore.common.messaging.MessageTask;
 import com.expediagroup.apiary.extensions.events.metastore.common.messaging.MessageTaskFactory;
+import com.expediagroup.apiary.extensions.events.metastore.common.metrics.MetricsConstant;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(ListenerUtils.class)
+@RunWith(MockitoJUnitRunner.class)
 public class AbstractMetaStoreEventListenerTest {
 
   private static final String DATABASE = "db";
@@ -85,10 +88,12 @@ public class AbstractMetaStoreEventListenerTest {
 
   private final Configuration config = new Configuration();
   private AbstractMetaStoreEventListener listener;
+  private HiveConf hiveConf = new HiveConf();
 
   @Before
   public void init() throws Exception {
-    mockStatic(ListenerUtils.class);
+    MetricsFactory.close();
+    MetricsFactory.init(hiveConf);
     when(eventSerDe.marshal(any(SerializableListenerEvent.class))).thenReturn(PAYLOAD);
     when(messageTaskFactory.newTask(any(Message.class))).thenReturn(messageTask);
     listener = new AbstractMetaStoreEventListener(config, serializableListenerEventFactory, executorService) {
@@ -126,8 +131,7 @@ public class AbstractMetaStoreEventListenerTest {
     RuntimeException e = new RuntimeException("Something has gone wrong");
     doThrow(e).when(executorService).submit(any(MessageTask.class));
     listener.onCreateTable(event);
-    verifyStatic(ListenerUtils.class);
-    ListenerUtils.error(e);
+    verifyMetrics(MetricsConstant.LISTENER_FAILURES);
   }
 
   @Test
@@ -152,8 +156,7 @@ public class AbstractMetaStoreEventListenerTest {
     RuntimeException e = new RuntimeException("Something has gone wrong");
     doThrow(e).when(executorService).submit(any(MessageTask.class));
     listener.onAlterTable(event);
-    verifyStatic(ListenerUtils.class);
-    ListenerUtils.error(e);
+    verifyMetrics(MetricsConstant.LISTENER_FAILURES);
   }
 
   @Test
@@ -178,8 +181,7 @@ public class AbstractMetaStoreEventListenerTest {
     RuntimeException e = new RuntimeException("Something has gone wrong");
     doThrow(e).when(executorService).submit(any(MessageTask.class));
     listener.onDropTable(event);
-    verifyStatic(ListenerUtils.class);
-    ListenerUtils.error(e);
+    verifyMetrics(MetricsConstant.LISTENER_FAILURES);
   }
 
   @Test
@@ -204,8 +206,7 @@ public class AbstractMetaStoreEventListenerTest {
     RuntimeException e = new RuntimeException("Something has gone wrong");
     doThrow(e).when(executorService).submit(any(MessageTask.class));
     listener.onAddPartition(event);
-    verifyStatic(ListenerUtils.class);
-    ListenerUtils.error(e);
+    verifyMetrics(MetricsConstant.LISTENER_FAILURES);
   }
 
   @Test
@@ -230,8 +231,7 @@ public class AbstractMetaStoreEventListenerTest {
     RuntimeException e = new RuntimeException("Something has gone wrong");
     doThrow(e).when(executorService).submit(any(MessageTask.class));
     listener.onAlterPartition(event);
-    verifyStatic(ListenerUtils.class);
-    ListenerUtils.error(e);
+    verifyMetrics(MetricsConstant.LISTENER_FAILURES);
   }
 
   @Test
@@ -256,8 +256,7 @@ public class AbstractMetaStoreEventListenerTest {
     RuntimeException e = new RuntimeException("Something has gone wrong");
     doThrow(e).when(executorService).submit(any(MessageTask.class));
     listener.onDropPartition(event);
-    verifyStatic(ListenerUtils.class);
-    ListenerUtils.error(e);
+    verifyMetrics(MetricsConstant.LISTENER_FAILURES);
   }
 
   @Test
@@ -282,8 +281,7 @@ public class AbstractMetaStoreEventListenerTest {
     RuntimeException e = new RuntimeException("Something has gone wrong");
     doThrow(e).when(executorService).submit(any(MessageTask.class));
     listener.onInsert(event);
-    verifyStatic(ListenerUtils.class);
-    ListenerUtils.error(e);
+    verifyMetrics(MetricsConstant.LISTENER_FAILURES);
   }
 
   @Test
@@ -347,6 +345,13 @@ public class AbstractMetaStoreEventListenerTest {
     listener.onDropFunction(mock(DropFunctionEvent.class));
     verify(executorService, never()).submit(any(Runnable.class));
     verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
+  }
+
+  private void verifyMetrics(String metricName) {
+    CodahaleMetrics metrics = (CodahaleMetrics) MetricsFactory.getInstance();
+    SortedMap<String, Counter> counters = metrics.getMetricRegistry().getCounters();
+    assertThat(counters).hasSize(1);
+    assertThat(counters.get(metricName).getCount()).isEqualTo(1);
   }
 
 }
