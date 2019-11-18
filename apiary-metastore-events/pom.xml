@@ -11,6 +11,7 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>kafka-metastore-events</module>
     <module>sns-metastore-events</module>
   </modules>
 
