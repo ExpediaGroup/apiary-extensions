@@ -13,7 +13,7 @@
 
   <modules>
     <module>kafka-metastore-listener</module>
-    <module>kafka-events-common</module>
+    <module>kafka-serializable-events</module>
   </modules>
 
   <properties>

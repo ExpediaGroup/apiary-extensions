@@ -23,15 +23,8 @@ import org.junit.Test;
 
 import com.expediagroup.apiary.extensions.events.metastore.common.KafkaMetaStoreEventsException;
 import com.expediagroup.apiary.extensions.events.metastore.common.io.jackson.JsonMetaStoreEventSerDe;
-import com.expediagroup.apiary.extensions.events.metastore.common.io.java.JavaMetaStoreEventSerDe;
 
 public class MetaStoreEventSerDeTest {
-
-  @Test
-  public void instantiateJavaSerDe() {
-    MetaStoreEventSerDe serDe = serDeForClassName(JavaMetaStoreEventSerDe.class.getName());
-    assertThat(serDe).isExactlyInstanceOf(JavaMetaStoreEventSerDe.class);
-  }
 
   @Test
   public void instantiateJsonSerDe() {
