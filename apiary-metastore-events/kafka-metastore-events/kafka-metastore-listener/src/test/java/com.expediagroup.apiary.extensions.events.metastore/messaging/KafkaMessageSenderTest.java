@@ -16,6 +16,8 @@
 package com.expediagroup.apiary.extensions.events.metastore.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import static com.expediagroup.apiary.extensions.events.metastore.KafkaProducerProperty.ACKS;
 import static com.expediagroup.apiary.extensions.events.metastore.KafkaProducerProperty.BATCH_SIZE;
@@ -31,17 +33,44 @@ import static com.expediagroup.apiary.extensions.events.metastore.messaging.Kafk
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongSerializer;
+import org.datanucleus.store.types.wrappers.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KafkaMessageSenderTest {
 
+  private @Captor ArgumentCaptor<ProducerRecord> producerRecordCaptor;
+  private @Mock KafkaMessage kafkaMessage;
+  private @Mock KafkaProducer<Long, byte[]> producer;
+  private @Mock List<PartitionInfo> partitionInfoList;
   private static final String TOPIC_NAME = "topic";
-  private final Configuration conf = new Configuration();
+  private Configuration conf = new Configuration();
+
+  @Test
+  public void send() {
+    byte[] payload = { 1, 2, 3 };
+    when(kafkaMessage.getPayload()).thenReturn(payload);
+    when(kafkaMessage.getQualifiedTableName()).thenReturn("database.table");
+    when(producer.partitionsFor(TOPIC_NAME)).thenReturn(partitionInfoList);
+    when(partitionInfoList.size()).thenReturn(5);
+    KafkaMessageSender kafkaMessageSender = new KafkaMessageSender(TOPIC_NAME, producer);
+    kafkaMessageSender.send(kafkaMessage);
+    verify(producer).send(producerRecordCaptor.capture());
+    ProducerRecord record = producerRecordCaptor.getValue();
+    assertThat(record.topic()).isEqualToIgnoringCase(TOPIC_NAME);
+    assertThat(record.partition()).isEqualTo(1);
+    assertThat(record.value()).isEqualTo(payload);
+  }
 
   @Test
   public void populateKafkaProperties() {

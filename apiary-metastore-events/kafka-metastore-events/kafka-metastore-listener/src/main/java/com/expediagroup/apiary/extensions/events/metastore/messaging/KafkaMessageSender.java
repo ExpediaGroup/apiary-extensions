@@ -55,7 +55,7 @@ public class KafkaMessageSender {
   KafkaMessageSender(String topic, KafkaProducer<Long, byte[]> producer) {
     this.producer = producer;
     this.topic = topic;
-    numberOfPartitions = producer.partitionsFor(topic).size();
+    this.numberOfPartitions = producer.partitionsFor(topic).size();
   }
 
   public void send(KafkaMessage kafkaMessage) {
