@@ -15,8 +15,6 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.common.io;
 
-import org.apache.hadoop.hive.metastore.api.MetaException;
-
 import com.expediagroup.apiary.extensions.events.metastore.common.KafkaMetaStoreEventsException;
 import com.expediagroup.apiary.extensions.events.metastore.common.event.SerializableListenerEvent;
 

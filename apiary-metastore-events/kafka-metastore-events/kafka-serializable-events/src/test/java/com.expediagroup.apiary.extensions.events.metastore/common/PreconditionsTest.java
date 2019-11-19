@@ -17,6 +17,7 @@ package com.expediagroup.apiary.extensions.events.metastore.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotEmpty;
 import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotNull;
 
 import org.junit.Rule;
@@ -40,6 +41,18 @@ public class PreconditionsTest {
     exception.expect(NullPointerException.class);
     exception.expectMessage("message");
     checkNotNull(null, "message");
+  }
+
+  @Test
+  public void checkNotEmptySucceeds() {
+    assertThat(checkNotEmpty(" a string ", "message")).isSameAs(" a string ");
+  }
+
+  @Test
+  public void checkNotEmptyFails() {
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage("message");
+    checkNotEmpty("  ", "message");
   }
 
 }

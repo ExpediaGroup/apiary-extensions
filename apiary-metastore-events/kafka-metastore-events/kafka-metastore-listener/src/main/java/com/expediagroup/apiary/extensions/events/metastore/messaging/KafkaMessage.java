@@ -15,7 +15,7 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.messaging;
 
-import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkEmpty;
+import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotEmpty;
 import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotNull;
 
 public class KafkaMessage {
@@ -49,8 +49,8 @@ public class KafkaMessage {
     }
 
     public KafkaMessage build() {
-      return new KafkaMessage(checkEmpty(database, "Parameter 'database' is required"),
-          checkEmpty(table, "Parameter 'table' is required"), timestamp,
+      return new KafkaMessage(checkNotEmpty(database, "Parameter 'database' is required").trim(),
+          checkNotEmpty(table, "Parameter 'table' is required").trim(), timestamp,
           checkNotNull(payload, "Parameter 'payload' is required"));
     }
   }
