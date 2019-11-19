@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.kafka.utils;
+package com.expediagroup.apiary.extensions.events.metastore.kafka.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.Preconditions.checkNotEmpty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.Preconditions.checkNotNull;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.Preconditions.checkNotEmpty;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.Preconditions.checkNotNull;
 
 import org.junit.Rule;
 import org.junit.Test;

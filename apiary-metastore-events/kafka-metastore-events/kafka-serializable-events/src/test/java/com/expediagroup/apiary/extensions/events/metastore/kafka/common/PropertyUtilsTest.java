@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.kafka.utils;
+package com.expediagroup.apiary.extensions.events.metastore.kafka.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.PropertyUtils.booleanProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.PropertyUtils.intProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.PropertyUtils.longProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.PropertyUtils.stringProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.booleanProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.intProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.longProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.stringProperty;
 
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
@@ -31,8 +31,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.Property;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PropertyUtilsTest {

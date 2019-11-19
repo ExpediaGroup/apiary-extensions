@@ -13,14 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
+package com.expediagroup.apiary.extensions.events.metastore.kafka.common;
 
-public interface Property {
+public final class Preconditions {
 
-  String key();
+  private Preconditions() {}
 
-  String unPrefixedKey();
+  public static String checkNotEmpty(String string, String message) {
+    if (string == null || string.trim().isEmpty()) {
+      throw new IllegalArgumentException(message);
+    }
+    return string;
+  }
 
-  Object defaultValue();
-  
+  public static <T> T checkNotNull(T t, String message) {
+    if (t == null) {
+      throw new NullPointerException(message);
+    }
+    return t;
+  }
+
 }

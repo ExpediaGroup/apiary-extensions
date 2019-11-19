@@ -15,8 +15,8 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.Preconditions.checkNotEmpty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.Preconditions.checkNotNull;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.Preconditions.checkNotEmpty;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.Preconditions.checkNotNull;
 
 public class KafkaMessage {
 

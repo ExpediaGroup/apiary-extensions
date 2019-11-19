@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.kafka.utils;
+package com.expediagroup.apiary.extensions.events.metastore.kafka.common;
 
 import org.apache.hadoop.conf.Configuration;
-
-import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.Property;
 
 public class PropertyUtils {
 

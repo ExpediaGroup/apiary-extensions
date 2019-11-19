@@ -18,7 +18,7 @@ package com.expediagroup.apiary.extensions.events.metastore.kafka.listener;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.MetaStoreEventSerDe.serDeForClassName;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.listener.ListenerUtils.error;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.SERDE_CLASS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.PropertyUtils.stringProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.stringProperty;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;

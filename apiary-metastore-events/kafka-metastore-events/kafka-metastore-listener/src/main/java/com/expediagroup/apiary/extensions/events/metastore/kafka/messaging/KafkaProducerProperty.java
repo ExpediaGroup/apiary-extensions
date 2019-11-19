@@ -15,6 +15,7 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
+import com.expediagroup.apiary.extensions.events.metastore.kafka.common.Property;
 import com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.jackson.JsonMetaStoreEventSerDe;
 
 public enum KafkaProducerProperty implements Property {

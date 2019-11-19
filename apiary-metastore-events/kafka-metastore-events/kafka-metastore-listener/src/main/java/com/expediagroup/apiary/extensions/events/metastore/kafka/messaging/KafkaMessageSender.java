@@ -24,10 +24,10 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.RETRIES;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.Preconditions.checkNotNull;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.PropertyUtils.intProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.PropertyUtils.longProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.utils.PropertyUtils.stringProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.Preconditions.checkNotNull;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.intProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.longProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.stringProperty;
 
 import java.util.Properties;
 
