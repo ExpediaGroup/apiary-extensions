@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.kafka.receiver;
+package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.Preconditions.checkNotNull;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.stringProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.TOPIC;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.TOPIC;
 
 import java.io.Closeable;
 import java.io.IOException;

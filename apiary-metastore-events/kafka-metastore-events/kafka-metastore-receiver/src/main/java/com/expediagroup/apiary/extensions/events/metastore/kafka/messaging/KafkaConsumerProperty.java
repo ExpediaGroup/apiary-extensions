@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.kafka.receiver;
+package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -37,7 +37,7 @@ public enum KafkaConsumerProperty implements Property {
   FETCH_MAX_BYTES("fetch.max.bytes", 52428800),
   RECEIVE_BUFFER_BYTES("receive.buffer.bytes", 65536);
 
-  private static final String PROPERTY_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.";
+  private static final String PROPERTY_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
 
   private final String unPrefixedKey;
   private final Object defaultValue;

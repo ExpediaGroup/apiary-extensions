@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>kafka-metastore-events-parent</artifactId>
+    <groupId>com.expediagroup.apiary</groupId>
+    <version>4.2.1-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>kafka-metastore-integration-tests</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.expediagroup.apiary</groupId>
+      <artifactId>kafka-metastore-listener</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.expediagroup.apiary</groupId>
+      <artifactId>kafka-metastore-receiver</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.salesforce.kafka.test</groupId>
+      <artifactId>kafka-junit4</artifactId>
+      <version>3.2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.11</artifactId>
+      <version>2.0.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>2.0.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+</project>

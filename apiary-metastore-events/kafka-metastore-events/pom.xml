@@ -15,6 +15,7 @@
     <module>kafka-metastore-listener</module>
     <module>kafka-metastore-receiver</module>
     <module>kafka-serializable-events</module>
+    <module>kafka-metastore-integration-tests</module>
   </modules>
 
   <properties>

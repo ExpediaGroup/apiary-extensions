@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.kafka.receiver;
+package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.Preconditions.checkNotNull;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.booleanProperty;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.intProperty;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.longProperty;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.stringProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.AUTO_COMMIT_INTERVAL_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.BOOTSTRAP_SERVERS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.CLIENT_ID;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.CONNECTIONS_MAX_IDLE_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.ENABLE_AUTO_COMMIT;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.FETCH_MAX_BYTES;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.GROUP_ID;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.MAX_POLL_INTERVAL_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.MAX_POLL_RECORDS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.RECEIVE_BUFFER_BYTES;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.RECONNECT_BACKOFF_MAX_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.RECONNECT_BACKOFF_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.RETRY_BACKOFF_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.SESSION_TIMEOUT_MS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.AUTO_COMMIT_INTERVAL_MS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.BOOTSTRAP_SERVERS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CLIENT_ID;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CONNECTIONS_MAX_IDLE_MS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.ENABLE_AUTO_COMMIT;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.FETCH_MAX_BYTES;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.GROUP_ID;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.MAX_POLL_INTERVAL_MS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.MAX_POLL_RECORDS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECEIVE_BUFFER_BYTES;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECONNECT_BACKOFF_MAX_MS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECONNECT_BACKOFF_MS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RETRY_BACKOFF_MS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.SESSION_TIMEOUT_MS;
 
 import java.util.Properties;
 

@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.kafka.receiver;
+package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.BOOTSTRAP_SERVERS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.CLIENT_ID;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.GROUP_ID;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.BOOTSTRAP_SERVERS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CLIENT_ID;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.GROUP_ID;
 
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.HiveMetaStoreEventKafkaConsumer;
 
 public class HiveMetaStoreEventKafkaConsumerTest {
 

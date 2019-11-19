@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.events.metastore.kafka.receiver;
+package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.receiver.KafkaConsumerProperty.TOPIC;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.TOPIC;
 
 import java.util.List;
 import java.util.Map;
