@@ -17,6 +17,8 @@ package com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.jack
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.jackson.TestUtils.toJson;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -51,7 +53,7 @@ public class SkewedInfoSerializerTest {
         .put(Arrays.asList("20", "200"), "b")
         .build());
     String json = mapper.writeValueAsString(skewedInfo);
-    assertThat(json).isEqualTo(TestUtils.toJson(skewedInfo));
+    assertThat(json).isEqualTo(toJson(skewedInfo));
   }
 
   @Test
@@ -63,7 +65,7 @@ public class SkewedInfoSerializerTest {
         .put(Arrays.asList("20", "200"), "b")
         .build());
     String json = mapper.writeValueAsString(skewedInfo);
-    assertThat(json).isEqualTo(TestUtils.toJson(skewedInfo));
+    assertThat(json).isEqualTo(toJson(skewedInfo));
   }
 
   @Test
@@ -75,7 +77,7 @@ public class SkewedInfoSerializerTest {
         .put(Arrays.asList("20", "200"), "b")
         .build());
     String json = mapper.writeValueAsString(skewedInfo);
-    assertThat(json).isEqualTo(TestUtils.toJson(skewedInfo));
+    assertThat(json).isEqualTo(toJson(skewedInfo));
   }
 
   @Test
@@ -83,7 +85,7 @@ public class SkewedInfoSerializerTest {
     skewedInfo.setSkewedColNames(Arrays.asList("col1", "col2"));
     skewedInfo.setSkewedColValues(Arrays.asList(Arrays.asList("val11", "val12"), Arrays.asList("val21", "val22")));
     String json = mapper.writeValueAsString(skewedInfo);
-    assertThat(json).isEqualTo(TestUtils.toJson(skewedInfo));
+    assertThat(json).isEqualTo(toJson(skewedInfo));
   }
 
 }
