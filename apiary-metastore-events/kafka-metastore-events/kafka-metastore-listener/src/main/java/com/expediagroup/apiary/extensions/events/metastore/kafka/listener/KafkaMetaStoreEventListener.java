@@ -66,7 +66,7 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
       Configuration config,
       SerializableListenerEventFactory serializableListenerEventFactory,
       MetaStoreEventSerDe eventSerDe,
-    KafkaMessageSender kafkaMessageSender) {
+      KafkaMessageSender kafkaMessageSender) {
     super(config);
     this.eventSerDe = eventSerDe;
     this.serializableListenerEventFactory = serializableListenerEventFactory;
