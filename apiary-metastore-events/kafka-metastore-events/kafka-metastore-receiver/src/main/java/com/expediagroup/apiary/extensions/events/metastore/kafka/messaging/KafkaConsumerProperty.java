@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016-2018 Expedia Inc.
+ * Copyright (C) 2018-2019 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ public enum KafkaConsumerProperty implements Property {
   TOPIC("topic", null),
   BOOTSTRAP_SERVERS("bootstrap.servers", null),
   GROUP_ID("group.id", null),
-  CLIENT_ID("client.id", "CircusTrainEventDrivenReceiver"),
+  CLIENT_ID("client.id", "ApiaryKafkaMetaStoreReceiver"),
   SESSION_TIMEOUT_MS("session.timeout.ms", 30000),
   CONNECTIONS_MAX_IDLE_MS("connections.max.idle.ms", MINUTES.toMillis(9)),
   RECONNECT_BACKOFF_MAX_MS("reconnect.backoff.max.ms", SECONDS.toMillis(1)),
