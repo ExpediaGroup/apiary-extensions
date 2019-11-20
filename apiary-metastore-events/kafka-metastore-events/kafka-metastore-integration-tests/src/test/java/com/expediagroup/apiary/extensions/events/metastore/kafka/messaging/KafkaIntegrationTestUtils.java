@@ -51,7 +51,7 @@ public class KafkaIntegrationTestUtils {
       partitions,
       buildTableParameters(),
       "originalText",
-      "expandedTtext",
+      "expandedText",
       "tableType"
     );
   }
