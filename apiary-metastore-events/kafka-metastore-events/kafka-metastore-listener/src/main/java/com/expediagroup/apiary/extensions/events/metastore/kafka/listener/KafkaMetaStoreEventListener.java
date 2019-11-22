@@ -15,10 +15,10 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.kafka.listener;
 
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.MetaStoreEventSerDe.serDeForClassName;
+import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.stringProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe.serDeForClassName;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.listener.ListenerUtils.error;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.SERDE_CLASS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.stringProperty;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -43,9 +43,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableListenerEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableListenerEventFactory;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.MetaStoreEventSerDe;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEventFactory;
+import com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe;
 import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessage;
 import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageSender;
 
@@ -54,26 +54,26 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
 
   private final MetaStoreEventSerDe eventSerDe;
   private final KafkaMessageSender kafkaMessageSender;
-  private final SerializableListenerEventFactory serializableListenerEventFactory;
+  private final ApiaryListenerEventFactory apiaryListenerEventFactory;
 
   public KafkaMetaStoreEventListener(Configuration config) {
-    this(config, new SerializableListenerEventFactory(config), serDeForClassName(stringProperty(config, SERDE_CLASS)),
+    this(config, new ApiaryListenerEventFactory(config), serDeForClassName(stringProperty(config, SERDE_CLASS)),
         new KafkaMessageSender(config));
   }
 
   @VisibleForTesting
   KafkaMetaStoreEventListener(
       Configuration config,
-      SerializableListenerEventFactory serializableListenerEventFactory,
+    ApiaryListenerEventFactory apiaryListenerEventFactory,
       MetaStoreEventSerDe eventSerDe,
-    KafkaMessageSender kafkaMessageSender) {
+      KafkaMessageSender kafkaMessageSender) {
     super(config);
     this.eventSerDe = eventSerDe;
-    this.serializableListenerEventFactory = serializableListenerEventFactory;
+    this.apiaryListenerEventFactory = apiaryListenerEventFactory;
     this.kafkaMessageSender = kafkaMessageSender;
   }
 
-  private KafkaMessage withPayload(SerializableListenerEvent event) {
+  private KafkaMessage withPayload(ApiaryListenerEvent event) {
     return KafkaMessage
       .builder()
       .database(event.getDatabaseName())
@@ -86,7 +86,7 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   public void onCreateTable(CreateTableEvent tableEvent) {
     log.debug("Create table event received");
     try {
-      kafkaMessageSender.send(withPayload(serializableListenerEventFactory.create(tableEvent)));
+      kafkaMessageSender.send(withPayload(apiaryListenerEventFactory.create(tableEvent)));
     } catch (Exception e) {
       error(e);
     }
@@ -96,7 +96,7 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   public void onDropTable(DropTableEvent tableEvent) {
     log.debug("Drop table event received");
     try {
-      kafkaMessageSender.send(withPayload(serializableListenerEventFactory.create(tableEvent)));
+      kafkaMessageSender.send(withPayload(apiaryListenerEventFactory.create(tableEvent)));
     } catch (Exception e) {
       error(e);
     }
@@ -106,7 +106,7 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   public void onAlterTable(AlterTableEvent tableEvent) {
     log.debug("Alter table event received");
     try {
-      kafkaMessageSender.send(withPayload(serializableListenerEventFactory.create(tableEvent)));
+      kafkaMessageSender.send(withPayload(apiaryListenerEventFactory.create(tableEvent)));
     } catch (Exception e) {
       error(e);
     }
@@ -116,7 +116,7 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   public void onAddPartition(AddPartitionEvent partitionEvent) {
     log.debug("Add partition event received");
     try {
-      kafkaMessageSender.send(withPayload(serializableListenerEventFactory.create(partitionEvent)));
+      kafkaMessageSender.send(withPayload(apiaryListenerEventFactory.create(partitionEvent)));
     } catch (Exception e) {
       error(e);
     }
@@ -126,7 +126,7 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   public void onDropPartition(DropPartitionEvent partitionEvent) {
     log.debug("Drop partition event received");
     try {
-      kafkaMessageSender.send(withPayload(serializableListenerEventFactory.create(partitionEvent)));
+      kafkaMessageSender.send(withPayload(apiaryListenerEventFactory.create(partitionEvent)));
     } catch (Exception e) {
       error(e);
     }
@@ -136,7 +136,7 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   public void onAlterPartition(AlterPartitionEvent partitionEvent) {
     log.debug("Alter partition event received");
     try {
-      kafkaMessageSender.send(withPayload(serializableListenerEventFactory.create(partitionEvent)));
+      kafkaMessageSender.send(withPayload(apiaryListenerEventFactory.create(partitionEvent)));
     } catch (Exception e) {
       error(e);
     }
@@ -146,7 +146,7 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   public void onInsert(InsertEvent insertEvent) {
     log.debug("Insert event received");
     try {
-      kafkaMessageSender.send(withPayload(serializableListenerEventFactory.create(insertEvent)));
+      kafkaMessageSender.send(withPayload(apiaryListenerEventFactory.create(insertEvent)));
     } catch (Exception e) {
       error(e);
     }

@@ -14,16 +14,12 @@
   <modules>
     <module>kafka-metastore-listener</module>
     <module>kafka-metastore-receiver</module>
-    <module>kafka-serializable-events</module>
     <module>kafka-metastore-integration-tests</module>
   </modules>
 
   <properties>
-    <assertj.version>3.10.0</assertj.version>
     <kafka.version>2.3.1</kafka.version>
-    <powermock.version>2.0.0-beta.5</powermock.version>
   </properties>
-
 
   <dependencies>
     <dependency>

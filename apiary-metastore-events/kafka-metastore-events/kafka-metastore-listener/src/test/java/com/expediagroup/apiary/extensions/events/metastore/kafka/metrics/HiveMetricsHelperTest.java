@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,7 +40,7 @@ public class HiveMetricsHelperTest {
 
   @Test
   public void nullMetricsClass() {
-    Assertions.assertThat(HiveMetricsHelper.incrementCounter("name")).isNotPresent();
+    assertThat(HiveMetricsHelper.incrementCounter("name")).isNotPresent();
   }
 
   @Test
