@@ -91,6 +91,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
     kafkaMetaStoreEventListener = new KafkaMetaStoreEventListener(CONF);
 
     Properties receiverProperties = KafkaMessageReader.kafkaProperties(CONF);
+    //this makes sure the consumer starts from the beginning on the first read
     receiverProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     kafkaMessageReader = new KafkaMessageReader(CONF, new JsonMetaStoreEventSerDe(),
       new KafkaConsumer<>(receiverProperties));
