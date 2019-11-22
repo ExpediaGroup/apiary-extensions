@@ -22,4 +22,5 @@ public interface Property {
   String unPrefixedKey();
 
   Object defaultValue();
+
 }
