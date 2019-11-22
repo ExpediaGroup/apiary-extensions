@@ -44,9 +44,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableListenerEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.MetaStoreEventSerDe;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.SerDeException;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
+import com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe;
+import com.expediagroup.apiary.extensions.events.metastore.io.SerDeException;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KafkaMessageReaderTest {
@@ -61,7 +61,7 @@ public class KafkaMessageReaderTest {
   private @Mock MetaStoreEventSerDe serDe;
   private @Mock KafkaConsumer<Long, byte[]> consumer;
   private @Mock ConsumerRecord<Long, byte[]> message;
-  private @Mock SerializableListenerEvent event;
+  private @Mock ApiaryListenerEvent event;
 
   private final Configuration conf = new Configuration();
   private ConsumerRecords<Long, byte[]> messages;

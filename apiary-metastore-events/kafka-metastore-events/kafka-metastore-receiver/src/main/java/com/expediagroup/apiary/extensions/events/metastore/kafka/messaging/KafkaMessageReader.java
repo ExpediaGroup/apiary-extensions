@@ -15,11 +15,11 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.Preconditions.checkNotNull;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.booleanProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.intProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.longProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.common.PropertyUtils.stringProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotNull;
+import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.booleanProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.intProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.longProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.stringProperty;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.AUTO_COMMIT_INTERVAL_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.BOOTSTRAP_SERVERS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CLIENT_ID;
@@ -48,10 +48,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableListenerEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.MetaStoreEventSerDe;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
+import com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe;
 
-public class KafkaMessageReader implements Iterator<SerializableListenerEvent>, Closeable {
+public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closeable {
 
   private static final Duration POLL_TIMEOUT = Duration.ofHours(1);
 
@@ -119,7 +119,7 @@ public class KafkaMessageReader implements Iterator<SerializableListenerEvent>, 
   }
 
   @Override
-  public SerializableListenerEvent next() {
+  public ApiaryListenerEvent next() {
     readRecordsIfNeeded();
     ConsumerRecord<Long, byte[]> next = records.next();
     return eventSerDe.unmarshal(next.value());

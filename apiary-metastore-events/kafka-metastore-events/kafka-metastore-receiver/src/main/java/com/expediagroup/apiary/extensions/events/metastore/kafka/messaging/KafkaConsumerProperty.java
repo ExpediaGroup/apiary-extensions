@@ -18,7 +18,7 @@ package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.Property;
+import com.expediagroup.apiary.extensions.events.metastore.common.Property;
 
 public enum KafkaConsumerProperty implements Property {
   TOPIC("topic", null),

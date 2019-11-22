@@ -56,15 +56,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 import com.google.common.collect.Lists;
 import com.salesforce.kafka.test.junit4.SharedKafkaTestResource;
 
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableAddPartitionEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableAlterPartitionEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableAlterTableEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableCreateTableEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableDropPartitionEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableDropTableEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableInsertEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableListenerEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.jackson.JsonMetaStoreEventSerDe;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAddPartitionEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAlterPartitionEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAlterTableEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryCreateTableEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryDropPartitionEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryDropTableEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryInsertEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
+import com.expediagroup.apiary.extensions.events.metastore.io.jackson.JsonMetaStoreEventSerDe;
 import com.expediagroup.apiary.extensions.events.metastore.kafka.listener.KafkaMetaStoreEventListener;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -100,9 +100,9 @@ public class KafkaApiaryMetastoreIntegrationTest {
   public void createTableEvent() {
     CreateTableEvent createTableEvent = new CreateTableEvent(buildTable(), true, hmsHandler);
     kafkaMetaStoreEventListener.onCreateTable(createTableEvent);
-    SerializableListenerEvent result = kafkaMessageReader.next();
-    assertThat(result).isInstanceOf(SerializableCreateTableEvent.class);
-    SerializableCreateTableEvent event = (SerializableCreateTableEvent) result;
+    ApiaryListenerEvent result = kafkaMessageReader.next();
+    assertThat(result).isInstanceOf(ApiaryCreateTableEvent.class);
+    ApiaryCreateTableEvent event = (ApiaryCreateTableEvent) result;
     assertThat(event.getQualifiedTableName()).isEqualTo(buildQualifiedTableName());
     assertThat(event.getTable().getParameters()).isEqualTo(buildTableParameters());
     assertThat(event.getStatus()).isEqualTo(true);
@@ -112,9 +112,9 @@ public class KafkaApiaryMetastoreIntegrationTest {
   public void dropTableEvent() {
     DropTableEvent dropTableEvent = new DropTableEvent(buildTable(), true, false, hmsHandler);
     kafkaMetaStoreEventListener.onDropTable(dropTableEvent);
-    SerializableListenerEvent result = kafkaMessageReader.next();
-    assertThat(result).isInstanceOf(SerializableDropTableEvent.class);
-    SerializableDropTableEvent event = (SerializableDropTableEvent) result;
+    ApiaryListenerEvent result = kafkaMessageReader.next();
+    assertThat(result).isInstanceOf(ApiaryDropTableEvent.class);
+    ApiaryDropTableEvent event = (ApiaryDropTableEvent) result;
     assertThat(event.getQualifiedTableName()).isEqualTo(buildQualifiedTableName());
     assertThat(event.getTable().getParameters()).isEqualTo(buildTableParameters());
     assertThat(event.getStatus()).isEqualTo(true);
@@ -125,9 +125,9 @@ public class KafkaApiaryMetastoreIntegrationTest {
     AlterTableEvent alterTableEvent = new AlterTableEvent(buildTable("old_table"), buildTable("new_table"), true,
       hmsHandler);
     kafkaMetaStoreEventListener.onAlterTable(alterTableEvent);
-    SerializableListenerEvent result = kafkaMessageReader.next();
-    assertThat(result).isInstanceOf(SerializableAlterTableEvent.class);
-    SerializableAlterTableEvent event = (SerializableAlterTableEvent) result;
+    ApiaryListenerEvent result = kafkaMessageReader.next();
+    assertThat(result).isInstanceOf(ApiaryAlterTableEvent.class);
+    ApiaryAlterTableEvent event = (ApiaryAlterTableEvent) result;
     assertThat(event.getQualifiedTableName()).isEqualTo("database.new_table");
     assertThat(event.getOldTable().getTableName()).isEqualTo("old_table");
     assertThat(event.getNewTable().getTableName()).isEqualTo("new_table");
@@ -140,9 +140,9 @@ public class KafkaApiaryMetastoreIntegrationTest {
   public void addPartitionEvent() {
     AddPartitionEvent addPartitionEvent = new AddPartitionEvent(buildTable(), buildPartition(), true, hmsHandler);
     kafkaMetaStoreEventListener.onAddPartition(addPartitionEvent);
-    SerializableListenerEvent result = kafkaMessageReader.next();
-    assertThat(result).isInstanceOf(SerializableAddPartitionEvent.class);
-    SerializableAddPartitionEvent event = (SerializableAddPartitionEvent) result;
+    ApiaryListenerEvent result = kafkaMessageReader.next();
+    assertThat(result).isInstanceOf(ApiaryAddPartitionEvent.class);
+    ApiaryAddPartitionEvent event = (ApiaryAddPartitionEvent) result;
     assertThat(event.getQualifiedTableName()).isEqualTo(buildQualifiedTableName());
     assertThat(event.getTable().getParameters()).isEqualTo(buildTableParameters());
     assertThat(event.getPartitions()).isEqualTo(Lists.newArrayList(buildPartition()));
@@ -153,9 +153,9 @@ public class KafkaApiaryMetastoreIntegrationTest {
   public void dropPartitionEvent() {
     DropPartitionEvent dropPartitionEvent = new DropPartitionEvent(buildTable(), buildPartition(), true, false, hmsHandler);
     kafkaMetaStoreEventListener.onDropPartition(dropPartitionEvent);
-    SerializableListenerEvent result = kafkaMessageReader.next();
-    assertThat(result).isInstanceOf(SerializableDropPartitionEvent.class);
-    SerializableDropPartitionEvent event = (SerializableDropPartitionEvent) result;
+    ApiaryListenerEvent result = kafkaMessageReader.next();
+    assertThat(result).isInstanceOf(ApiaryDropPartitionEvent.class);
+    ApiaryDropPartitionEvent event = (ApiaryDropPartitionEvent) result;
     assertThat(event.getQualifiedTableName()).isEqualTo(buildQualifiedTableName());
     assertThat(event.getTable().getParameters()).isEqualTo(buildTableParameters());
     assertThat(event.getPartitions()).isEqualTo(Lists.newArrayList(buildPartition()));
@@ -169,9 +169,9 @@ public class KafkaApiaryMetastoreIntegrationTest {
     AlterPartitionEvent alterPartitionEvent = new AlterPartitionEvent(oldPartition, newPartition, buildTable(), true,
       hmsHandler);
     kafkaMetaStoreEventListener.onAlterPartition(alterPartitionEvent);
-    SerializableListenerEvent result = kafkaMessageReader.next();
-    assertThat(result).isInstanceOf(SerializableAlterPartitionEvent.class);
-    SerializableAlterPartitionEvent event = (SerializableAlterPartitionEvent) result;
+    ApiaryListenerEvent result = kafkaMessageReader.next();
+    assertThat(result).isInstanceOf(ApiaryAlterPartitionEvent.class);
+    ApiaryAlterPartitionEvent event = (ApiaryAlterPartitionEvent) result;
     assertThat(event.getQualifiedTableName()).isEqualTo(buildQualifiedTableName());
     assertThat(event.getTable().getParameters()).isEqualTo(buildTableParameters());
     assertThat(event.getOldPartition()).isEqualTo(oldPartition);
@@ -192,9 +192,9 @@ public class KafkaApiaryMetastoreIntegrationTest {
       hmsHandler
     );
     kafkaMetaStoreEventListener.onInsert(insertEvent);
-    SerializableListenerEvent result = kafkaMessageReader.next();
-    assertThat(result).isInstanceOf(SerializableInsertEvent.class);
-    SerializableInsertEvent event = (SerializableInsertEvent) result;
+    ApiaryListenerEvent result = kafkaMessageReader.next();
+    assertThat(result).isInstanceOf(ApiaryInsertEvent.class);
+    ApiaryInsertEvent event = (ApiaryInsertEvent) result;
     assertThat(event.getQualifiedTableName()).isEqualTo(buildQualifiedTableName());
     assertThat(event.getStatus()).isEqualTo(true);
   }
