@@ -44,16 +44,16 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableAddPartitionEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableAlterPartitionEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableAlterTableEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableCreateTableEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableDropPartitionEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableDropTableEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableInsertEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableListenerEvent;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.event.SerializableListenerEventFactory;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.MetaStoreEventSerDe;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAddPartitionEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAlterPartitionEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAlterTableEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryCreateTableEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryDropPartitionEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryDropTableEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryInsertEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEventFactory;
+import com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe;
 import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessage;
 import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageSender;
 
@@ -65,7 +65,7 @@ public class KafkaMetaStoreEventListenerTest {
   private static final byte[] PAYLOAD = "payload".getBytes();
 
   private @Mock MetaStoreEventSerDe eventSerDe;
-  private @Mock SerializableListenerEventFactory serializableListenerEventFactory;
+  private @Mock ApiaryListenerEventFactory apiaryListenerEventFactory;
   private @Mock KafkaMessageSender kafkaMessageSender;
 
   private final Configuration config = new Configuration();
@@ -73,17 +73,17 @@ public class KafkaMetaStoreEventListenerTest {
 
   @Before
   public void init() {
-    when(eventSerDe.marshal(any(SerializableListenerEvent.class))).thenReturn(PAYLOAD);
-    listener = new KafkaMetaStoreEventListener(config, serializableListenerEventFactory, eventSerDe, kafkaMessageSender);
+    when(eventSerDe.marshal(any(ApiaryListenerEvent.class))).thenReturn(PAYLOAD);
+    listener = new KafkaMetaStoreEventListener(config, apiaryListenerEventFactory, eventSerDe, kafkaMessageSender);
   }
 
   @Test
   public void onCreateTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
-    SerializableCreateTableEvent serializableEvent = mock(SerializableCreateTableEvent.class);
-    when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
-    when(serializableEvent.getTableName()).thenReturn(TABLE);
-    when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
+    ApiaryCreateTableEvent apiaryEvent = mock(ApiaryCreateTableEvent.class);
+    when(apiaryEvent.getDatabaseName()).thenReturn(DATABASE);
+    when(apiaryEvent.getTableName()).thenReturn(TABLE);
+    when(apiaryListenerEventFactory.create(event)).thenReturn(apiaryEvent);
     listener.onCreateTable(event);
     verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
@@ -91,10 +91,10 @@ public class KafkaMetaStoreEventListenerTest {
   @Test
   public void onAlterTable() {
     AlterTableEvent event = mock(AlterTableEvent.class);
-    SerializableAlterTableEvent serializableEvent = mock(SerializableAlterTableEvent.class);
-    when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
-    when(serializableEvent.getTableName()).thenReturn(TABLE);
-    when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
+    ApiaryAlterTableEvent apiaryEvent = mock(ApiaryAlterTableEvent.class);
+    when(apiaryEvent.getDatabaseName()).thenReturn(DATABASE);
+    when(apiaryEvent.getTableName()).thenReturn(TABLE);
+    when(apiaryListenerEventFactory.create(event)).thenReturn(apiaryEvent);
     listener.onAlterTable(event);
     verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
@@ -102,10 +102,10 @@ public class KafkaMetaStoreEventListenerTest {
   @Test
   public void onDropTable() {
     DropTableEvent event = mock(DropTableEvent.class);
-    SerializableDropTableEvent serializableEvent = mock(SerializableDropTableEvent.class);
-    when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
-    when(serializableEvent.getTableName()).thenReturn(TABLE);
-    when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
+    ApiaryDropTableEvent apiaryEvent = mock(ApiaryDropTableEvent.class);
+    when(apiaryEvent.getDatabaseName()).thenReturn(DATABASE);
+    when(apiaryEvent.getTableName()).thenReturn(TABLE);
+    when(apiaryListenerEventFactory.create(event)).thenReturn(apiaryEvent);
     listener.onDropTable(event);
     verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
@@ -113,10 +113,10 @@ public class KafkaMetaStoreEventListenerTest {
   @Test
   public void onAddPartition() {
     AddPartitionEvent event = mock(AddPartitionEvent.class);
-    SerializableAddPartitionEvent serializableEvent = mock(SerializableAddPartitionEvent.class);
-    when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
-    when(serializableEvent.getTableName()).thenReturn(TABLE);
-    when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
+    ApiaryAddPartitionEvent apiaryEvent = mock(ApiaryAddPartitionEvent.class);
+    when(apiaryEvent.getDatabaseName()).thenReturn(DATABASE);
+    when(apiaryEvent.getTableName()).thenReturn(TABLE);
+    when(apiaryListenerEventFactory.create(event)).thenReturn(apiaryEvent);
     listener.onAddPartition(event);
     verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
@@ -124,10 +124,10 @@ public class KafkaMetaStoreEventListenerTest {
   @Test
   public void onAlterPartition() {
     AlterPartitionEvent event = mock(AlterPartitionEvent.class);
-    SerializableAlterPartitionEvent serializableEvent = mock(SerializableAlterPartitionEvent.class);
-    when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
-    when(serializableEvent.getTableName()).thenReturn(TABLE);
-    when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
+    ApiaryAlterPartitionEvent apiaryEvent = mock(ApiaryAlterPartitionEvent.class);
+    when(apiaryEvent.getDatabaseName()).thenReturn(DATABASE);
+    when(apiaryEvent.getTableName()).thenReturn(TABLE);
+    when(apiaryListenerEventFactory.create(event)).thenReturn(apiaryEvent);
     listener.onAlterPartition(event);
     verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
@@ -135,10 +135,10 @@ public class KafkaMetaStoreEventListenerTest {
   @Test
   public void onDropPartition() {
     DropPartitionEvent event = mock(DropPartitionEvent.class);
-    SerializableDropPartitionEvent serializableEvent = mock(SerializableDropPartitionEvent.class);
-    when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
-    when(serializableEvent.getTableName()).thenReturn(TABLE);
-    when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
+    ApiaryDropPartitionEvent apiaryEvent = mock(ApiaryDropPartitionEvent.class);
+    when(apiaryEvent.getDatabaseName()).thenReturn(DATABASE);
+    when(apiaryEvent.getTableName()).thenReturn(TABLE);
+    when(apiaryListenerEventFactory.create(event)).thenReturn(apiaryEvent);
     listener.onDropPartition(event);
     verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
@@ -146,10 +146,10 @@ public class KafkaMetaStoreEventListenerTest {
   @Test
   public void onInsert() {
     InsertEvent event = mock(InsertEvent.class);
-    SerializableInsertEvent serializableEvent = mock(SerializableInsertEvent.class);
-    when(serializableEvent.getDatabaseName()).thenReturn(DATABASE);
-    when(serializableEvent.getTableName()).thenReturn(TABLE);
-    when(serializableListenerEventFactory.create(event)).thenReturn(serializableEvent);
+    ApiaryInsertEvent apiaryEvent = mock(ApiaryInsertEvent.class);
+    when(apiaryEvent.getDatabaseName()).thenReturn(DATABASE);
+    when(apiaryEvent.getTableName()).thenReturn(TABLE);
+    when(apiaryListenerEventFactory.create(event)).thenReturn(apiaryEvent);
     listener.onInsert(event);
     verify(kafkaMessageSender).send(any(KafkaMessage.class));
   }
@@ -158,63 +158,63 @@ public class KafkaMetaStoreEventListenerTest {
   public void onConfigChange() {
     listener.onConfigChange(mock(ConfigChangeEvent.class));
     verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
+    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
 
   @Test
   public void onCreateDatabase() {
     listener.onCreateDatabase(mock(CreateDatabaseEvent.class));
     verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
+    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
 
   @Test
   public void onDropDatabase() {
     listener.onDropDatabase(mock(DropDatabaseEvent.class));
     verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
+    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
 
   @Test
   public void onLoadPartitionDone() {
     listener.onLoadPartitionDone(mock(LoadPartitionDoneEvent.class));
     verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
+    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
 
   @Test
   public void onAddIndex() {
     listener.onAddIndex(mock(AddIndexEvent.class));
     verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
+    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
 
   @Test
   public void onDropIndex() {
     listener.onDropIndex(mock(DropIndexEvent.class));
     verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
+    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
 
   @Test
   public void onAlterIndex() {
     listener.onAlterIndex(mock(AlterIndexEvent.class));
     verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
+    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
 
   @Test
   public void onCreateFunction() {
     listener.onCreateFunction(mock(CreateFunctionEvent.class));
     verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
+    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
 
   @Test
   public void onDropFunction() {
     listener.onDropFunction(mock(DropFunctionEvent.class));
     verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(SerializableListenerEvent.class));
+    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
 
 }

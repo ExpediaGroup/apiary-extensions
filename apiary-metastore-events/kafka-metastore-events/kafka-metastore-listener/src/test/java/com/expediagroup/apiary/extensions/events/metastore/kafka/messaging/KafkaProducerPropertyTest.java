@@ -30,7 +30,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 
 import org.junit.Test;
 
-import com.expediagroup.apiary.extensions.events.metastore.kafka.common.io.jackson.JsonMetaStoreEventSerDe;
+import com.expediagroup.apiary.extensions.events.metastore.io.jackson.JsonMetaStoreEventSerDe;
 
 public class KafkaProducerPropertyTest {
 

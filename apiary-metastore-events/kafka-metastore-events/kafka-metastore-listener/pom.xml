@@ -12,7 +12,7 @@
     <dependencies>
         <dependency>
             <groupId>com.expediagroup.apiary</groupId>
-            <artifactId>kafka-serializable-events</artifactId>
+            <artifactId>apiary-hive-events</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
