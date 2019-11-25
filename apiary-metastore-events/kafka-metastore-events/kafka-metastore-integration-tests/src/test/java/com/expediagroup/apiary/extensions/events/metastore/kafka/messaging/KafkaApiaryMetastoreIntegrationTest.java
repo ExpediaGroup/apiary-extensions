@@ -73,6 +73,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
   @ClassRule
   public static final SharedKafkaTestResource KAFKA = new SharedKafkaTestResource();
 
+  private static final long TEST_TIMEOUT_MS = 10000;
   private static final String TOPIC_NAME = "topic";
   private static Configuration CONF = new Configuration();
 
@@ -97,7 +98,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
       new KafkaConsumer<>(receiverProperties));
   }
 
-  @Test
+  @Test(timeout = TEST_TIMEOUT_MS)
   public void createTableEvent() {
     CreateTableEvent createTableEvent = new CreateTableEvent(buildTable(), true, hmsHandler);
     kafkaMetaStoreEventListener.onCreateTable(createTableEvent);
@@ -109,7 +110,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
     assertThat(event.getStatus()).isEqualTo(true);
   }
 
-  @Test
+  @Test(timeout = TEST_TIMEOUT_MS)
   public void dropTableEvent() {
     DropTableEvent dropTableEvent = new DropTableEvent(buildTable(), true, false, hmsHandler);
     kafkaMetaStoreEventListener.onDropTable(dropTableEvent);
@@ -121,7 +122,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
     assertThat(event.getStatus()).isEqualTo(true);
   }
 
-  @Test
+  @Test(timeout = TEST_TIMEOUT_MS)
   public void alterTableEvent() {
     AlterTableEvent alterTableEvent = new AlterTableEvent(buildTable("old_table"), buildTable("new_table"), true,
       hmsHandler);
@@ -137,7 +138,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
     assertThat(event.getStatus()).isEqualTo(true);
   }
 
-  @Test
+  @Test(timeout = TEST_TIMEOUT_MS)
   public void addPartitionEvent() {
     AddPartitionEvent addPartitionEvent = new AddPartitionEvent(buildTable(), buildPartition(), true, hmsHandler);
     kafkaMetaStoreEventListener.onAddPartition(addPartitionEvent);
@@ -150,7 +151,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
     assertThat(event.getStatus()).isEqualTo(true);
   }
 
-  @Test
+  @Test(timeout = TEST_TIMEOUT_MS)
   public void dropPartitionEvent() {
     DropPartitionEvent dropPartitionEvent = new DropPartitionEvent(buildTable(), buildPartition(), true, false, hmsHandler);
     kafkaMetaStoreEventListener.onDropPartition(dropPartitionEvent);
@@ -163,7 +164,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
     assertThat(event.getStatus()).isEqualTo(true);
   }
 
-  @Test
+  @Test(timeout = TEST_TIMEOUT_MS)
   public void alterPartitionEvent() {
     Partition oldPartition = buildPartition("old_partition");
     Partition newPartition = buildPartition("new_partition");
@@ -180,7 +181,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
     assertThat(event.getStatus()).isEqualTo(true);
   }
 
-  @Test
+  @Test(timeout = TEST_TIMEOUT_MS)
   public void insertPartitionEvent() throws MetaException, NoSuchObjectException {
     when(hmsHandler.get_table_req(any())).thenReturn(new GetTableResult(buildTable()));
     ArrayList<String> partitionValues = Lists.newArrayList("value1", "value2");
