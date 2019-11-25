@@ -13,10 +13,12 @@
 
   <modules>
     <module>kafka-metastore-listener</module>
+    <module>kafka-metastore-receiver</module>
+    <module>kafka-metastore-integration-tests</module>
   </modules>
 
   <properties>
-    <kafka.version>0.11.0.1</kafka.version>
+    <kafka.version>2.3.1</kafka.version>
   </properties>
 
   <dependencies>
