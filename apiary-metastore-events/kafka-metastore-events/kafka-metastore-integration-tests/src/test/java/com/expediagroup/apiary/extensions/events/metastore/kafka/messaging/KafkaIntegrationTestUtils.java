@@ -78,7 +78,7 @@ public class KafkaIntegrationTestUtils {
   }
 
   public static Map<String, String> buildTableParameters() {
-    HashMap<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<>();
     parameters.put("key1", "value1");
     parameters.put("key2", "value2");
     return parameters;

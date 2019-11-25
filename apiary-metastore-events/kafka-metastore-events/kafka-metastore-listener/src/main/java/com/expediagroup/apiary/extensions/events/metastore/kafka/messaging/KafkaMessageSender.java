@@ -66,17 +66,17 @@ public class KafkaMessageSender {
   @VisibleForTesting
   static Properties kafkaProperties(Configuration conf) {
     Properties props = new Properties();
-    props.put(BOOTSTRAP_SERVERS.unPrefixedKey(),
+    props.put(BOOTSTRAP_SERVERS.unprefixedKey(),
         checkNotNull(stringProperty(conf, BOOTSTRAP_SERVERS), "Property " + BOOTSTRAP_SERVERS + " is not set"));
-    props.put(CLIENT_ID.unPrefixedKey(),
+    props.put(CLIENT_ID.unprefixedKey(),
         checkNotNull(stringProperty(conf, CLIENT_ID), "Property " + CLIENT_ID + " is not set"));
-    props.put(ACKS.unPrefixedKey(), stringProperty(conf, ACKS));
-    props.put(RETRIES.unPrefixedKey(), intProperty(conf, RETRIES));
-    props.put(MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION.unPrefixedKey(),
+    props.put(ACKS.unprefixedKey(), stringProperty(conf, ACKS));
+    props.put(RETRIES.unprefixedKey(), intProperty(conf, RETRIES));
+    props.put(MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION.unprefixedKey(),
         intProperty(conf, MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION));
-    props.put(BATCH_SIZE.unPrefixedKey(), intProperty(conf, BATCH_SIZE));
-    props.put(LINGER_MS.unPrefixedKey(), longProperty(conf, LINGER_MS));
-    props.put(BUFFER_MEMORY.unPrefixedKey(), longProperty(conf, BUFFER_MEMORY));
+    props.put(BATCH_SIZE.unprefixedKey(), intProperty(conf, BATCH_SIZE));
+    props.put(LINGER_MS.unprefixedKey(), longProperty(conf, LINGER_MS));
+    props.put(BUFFER_MEMORY.unprefixedKey(), longProperty(conf, BUFFER_MEMORY));
     props.put("key.serializer", "org.apache.kafka.common.serialization.LongSerializer");
     props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
     return props;

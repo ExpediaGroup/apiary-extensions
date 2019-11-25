@@ -46,7 +46,7 @@ public enum KafkaProducerProperty implements Property {
   }
 
   @Override
-  public String unPrefixedKey() {
+  public String unprefixedKey() {
     return unprefixedKey;
   }
 

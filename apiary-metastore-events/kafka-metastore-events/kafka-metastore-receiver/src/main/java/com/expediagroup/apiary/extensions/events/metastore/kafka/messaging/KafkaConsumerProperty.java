@@ -39,22 +39,22 @@ public enum KafkaConsumerProperty implements Property {
 
   private static final String PROPERTY_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
 
-  private final String unPrefixedKey;
+  private final String unprefixedKey;
   private final Object defaultValue;
 
-  private KafkaConsumerProperty(String unPrefixedKey, Object defaultValue) {
-    this.unPrefixedKey = unPrefixedKey;
+  private KafkaConsumerProperty(String unprefixedKey, Object defaultValue) {
+    this.unprefixedKey = unprefixedKey;
     this.defaultValue = defaultValue;
   }
 
   @Override
   public String key() {
-    return new StringBuffer(PROPERTY_PREFIX).append(unPrefixedKey).toString();
+    return new StringBuffer(PROPERTY_PREFIX).append(unprefixedKey).toString();
   }
 
   @Override
-  public String unPrefixedKey() {
-    return unPrefixedKey;
+  public String unprefixedKey() {
+    return unprefixedKey;
   }
 
   @Override

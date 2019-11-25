@@ -19,7 +19,7 @@ public interface Property {
 
   String key();
 
-  String unPrefixedKey();
+  String unprefixedKey();
 
   Object defaultValue();
 

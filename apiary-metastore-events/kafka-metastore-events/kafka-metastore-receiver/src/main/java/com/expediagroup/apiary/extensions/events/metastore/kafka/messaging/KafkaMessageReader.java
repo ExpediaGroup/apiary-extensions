@@ -76,23 +76,23 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
   @VisibleForTesting
   static Properties kafkaProperties(Configuration conf) {
     Properties props = new Properties();
-    props.put(BOOTSTRAP_SERVERS.unPrefixedKey(),
+    props.put(BOOTSTRAP_SERVERS.unprefixedKey(),
       checkNotNull(stringProperty(conf, BOOTSTRAP_SERVERS), "Property " + BOOTSTRAP_SERVERS + " is not set"));
-    props.put(GROUP_ID.unPrefixedKey(),
+    props.put(GROUP_ID.unprefixedKey(),
       checkNotNull(stringProperty(conf, GROUP_ID), "Property " + GROUP_ID + " is not set"));
-    props.put(CLIENT_ID.unPrefixedKey(),
+    props.put(CLIENT_ID.unprefixedKey(),
       checkNotNull(stringProperty(conf, CLIENT_ID), "Property " + CLIENT_ID + " is not set"));
-    props.put(SESSION_TIMEOUT_MS.unPrefixedKey(), intProperty(conf, SESSION_TIMEOUT_MS));
-    props.put(CONNECTIONS_MAX_IDLE_MS.unPrefixedKey(), longProperty(conf, CONNECTIONS_MAX_IDLE_MS));
-    props.put(RECONNECT_BACKOFF_MAX_MS.unPrefixedKey(), longProperty(conf, RECONNECT_BACKOFF_MAX_MS));
-    props.put(RECONNECT_BACKOFF_MS.unPrefixedKey(), longProperty(conf, RECONNECT_BACKOFF_MS));
-    props.put(RETRY_BACKOFF_MS.unPrefixedKey(), longProperty(conf, RETRY_BACKOFF_MS));
-    props.put(MAX_POLL_INTERVAL_MS.unPrefixedKey(), intProperty(conf, MAX_POLL_INTERVAL_MS));
-    props.put(MAX_POLL_RECORDS.unPrefixedKey(), intProperty(conf, MAX_POLL_RECORDS));
-    props.put(ENABLE_AUTO_COMMIT.unPrefixedKey(), booleanProperty(conf, ENABLE_AUTO_COMMIT));
-    props.put(AUTO_COMMIT_INTERVAL_MS.unPrefixedKey(), intProperty(conf, AUTO_COMMIT_INTERVAL_MS));
-    props.put(FETCH_MAX_BYTES.unPrefixedKey(), intProperty(conf, FETCH_MAX_BYTES));
-    props.put(RECEIVE_BUFFER_BYTES.unPrefixedKey(), intProperty(conf, RECEIVE_BUFFER_BYTES));
+    props.put(SESSION_TIMEOUT_MS.unprefixedKey(), intProperty(conf, SESSION_TIMEOUT_MS));
+    props.put(CONNECTIONS_MAX_IDLE_MS.unprefixedKey(), longProperty(conf, CONNECTIONS_MAX_IDLE_MS));
+    props.put(RECONNECT_BACKOFF_MAX_MS.unprefixedKey(), longProperty(conf, RECONNECT_BACKOFF_MAX_MS));
+    props.put(RECONNECT_BACKOFF_MS.unprefixedKey(), longProperty(conf, RECONNECT_BACKOFF_MS));
+    props.put(RETRY_BACKOFF_MS.unprefixedKey(), longProperty(conf, RETRY_BACKOFF_MS));
+    props.put(MAX_POLL_INTERVAL_MS.unprefixedKey(), intProperty(conf, MAX_POLL_INTERVAL_MS));
+    props.put(MAX_POLL_RECORDS.unprefixedKey(), intProperty(conf, MAX_POLL_RECORDS));
+    props.put(ENABLE_AUTO_COMMIT.unprefixedKey(), booleanProperty(conf, ENABLE_AUTO_COMMIT));
+    props.put(AUTO_COMMIT_INTERVAL_MS.unprefixedKey(), intProperty(conf, AUTO_COMMIT_INTERVAL_MS));
+    props.put(FETCH_MAX_BYTES.unprefixedKey(), intProperty(conf, FETCH_MAX_BYTES));
+    props.put(RECEIVE_BUFFER_BYTES.unprefixedKey(), intProperty(conf, RECEIVE_BUFFER_BYTES));
     props.put("key.deserializer", "org.apache.kafka.common.serialization.LongDeserializer");
     props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
     return props;
