@@ -21,7 +21,9 @@ import com.google.common.collect.ImmutableList;
 import org.apache.ranger.admin.client.RangerAdminClient;
 import org.apache.ranger.admin.client.RangerAdminRESTClient;
 import org.apache.ranger.plugin.model.RangerPolicy;
+import org.apache.ranger.plugin.model.RangerRole;
 import org.apache.ranger.plugin.util.GrantRevokeRequest;
+import org.apache.ranger.plugin.util.GrantRevokeRoleRequest;
 import org.apache.ranger.plugin.util.ServicePolicies;
 import org.apache.ranger.plugin.util.ServiceTags;
 import org.slf4j.Logger;
@@ -86,6 +88,30 @@ public class ApiaryRangerAuthAllAccessPolicyProvider implements RangerAdminClien
   }
 
   @Override
+  public RangerRole createRole(RangerRole request) throws Exception {
+    return request;
+  }
+
+  @Override
+  public void dropRole(String execUser, String roleName) throws Exception {
+  }
+
+  @Override
+  public List<String> getAllRoles(String execUser) throws Exception {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public List<String> getUserRoles(String execUser) throws Exception {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public RangerRole getRole(String execUser, String roleName) throws Exception {
+    return null;
+  }
+
+  @Override
   public ServicePolicies getServicePoliciesIfUpdated(long lastKnownVersion, long lastActivationTimeInMillis) throws Exception {
     ServicePolicies realServicePolicies = rangerAdminClient.getServicePoliciesIfUpdated(lastKnownVersion, lastActivationTimeInMillis);
 
@@ -100,6 +126,14 @@ public class ApiaryRangerAuthAllAccessPolicyProvider implements RangerAdminClien
 
   @Override
   public void revokeAccess(GrantRevokeRequest request) throws Exception {
+  }
+
+  @Override
+  public void grantRole(GrantRevokeRoleRequest request) throws Exception {
+  }
+
+  @Override
+  public void revokeRole(GrantRevokeRoleRequest request) throws Exception {
   }
 
   @Override
