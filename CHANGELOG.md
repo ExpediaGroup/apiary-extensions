@@ -3,10 +3,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 5.0.0 - TBD
+## 5.0.0 - 2019-12-09
 ### Changed
 - Moved `apiary-gluesync-listener`, `apiary-metastore-auth` and `apiary-ranger-metastore-plugin` (all previously top-level modules) to be submodules under a new top-level module named `hive-metastore-events`.
 - Grouped `apiary-metastore-consumers`, `apiary-metastore-listener` and `apiary-receivers` (all previously submodules in `apiary-metastore-events`) in a new module named `sns-metastore-events`, itself a submodule of `apiary-metastore-events`.
+- Updated `apiary-ranger-metastore-plugin` to use Ranger 2.0.0 (was 1.1.0).
 - Changed parent to `com.expediagroup:eg-oss-parent:1.1.0` (was `com.hotels:hotels-oss-parent:4.0.1`).
 
 ## 4.2.0 - 2019-08-02
