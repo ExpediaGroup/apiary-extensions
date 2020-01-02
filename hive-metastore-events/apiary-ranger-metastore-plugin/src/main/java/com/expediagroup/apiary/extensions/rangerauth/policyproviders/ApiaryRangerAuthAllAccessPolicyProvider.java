@@ -15,9 +15,14 @@
  */
 package com.expediagroup.apiary.extensions.rangerauth.policyproviders;
 
-import com.expediagroup.apiary.extensions.rangerauth.listener.ApiaryRangerAuthPreEventListener;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.ranger.admin.client.RangerAdminClient;
 import org.apache.ranger.admin.client.RangerAdminRESTClient;
 import org.apache.ranger.plugin.model.RangerPolicy;
@@ -29,13 +34,10 @@ import org.apache.ranger.plugin.util.ServiceTags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+
+import com.expediagroup.apiary.extensions.rangerauth.listener.ApiaryRangerAuthPreEventListener;
 
 /**
  * Class to return a list of Ranger authorization policies that permits all access.  If this is configured in

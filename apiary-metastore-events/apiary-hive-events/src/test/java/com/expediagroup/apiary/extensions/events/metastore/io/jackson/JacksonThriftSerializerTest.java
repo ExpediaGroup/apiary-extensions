@@ -32,8 +32,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-import com.expediagroup.apiary.extensions.events.metastore.io.SerDeTestUtils;
 import com.expediagroup.apiary.extensions.events.metastore.io.SerDeException;
+import com.expediagroup.apiary.extensions.events.metastore.io.SerDeTestUtils;
 
 public class JacksonThriftSerializerTest {
 

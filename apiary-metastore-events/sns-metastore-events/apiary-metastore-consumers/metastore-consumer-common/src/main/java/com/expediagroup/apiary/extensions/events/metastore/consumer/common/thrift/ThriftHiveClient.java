@@ -15,10 +15,11 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift;
 
-import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+
+import com.expediagroup.apiary.extensions.events.metastore.consumer.common.exception.HiveClientException;
 
 /**
  * Exposes an instance of the Hive Metastore Thrift Api Client.

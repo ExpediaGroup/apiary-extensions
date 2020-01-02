@@ -22,7 +22,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.expediagroup.apiary.extensions.rangerauth.listener.RangerAdminClientImpl;
+import java.util.Date;
+import java.util.Set;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveOperationType;
 import org.apache.ranger.admin.client.RangerAdminRESTClient;
@@ -40,8 +42,7 @@ import org.mockito.Mock;
 import org.mockito.internal.util.collections.Sets;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Date;
-import java.util.Set;
+import com.expediagroup.apiary.extensions.rangerauth.listener.RangerAdminClientImpl;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryRangerAuthAllAccessPolicyProviderTest {

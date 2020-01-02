@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.Test;
 
-import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessage;
 
 public class KafkaMessageTest {
 
