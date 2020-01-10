@@ -3,9 +3,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [5.0.1] - TBD
+## [TBD] - TBD
 ### Changed
 - `eg-oss-parent` version updated to 1.2.0 (was 1.1.0).
+
+## 5.0.1 - 2020-01-10
+### Changed
+- Upgraded Solr version to `7.7.1` (was `5.5.4`) to fix issue where Ranger plugin jar (version `2.0.0`) could not instantiate Solr client correctly.
 
 ## 5.0.0 - 2019-12-09
 ### Changed
