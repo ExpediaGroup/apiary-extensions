@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageSender.kafkaProperties;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageSender.topic;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.ACKS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BATCH_SIZE;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BOOTSTRAP_SERVERS;
@@ -27,8 +29,6 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.RETRIES;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageSender.kafkaProperties;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageSender.topic;
 
 import java.util.Properties;
 
@@ -46,8 +46,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessage;
-import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageSender;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KafkaMessageSenderTest {
