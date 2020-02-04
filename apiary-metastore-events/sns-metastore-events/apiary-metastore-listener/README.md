@@ -162,6 +162,7 @@ The following messages attributes are supported:
 |`eventType`|String|One of: CREATE_TABLE, DROP_TABLE, ALTER_TABLE, ADD_PARTITION, DROP_PARTITION, ALTER_PARTITION
 |`dbName`|String|Database name of the Hive table from which the event is emitted.
 |`tableName`|String|Name of the Hive table from which the event is emitted.
+|`qualifiedTableName`|String|Combined version of dbName and tableName: `my_db.my_table`.
 
 # Legal
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).

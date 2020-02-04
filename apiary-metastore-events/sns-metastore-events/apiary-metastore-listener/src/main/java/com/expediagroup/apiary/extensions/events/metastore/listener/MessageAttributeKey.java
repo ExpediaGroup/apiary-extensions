@@ -19,7 +19,8 @@ public enum MessageAttributeKey {
 
   EVENT_TYPE("eventType"),
   DB_NAME("dbName"),
-  TABLE_NAME("tableName");
+  TABLE_NAME("tableName"),
+  QUALIFIED_TABLE_NAME("qualifiedTableName");
 
   private final String attribute;
 
