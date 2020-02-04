@@ -424,16 +424,20 @@ public class ApiarySnsListenerTest {
       String dbName,
       String tableName) {
     Map<String, MessageAttributeValue> messageAttributes = publishRequest.getMessageAttributes();
-    assertThat(messageAttributes.size(), is(3));
+    assertThat(messageAttributes.size(), is(4));
     assertThat(messageAttributes.get(MessageAttributeKey.EVENT_TYPE.toString()).getStringValue(), is(eventType));
     assertThat(messageAttributes.get(MessageAttributeKey.DB_NAME.toString()).getStringValue(), is(dbName));
     assertThat(messageAttributes.get(MessageAttributeKey.TABLE_NAME.toString()).getStringValue(), is(tableName));
+    assertThat(messageAttributes.get(MessageAttributeKey.QUALIFIED_TABLE_NAME.toString()).getStringValue(),
+        is(dbName + "." + tableName));
 
     assertThat(messageAttributes.get(MessageAttributeKey.EVENT_TYPE.toString()).getDataType(),
         is(MessageAttributeDataType.STRING.toString()));
     assertThat(messageAttributes.get(MessageAttributeKey.DB_NAME.toString()).getDataType(),
         is(MessageAttributeDataType.STRING.toString()));
     assertThat(messageAttributes.get(MessageAttributeKey.TABLE_NAME.toString()).getDataType(),
+        is(MessageAttributeDataType.STRING.toString()));
+    assertThat(messageAttributes.get(MessageAttributeKey.QUALIFIED_TABLE_NAME.toString()).getDataType(),
         is(MessageAttributeDataType.STRING.toString()));
 
   }

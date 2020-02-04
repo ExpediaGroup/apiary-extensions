@@ -223,12 +223,17 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     map
         .put(MessageAttributeKey.DB_NAME.toString(),
             new MessageAttributeValue()
-                .withStringValue(dbName.toString())
+                .withStringValue(dbName)
                 .withDataType(MessageAttributeDataType.STRING.toString()));
     map
         .put(MessageAttributeKey.TABLE_NAME.toString(),
             new MessageAttributeValue()
-                .withStringValue(tableName.toString())
+                .withStringValue(tableName)
+                .withDataType(MessageAttributeDataType.STRING.toString()));
+    map
+        .put(MessageAttributeKey.QUALIFIED_TABLE_NAME.toString(),
+            new MessageAttributeValue()
+                .withStringValue(dbName + "." + tableName)
                 .withDataType(MessageAttributeDataType.STRING.toString()));
 
     return map;
