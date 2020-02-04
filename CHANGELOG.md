@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 - `eg-oss-parent` version updated to 1.2.0 (was 1.1.0).
 ### Added
-- Added `sns-metastore-event` SNS message attribute: `qualifiedTableName`.
+- `sns-metastore-event` SNS message attribute: `qualifiedTableName`.
 
 ## 5.0.1 - 2020-01-10
 ### Changed
