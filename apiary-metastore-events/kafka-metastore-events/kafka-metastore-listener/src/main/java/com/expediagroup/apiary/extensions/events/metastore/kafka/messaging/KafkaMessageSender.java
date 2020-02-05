@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
 import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotNull;
-import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.intProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.longProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.stringProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.*;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.ACKS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BATCH_SIZE;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BOOTSTRAP_SERVERS;
@@ -48,7 +46,7 @@ public class KafkaMessageSender {
   private final int numberOfPartitions;
 
   public KafkaMessageSender(Configuration conf) {
-    this(topic(conf), new KafkaProducer<Long, byte[]>(kafkaProperties(conf)));
+    this(topic(conf), new KafkaProducer<>(kafkaProperties(conf)));
   }
 
   @VisibleForTesting

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
@@ -58,9 +57,7 @@ public class ApiaryListenerEventFactoryTest {
   @Before
   public void init() {
     parameters = new HashMap<>();
-    HiveConf config = new HiveConf();
-    config.setVar(METASTOREURIS, METASTORE_URIS);
-    factory = new ApiaryListenerEventFactory(config);
+    factory = new ApiaryListenerEventFactory(METASTORE_URIS);
   }
 
   private <T extends ListenerEvent> T mockEvent(Class<T> clazz) {

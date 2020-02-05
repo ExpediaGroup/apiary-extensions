@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,19 +22,35 @@ public class PropertyUtils {
   private PropertyUtils() {}
 
   public static String stringProperty(Configuration conf, Property property) {
-    return conf.get(property.key(), (String) property.defaultValue());
+    String value = System.getenv(property.key());
+    if (value == null) {
+      return conf.get(property.key(), (String) property.defaultValue());
+    }
+    return value;
   }
 
   public static boolean booleanProperty(Configuration conf, Property property) {
-    return conf.getBoolean(property.key(), (boolean) property.defaultValue());
+    String value = System.getenv(property.key());
+    if (value == null) {
+      return conf.getBoolean(property.key(), (boolean) property.defaultValue());
+    }
+    return Boolean.parseBoolean(value);
   }
 
   public static int intProperty(Configuration conf, Property property) {
-    return conf.getInt(property.key(), (int) property.defaultValue());
+    String value = System.getenv(property.key());
+    if (value == null) {
+      return conf.getInt(property.key(), (int) property.defaultValue());
+    }
+    return Integer.parseInt(value);
   }
 
   public static long longProperty(Configuration conf, Property property) {
-    return conf.getLong(property.key(), (long) property.defaultValue());
+    String value = System.getenv(property.key());
+    if (value == null) {
+      return conf.getLong(property.key(), (long) property.defaultValue());
+    }
+    return Long.parseLong(value);
   }
 
 }

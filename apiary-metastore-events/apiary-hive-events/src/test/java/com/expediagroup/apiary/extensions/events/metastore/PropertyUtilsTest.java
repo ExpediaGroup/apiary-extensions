@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -44,6 +45,9 @@ public class PropertyUtilsTest {
 
   public @Rule ExpectedException exception = ExpectedException.none();
 
+  @Rule
+  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
+
   private @Mock Property property;
 
   private final Configuration conf = new Configuration();
@@ -57,6 +61,13 @@ public class PropertyUtilsTest {
   }
 
   @Test
+  public void stringPropertyReturnsEnvValue() {
+    when(property.key()).thenReturn(STRING_PROPERTY);
+    environmentVariables.set(STRING_PROPERTY, "string");
+    assertThat(stringProperty(null, property)).isEqualTo("string");
+  }
+
+  @Test
   public void stringPropertyReturnsConfValue() {
     when(property.key()).thenReturn(STRING_PROPERTY);
     when(property.defaultValue()).thenReturn("default");
@@ -64,7 +75,7 @@ public class PropertyUtilsTest {
   }
 
   @Test
-  public void stringPropertyReturnsDefaultValue() {
+  public void stringPropertyReturnsDefaultConfValue() {
     when(property.key()).thenReturn("unset");
     when(property.defaultValue()).thenReturn("default");
     assertThat(stringProperty(conf, property)).isEqualTo("default");
@@ -74,6 +85,13 @@ public class PropertyUtilsTest {
   public void stringPropertyReturnsNull() {
     when(property.key()).thenReturn("unset");
     assertThat(stringProperty(conf, property)).isNull();
+  }
+
+  @Test
+  public void booleanPropertyReturnsEnvValue() {
+    when(property.key()).thenReturn(BOOLEAN_PROPERTY);
+    environmentVariables.set(BOOLEAN_PROPERTY, "true");
+    assertThat(booleanProperty(null, property)).isEqualTo(true);
   }
 
   @Test
@@ -97,6 +115,13 @@ public class PropertyUtilsTest {
   }
 
   @Test
+  public void intPropertyReturnsEnvValue() {
+    when(property.key()).thenReturn(INT_PROPERTY);
+    environmentVariables.set(INT_PROPERTY, "1024");
+    assertThat(intProperty(null, property)).isEqualTo(1024);
+  }
+
+  @Test
   public void intPropertyReturnsConfValue() {
     when(property.key()).thenReturn(INT_PROPERTY);
     when(property.defaultValue()).thenReturn(100);
@@ -114,6 +139,13 @@ public class PropertyUtilsTest {
   public void intPropertyThrowsNullPointerException() {
     when(property.key()).thenReturn("unset");
     intProperty(conf, property);
+  }
+
+  @Test
+  public void longPropertyReturnsEnvValue() {
+    when(property.key()).thenReturn(LONG_PROPERTY);
+    environmentVariables.set(LONG_PROPERTY, "18000");
+    assertThat(longProperty(null, property)).isEqualTo(18000L);
   }
 
   @Test

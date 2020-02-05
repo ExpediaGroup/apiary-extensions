@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.kafka.listener;
 
-import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.stringProperty;
+import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREURIS;
+
+import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.*;
 import static com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe.serDeForClassName;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.listener.ListenerUtils.error;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.SERDE_CLASS;
@@ -51,20 +53,30 @@ import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.Kafka
 
 public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   private static final Logger log = LoggerFactory.getLogger(KafkaMetaStoreEventListener.class);
+  private static final Configuration EMPTY_CONFIG = new Configuration();
 
   private final MetaStoreEventSerDe eventSerDe;
   private final KafkaMessageSender kafkaMessageSender;
   private final ApiaryListenerEventFactory apiaryListenerEventFactory;
 
+  public KafkaMetaStoreEventListener() {
+    this(EMPTY_CONFIG);
+  }
+
   public KafkaMetaStoreEventListener(Configuration config) {
-    this(config, new ApiaryListenerEventFactory(config), serDeForClassName(stringProperty(config, SERDE_CLASS)),
-        new KafkaMessageSender(config));
+    this(config, new ApiaryListenerEventFactory(getConfig(config, METASTOREURIS.varname)),
+      serDeForClassName(stringProperty(config, SERDE_CLASS)), new KafkaMessageSender(config));
+  }
+
+  public static String getConfig(Configuration config, String key) {
+    String value = System.getenv(key);
+    return value == null ? config.get(key) : value;
   }
 
   @VisibleForTesting
   KafkaMetaStoreEventListener(
       Configuration config,
-    ApiaryListenerEventFactory apiaryListenerEventFactory,
+      ApiaryListenerEventFactory apiaryListenerEventFactory,
       MetaStoreEventSerDe eventSerDe,
       KafkaMessageSender kafkaMessageSender) {
     super(config);
