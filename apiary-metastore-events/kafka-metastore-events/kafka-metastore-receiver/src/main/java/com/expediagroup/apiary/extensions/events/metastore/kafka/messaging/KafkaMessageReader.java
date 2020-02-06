@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECONNECT_BACKOFF_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RETRY_BACKOFF_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.SESSION_TIMEOUT_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.TOPIC;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.TOPIC_NAME;
 
 import java.io.Closeable;
 import java.time.Duration;
@@ -99,7 +99,7 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
   }
 
   private void init() {
-    topic = checkNotNull(stringProperty(conf, TOPIC), "Property " + TOPIC + " is not set");
+    topic = checkNotNull(stringProperty(conf, TOPIC_NAME), "Property " + TOPIC_NAME + " is not set");
     consumer.subscribe(Arrays.asList(topic));
   }
 

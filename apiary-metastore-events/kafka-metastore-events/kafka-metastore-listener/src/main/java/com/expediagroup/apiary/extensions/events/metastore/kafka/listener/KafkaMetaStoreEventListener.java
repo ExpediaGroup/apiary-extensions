@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,14 +57,14 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   private final ApiaryListenerEventFactory apiaryListenerEventFactory;
 
   public KafkaMetaStoreEventListener(Configuration config) {
-    this(config, new ApiaryListenerEventFactory(config), serDeForClassName(stringProperty(config, SERDE_CLASS)),
-        new KafkaMessageSender(config));
+    this(config, new ApiaryListenerEventFactory(), serDeForClassName(stringProperty(config, SERDE_CLASS)),
+      new KafkaMessageSender(config));
   }
 
   @VisibleForTesting
   KafkaMetaStoreEventListener(
       Configuration config,
-    ApiaryListenerEventFactory apiaryListenerEventFactory,
+      ApiaryListenerEventFactory apiaryListenerEventFactory,
       MetaStoreEventSerDe eventSerDe,
       KafkaMessageSender kafkaMessageSender) {
     super(config);

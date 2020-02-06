@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.event;
 
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREURIS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -26,7 +25,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
@@ -48,8 +46,6 @@ import org.mockito.stubbing.Answer;
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryListenerEventFactoryTest {
 
-  private static final String METASTORE_URIS = "thrift://localhost:1234";
-
   private @Mock Iterator<Partition> partitionIterator;
 
   private Map<String, String> parameters;
@@ -58,9 +54,7 @@ public class ApiaryListenerEventFactoryTest {
   @Before
   public void init() {
     parameters = new HashMap<>();
-    HiveConf config = new HiveConf();
-    config.setVar(METASTOREURIS, METASTORE_URIS);
-    factory = new ApiaryListenerEventFactory(config);
+    factory = new ApiaryListenerEventFactory();
   }
 
   private <T extends ListenerEvent> T mockEvent(Class<T> clazz) {
@@ -79,8 +73,7 @@ public class ApiaryListenerEventFactoryTest {
   private void assertCommon(ApiaryListenerEvent event) {
     assertThat(event.getStatus()).isTrue();
     // We don't use event.getParameters() here because it is deferred to parameters in the stub
-    assertThat(parameters).containsEntry(METASTOREURIS.varname, METASTORE_URIS).containsEntry(
-        CustomEventParameters.HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
+    assertThat(parameters).containsEntry(CustomEventParameters.HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
   }
 
   @Test

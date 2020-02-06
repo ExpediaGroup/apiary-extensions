@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECONNECT_BACKOFF_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RETRY_BACKOFF_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.SESSION_TIMEOUT_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.TOPIC;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.TOPIC_NAME;
 
 import org.junit.Test;
 
@@ -48,9 +48,9 @@ public class KafkaConsumerPropertyTest {
 
   @Test
   public void topic() {
-    assertThat(TOPIC.unprefixedKey()).isEqualTo("topic");
-    assertThat(TOPIC.key()).isEqualTo(prefixedKey("topic"));
-    assertThat(TOPIC.defaultValue()).isNull();
+    assertThat(TOPIC_NAME.unprefixedKey()).isEqualTo("topic.name");
+    assertThat(TOPIC_NAME.key()).isEqualTo(prefixedKey("topic.name"));
+    assertThat(TOPIC_NAME.defaultValue()).isNull();
   }
 
   @Test
@@ -71,7 +71,7 @@ public class KafkaConsumerPropertyTest {
   public void clientId() {
     assertThat(CLIENT_ID.unprefixedKey()).isEqualTo("client.id");
     assertThat(CLIENT_ID.key()).isEqualTo(prefixedKey("client.id"));
-    assertThat(CLIENT_ID.defaultValue()).isEqualTo("ApiaryKafkaMetaStoreReceiver");
+    assertThat(CLIENT_ID.defaultValue()).isNull();
   }
 
   @Test

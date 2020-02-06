@@ -15,11 +15,9 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.event;
 
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREURIS;
 
 import static com.expediagroup.apiary.extensions.events.metastore.event.CustomEventParameters.HIVE_VERSION;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
@@ -31,18 +29,6 @@ import org.apache.hadoop.hive.metastore.events.ListenerEvent;
 import org.apache.hive.common.util.HiveVersionInfo;
 
 public class ApiaryListenerEventFactory {
-
-  private final Configuration config;
-
-  public ApiaryListenerEventFactory(Configuration config) {
-    this.config = config;
-  }
-
-  private <T extends ListenerEvent> T addParams(T event) {
-    event.putParameter(HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
-    event.putParameter(METASTOREURIS.varname, config.get(METASTOREURIS.varname));
-    return event;
-  }
 
   public ApiaryCreateTableEvent create(CreateTableEvent event) {
     return new ApiaryCreateTableEvent(addParams(event));
@@ -70,6 +56,11 @@ public class ApiaryListenerEventFactory {
 
   public ApiaryInsertEvent create(InsertEvent event) {
     return new ApiaryInsertEvent(addParams(event));
+  }
+
+  private <T extends ListenerEvent> T addParams(T event) {
+    event.putParameter(HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
+    return event;
   }
 
 }

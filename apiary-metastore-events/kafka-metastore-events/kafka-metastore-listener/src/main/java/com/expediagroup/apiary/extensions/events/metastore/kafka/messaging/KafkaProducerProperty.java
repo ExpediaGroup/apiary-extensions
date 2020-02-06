@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.expediagroup.apiary.extensions.events.metastore.common.Property;
 import com.expediagroup.apiary.extensions.events.metastore.io.jackson.JsonMetaStoreEventSerDe;
 
 public enum KafkaProducerProperty implements Property {
-  TOPIC("topic", null),
+  TOPIC_NAME("topic.name", null),
   BOOTSTRAP_SERVERS("bootstrap.servers", null),
-  CLIENT_ID("client.id", "ApiaryKafkaMetaStoreListener"),
+  CLIENT_ID("client.id", null),
   ACKS("acks", "all"),
   RETRIES("retries", 3),
   MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION("max.in.flight.requests.per.connection", 1),
@@ -30,19 +30,19 @@ public enum KafkaProducerProperty implements Property {
   BUFFER_MEMORY("buffer.memory", 33554432L),
   SERDE_CLASS("serde.class", JsonMetaStoreEventSerDe.class.getName());
 
-  private static final String PROPERTY_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
+  private static final String HADOOP_CONF_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
 
   private final String unprefixedKey;
   private final Object defaultValue;
 
-  private KafkaProducerProperty(String unprefixedKey, Object defaultValue) {
+  KafkaProducerProperty(String unprefixedKey, Object defaultValue) {
     this.unprefixedKey = unprefixedKey;
     this.defaultValue = defaultValue;
   }
 
   @Override
   public String key() {
-    return new StringBuffer(PROPERTY_PREFIX).append(unprefixedKey).toString();
+    return HADOOP_CONF_PREFIX + unprefixedKey;
   }
 
   @Override

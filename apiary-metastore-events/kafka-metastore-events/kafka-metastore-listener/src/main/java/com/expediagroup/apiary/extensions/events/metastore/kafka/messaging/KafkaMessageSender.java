@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.LINGER_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.RETRIES;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC_NAME;
 
 import java.util.Properties;
 
@@ -48,7 +48,7 @@ public class KafkaMessageSender {
   private final int numberOfPartitions;
 
   public KafkaMessageSender(Configuration conf) {
-    this(topic(conf), new KafkaProducer<Long, byte[]>(kafkaProperties(conf)));
+    this(topic(conf), new KafkaProducer<>(kafkaProperties(conf)));
   }
 
   @VisibleForTesting
@@ -84,7 +84,7 @@ public class KafkaMessageSender {
 
   @VisibleForTesting
   static String topic(Configuration conf) {
-    return checkNotNull(stringProperty(conf, TOPIC), "Property " + TOPIC + " is not set");
+    return checkNotNull(stringProperty(conf, TOPIC_NAME), "Property " + TOPIC_NAME + " is not set");
   }
 
 }

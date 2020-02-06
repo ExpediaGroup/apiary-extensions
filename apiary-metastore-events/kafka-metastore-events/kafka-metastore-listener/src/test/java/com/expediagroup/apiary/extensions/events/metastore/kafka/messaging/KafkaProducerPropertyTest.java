@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.RETRIES;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.SERDE_CLASS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC_NAME;
 
 import org.junit.Test;
 
@@ -45,9 +45,9 @@ public class KafkaProducerPropertyTest {
 
   @Test
   public void topic() {
-    assertThat(TOPIC.unprefixedKey()).isEqualTo("topic");
-    assertThat(TOPIC.key()).isEqualTo(prefixedKey("topic"));
-    assertThat(TOPIC.defaultValue()).isNull();
+    assertThat(TOPIC_NAME.unprefixedKey()).isEqualTo("topic.name");
+    assertThat(TOPIC_NAME.key()).isEqualTo(prefixedKey("topic.name"));
+    assertThat(TOPIC_NAME.defaultValue()).isNull();
   }
 
   @Test
@@ -61,7 +61,7 @@ public class KafkaProducerPropertyTest {
   public void clientId() {
     assertThat(CLIENT_ID.unprefixedKey()).isEqualTo("client.id");
     assertThat(CLIENT_ID.key()).isEqualTo(prefixedKey("client.id"));
-    assertThat(CLIENT_ID.defaultValue()).isEqualTo("ApiaryKafkaMetaStoreListener");
+    assertThat(CLIENT_ID.defaultValue()).isNull();
   }
 
   @Test

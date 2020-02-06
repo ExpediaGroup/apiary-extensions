@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,11 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BATCH_SIZE;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BOOTSTRAP_SERVERS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BUFFER_MEMORY;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.CLIENT_ID;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.LINGER_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.RETRIES;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC_NAME;
 
 import java.util.Properties;
 
@@ -54,7 +55,6 @@ public class KafkaMessageSenderTest {
   private @Mock KafkaMessage kafkaMessage;
   private @Mock KafkaProducer<Long, byte[]> producer;
   private @Mock List<PartitionInfo> partitionInfoList;
-  private static final String TOPIC_NAME = "topic";
   private Configuration conf = new Configuration();
 
   @Test
@@ -62,20 +62,21 @@ public class KafkaMessageSenderTest {
     byte[] payload = { 1, 2, 3 };
     when(kafkaMessage.getPayload()).thenReturn(payload);
     when(kafkaMessage.getQualifiedTableName()).thenReturn("database.table");
-    when(producer.partitionsFor(TOPIC_NAME)).thenReturn(partitionInfoList);
+    when(producer.partitionsFor("topic")).thenReturn(partitionInfoList);
     when(partitionInfoList.size()).thenReturn(5);
-    KafkaMessageSender kafkaMessageSender = new KafkaMessageSender(TOPIC_NAME, producer);
+    KafkaMessageSender kafkaMessageSender = new KafkaMessageSender("topic", producer);
     kafkaMessageSender.send(kafkaMessage);
     verify(producer).send(producerRecordCaptor.capture());
     ProducerRecord record = producerRecordCaptor.getValue();
-    assertThat(record.topic()).isEqualToIgnoringCase(TOPIC_NAME);
+    assertThat(record.topic()).isEqualToIgnoringCase("topic");
     assertThat(record.partition()).isEqualTo(1);
     assertThat(record.value()).isEqualTo(payload);
   }
 
   @Test
-  public void populateKafkaProperties() {
+  public void populateKafkaPropertiesFromHadoop() {
     conf.set(BOOTSTRAP_SERVERS.key(), "broker");
+    conf.set(CLIENT_ID.key(), "client");
     conf.set(ACKS.key(), "acknowledgements");
     conf.set(RETRIES.key(), "1");
     conf.set(MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION.key(), "2");
@@ -95,9 +96,9 @@ public class KafkaMessageSenderTest {
   }
 
   @Test
-  public void topicIsNotNull() {
-    conf.set(TOPIC.key(), TOPIC_NAME);
-    assertThat(topic(conf)).isEqualTo(TOPIC_NAME);
+  public void hadoopTopicIsNotNull() {
+    conf.set(TOPIC_NAME.key(), "topic");
+    assertThat(topic(conf)).isEqualTo("topic");
   }
 
   @Test(expected = NullPointerException.class)
