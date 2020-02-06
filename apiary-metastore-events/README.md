@@ -9,13 +9,13 @@ Currently, the following modules are defined:
 
 ## Kafka Configuration
 
-To configure the listener, use the configuration below and prefix all parameters with `com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.`.
+To configure the receiver or listener, use the configuration below and prefix all parameters with `com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.`.
 
 ### Kafka Metastore Listener
 
 | Parameter | Required | Default
 |:----|:----:|:----:|
-| `topic`   | Yes | n/a
+| `topic.name`   | Yes | n/a
 | `bootstrap.servers` | Yes | n/a
 | `client.id` | Yes | n/a
 | `acks` | No | "all"
@@ -32,7 +32,7 @@ Documentation for Kafka Producer configuration can be found [here](https://kafka
   
 | Parameter | Required | Default
 |:----|:----:|:----:|
-| `topic`   | Yes | n/a
+| `topic.name`   | Yes | n/a
 | `bootstrap.servers` | Yes | n/a
 | `group.id` | Yes | n/a
 | `client.id` | Yes | n/a

@@ -5,7 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## 5.0.3 - TBD
 ### Changed
-- 
+- `client.id` is now required to configure Kafka Receiver and Listener.
+- `topic` Kafka configuration parameter is now called `topic.name`.
+- No longer sending MetaStore uris with Kafka message.
 
 ## 5.0.2 - 2020-02-04
 ### Changed
