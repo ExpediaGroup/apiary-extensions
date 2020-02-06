@@ -15,20 +15,13 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageSender.kafkaProperties;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageSender.topic;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.ACKS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BATCH_SIZE;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BOOTSTRAP_SERVERS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BUFFER_MEMORY;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.LINGER_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.RETRIES;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC;
 
 import java.util.Properties;
 
@@ -39,7 +32,9 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.datanucleus.store.types.wrappers.List;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -49,6 +44,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KafkaMessageSenderTest {
+
+  public @Rule EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
   private @Captor ArgumentCaptor<ProducerRecord> producerRecordCaptor;
   private @Mock KafkaMessage kafkaMessage;
@@ -74,8 +71,9 @@ public class KafkaMessageSenderTest {
   }
 
   @Test
-  public void populateKafkaProperties() {
+  public void populateKafkaPropertiesFromHadoop() {
     conf.set(BOOTSTRAP_SERVERS.hadoopConfKey(), "broker");
+    conf.set(CLIENT_ID.hadoopConfKey(), "client");
     conf.set(ACKS.hadoopConfKey(), "acknowledgements");
     conf.set(RETRIES.hadoopConfKey(), "1");
     conf.set(MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION.hadoopConfKey(), "2");
@@ -95,8 +93,36 @@ public class KafkaMessageSenderTest {
   }
 
   @Test
-  public void topicIsNotNull() {
+  public void populateKafkaPropertiesFromEnv() {
+    environmentVariables.set(BOOTSTRAP_SERVERS.environmentKey(), "broker");
+    environmentVariables.set(CLIENT_ID.environmentKey(), "client");
+    environmentVariables.set(ACKS.environmentKey(), "acknowledgements");
+    environmentVariables.set(RETRIES.environmentKey(), "1");
+    environmentVariables.set(MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION.environmentKey(), "2");
+    environmentVariables.set(BATCH_SIZE.environmentKey(), "3");
+    environmentVariables.set(LINGER_MS.environmentKey(), "4");
+    environmentVariables.set(BUFFER_MEMORY.environmentKey(), "5");
+    Properties props = kafkaProperties(new Configuration());
+    assertThat(props.get("bootstrap.servers")).isEqualTo("broker");
+    assertThat(props.get("acks")).isEqualTo("acknowledgements");
+    assertThat(props.get("retries")).isEqualTo(1);
+    assertThat(props.get("max.in.flight.requests.per.connection")).isEqualTo(2);
+    assertThat(props.get("batch.size")).isEqualTo(3);
+    assertThat(props.get("linger.ms")).isEqualTo(4L);
+    assertThat(props.get("buffer.memory")).isEqualTo(5L);
+    assertThat(props.get("key.serializer")).isEqualTo(LongSerializer.class.getName());
+    assertThat(props.get("value.serializer")).isEqualTo(ByteArraySerializer.class.getName());
+  }
+
+  @Test
+  public void hadoopTopicIsNotNull() {
     conf.set(TOPIC.hadoopConfKey(), TOPIC_NAME);
+    assertThat(topic(conf)).isEqualTo(TOPIC_NAME);
+  }
+
+  @Test
+  public void envTopicIsNotNull() {
+    environmentVariables.set(TOPIC.environmentKey(), TOPIC_NAME);
     assertThat(topic(conf)).isEqualTo(TOPIC_NAME);
   }
 
