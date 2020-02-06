@@ -35,7 +35,7 @@ Documentation for Kafka Producer configuration can be found [here](https://kafka
 ### Kafka Metastore Receiver
   
 | Parameter | Required | Default
-|:----|:----:|:----:| n/a
+|:----|:----:|:----:|
 | `topic`   | Yes | n/a
 | `bootstrap.servers` | Yes | n/a
 | `group.id` | Yes | n/a
