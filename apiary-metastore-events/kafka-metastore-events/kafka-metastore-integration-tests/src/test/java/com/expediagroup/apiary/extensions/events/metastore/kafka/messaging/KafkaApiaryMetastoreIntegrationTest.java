@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CLIENT_ID;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.GROUP_ID;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildPartition;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildQualifiedTableName;
@@ -85,6 +86,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
   public static void init() {
     CONF.set(BOOTSTRAP_SERVERS.key(), KAFKA.getKafkaConnectString());
     CONF.set(GROUP_ID.key(), "1");
+    CONF.set(CLIENT_ID.key(), "client");
     CONF.set(TOPIC_NAME.key(), "topic");
     KAFKA.getKafkaTestUtils().createTopic("topic", 1, (short) 1);
 
