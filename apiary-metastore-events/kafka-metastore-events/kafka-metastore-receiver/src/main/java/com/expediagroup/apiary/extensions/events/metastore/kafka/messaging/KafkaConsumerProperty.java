@@ -24,7 +24,7 @@ public enum KafkaConsumerProperty implements Property {
   TOPIC("topic", null),
   BOOTSTRAP_SERVERS("bootstrap.servers", null),
   GROUP_ID("group.id", null),
-  CLIENT_ID("client.id", "ApiaryKafkaMetaStoreReceiver"),
+  CLIENT_ID("client.id", null),
   SESSION_TIMEOUT_MS("session.timeout.ms", 30000),
   CONNECTIONS_MAX_IDLE_MS("connections.max.idle.ms", MINUTES.toMillis(9)),
   RECONNECT_BACKOFF_MAX_MS("reconnect.backoff.max.ms", SECONDS.toMillis(1)),
@@ -37,19 +37,25 @@ public enum KafkaConsumerProperty implements Property {
   FETCH_MAX_BYTES("fetch.max.bytes", 52428800),
   RECEIVE_BUFFER_BYTES("receive.buffer.bytes", 65536);
 
-  private static final String PROPERTY_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
+  private static final String ENVIRONMENT_PREFIX = "KAFKA_";
+  private static final String HADOOP_CONF_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
 
   private final String unprefixedKey;
   private final Object defaultValue;
 
-  private KafkaConsumerProperty(String unprefixedKey, Object defaultValue) {
+  KafkaConsumerProperty(String unprefixedKey, Object defaultValue) {
     this.unprefixedKey = unprefixedKey;
     this.defaultValue = defaultValue;
   }
 
   @Override
-  public String key() {
-    return new StringBuffer(PROPERTY_PREFIX).append(unprefixedKey).toString();
+  public String hadoopConfKey() {
+    return HADOOP_CONF_PREFIX + unprefixedKey;
+  }
+
+  @Override
+  public String environmentKey() {
+    return ENVIRONMENT_PREFIX + this.name();
   }
 
   @Override
@@ -64,7 +70,7 @@ public enum KafkaConsumerProperty implements Property {
 
   @Override
   public String toString() {
-    return key();
+    return hadoopConfKey();
   }
 
 }

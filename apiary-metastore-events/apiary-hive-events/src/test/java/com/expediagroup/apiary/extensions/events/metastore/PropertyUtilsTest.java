@@ -37,6 +37,11 @@ import com.expediagroup.apiary.extensions.events.metastore.common.Property;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PropertyUtilsTest {
+  
+  private static final String STRING_ENV_PROPERTY = "KAFKA_PROPERTY_STRING";
+  private static final String BOOLEAN_ENV_PROPERTY = "KAFKA_PROPERTY_BOOLEAN";
+  private static final String INT_ENV_PROPERTY = "KAFKA_PROPERTY_INT";
+  private static final String LONG_ENV_PROPERTY = "KAFKA_PROPERTY_LONG";
 
   private static final String STRING_PROPERTY = "property.string";
   private static final String BOOLEAN_PROPERTY = "property.boolean";
@@ -62,109 +67,121 @@ public class PropertyUtilsTest {
 
   @Test
   public void stringPropertyReturnsEnvValue() {
-    when(property.key()).thenReturn(STRING_PROPERTY);
-    environmentVariables.set(STRING_PROPERTY, "string");
+    when(property.environmentKey()).thenReturn(STRING_ENV_PROPERTY);
+    environmentVariables.set(STRING_ENV_PROPERTY, "string");
     assertThat(stringProperty(null, property)).isEqualTo("string");
   }
 
   @Test
   public void stringPropertyReturnsConfValue() {
-    when(property.key()).thenReturn(STRING_PROPERTY);
+    when(property.environmentKey()).thenReturn(STRING_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn(STRING_PROPERTY);
     when(property.defaultValue()).thenReturn("default");
     assertThat(stringProperty(conf, property)).isEqualTo("string");
   }
 
   @Test
   public void stringPropertyReturnsDefaultConfValue() {
-    when(property.key()).thenReturn("unset");
+    when(property.environmentKey()).thenReturn(STRING_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn("unset");
     when(property.defaultValue()).thenReturn("default");
     assertThat(stringProperty(conf, property)).isEqualTo("default");
   }
 
   @Test
   public void stringPropertyReturnsNull() {
-    when(property.key()).thenReturn("unset");
+    when(property.environmentKey()).thenReturn(STRING_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn("unset");
     assertThat(stringProperty(conf, property)).isNull();
   }
 
   @Test
   public void booleanPropertyReturnsEnvValue() {
-    when(property.key()).thenReturn(BOOLEAN_PROPERTY);
-    environmentVariables.set(BOOLEAN_PROPERTY, "true");
+    when(property.environmentKey()).thenReturn(BOOLEAN_ENV_PROPERTY);
+    environmentVariables.set(BOOLEAN_ENV_PROPERTY, "true");
     assertThat(booleanProperty(null, property)).isEqualTo(true);
   }
 
   @Test
   public void booleanPropertyPropertyReturnsConfValue() {
-    when(property.key()).thenReturn(BOOLEAN_PROPERTY);
+    when(property.environmentKey()).thenReturn(BOOLEAN_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn(BOOLEAN_PROPERTY);
     when(property.defaultValue()).thenReturn(false);
     assertThat(booleanProperty(conf, property)).isTrue();
   }
 
   @Test
   public void booleanPropertyPropertyReturnsDefaultValue() {
-    when(property.key()).thenReturn("unset");
+    when(property.environmentKey()).thenReturn(BOOLEAN_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn("unset");
     when(property.defaultValue()).thenReturn(false);
     assertThat(booleanProperty(conf, property)).isFalse();
   }
 
   @Test(expected = NullPointerException.class)
   public void booleanPropertyPropertyThrowsNullPointerException() {
-    when(property.key()).thenReturn("unset");
+    when(property.environmentKey()).thenReturn(BOOLEAN_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn("unset");
     booleanProperty(conf, property);
   }
 
   @Test
   public void intPropertyReturnsEnvValue() {
-    when(property.key()).thenReturn(INT_PROPERTY);
-    environmentVariables.set(INT_PROPERTY, "1024");
+    when(property.environmentKey()).thenReturn(INT_ENV_PROPERTY);
+    environmentVariables.set(INT_ENV_PROPERTY, "1024");
     assertThat(intProperty(null, property)).isEqualTo(1024);
   }
 
   @Test
   public void intPropertyReturnsConfValue() {
-    when(property.key()).thenReturn(INT_PROPERTY);
+    when(property.environmentKey()).thenReturn(INT_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn(INT_PROPERTY);
     when(property.defaultValue()).thenReturn(100);
     assertThat(intProperty(conf, property)).isEqualTo(1024);
   }
 
   @Test
   public void intPropertyReturnsDefaultValue() {
-    when(property.key()).thenReturn("unset");
+    when(property.environmentKey()).thenReturn(INT_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn("unset");
     when(property.defaultValue()).thenReturn(100);
     assertThat(intProperty(conf, property)).isEqualTo(100);
   }
 
   @Test(expected = NullPointerException.class)
   public void intPropertyThrowsNullPointerException() {
-    when(property.key()).thenReturn("unset");
+    when(property.environmentKey()).thenReturn(INT_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn("unset");
     intProperty(conf, property);
   }
 
   @Test
   public void longPropertyReturnsEnvValue() {
-    when(property.key()).thenReturn(LONG_PROPERTY);
-    environmentVariables.set(LONG_PROPERTY, "18000");
+    when(property.environmentKey()).thenReturn(LONG_ENV_PROPERTY);
+    environmentVariables.set(LONG_ENV_PROPERTY, "18000");
     assertThat(longProperty(null, property)).isEqualTo(18000L);
   }
 
   @Test
   public void longPropertyReturnsConfValue() {
-    when(property.key()).thenReturn(LONG_PROPERTY);
+    when(property.environmentKey()).thenReturn(LONG_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn(LONG_PROPERTY);
     when(property.defaultValue()).thenReturn(1234567890L);
     assertThat(longProperty(conf, property)).isEqualTo(18000L);
   }
 
   @Test
   public void longPropertyReturnsDefaultValue() {
-    when(property.key()).thenReturn("unset");
+    when(property.environmentKey()).thenReturn(LONG_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn("unset");
     when(property.defaultValue()).thenReturn(1234567890L);
     assertThat(longProperty(conf, property)).isEqualTo(1234567890L);
   }
 
   @Test(expected = NullPointerException.class)
   public void longPropertyThrowsNullPointerException() {
-    when(property.key()).thenReturn("unset");
+    when(property.environmentKey()).thenReturn(LONG_ENV_PROPERTY);
+    when(property.hadoopConfKey()).thenReturn("unset");
     longProperty(conf, property);
   }
 

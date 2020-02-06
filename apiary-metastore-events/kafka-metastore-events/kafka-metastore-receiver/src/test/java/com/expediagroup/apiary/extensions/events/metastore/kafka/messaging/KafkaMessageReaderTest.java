@@ -76,10 +76,10 @@ public class KafkaMessageReaderTest {
     when(consumer.poll(any(Duration.class))).thenReturn(messages);
     when(message.value()).thenReturn(MESSAGE_CONTENT);
     when(serDe.unmarshal(MESSAGE_CONTENT)).thenReturn(event);
-    conf.set(TOPIC.key(), TOPIC_NAME);
-    conf.set(BOOTSTRAP_SERVERS.key(), BOOTSTRAP_SERVERS_STRING);
-    conf.set(GROUP_ID.key(), GROUP_NAME);
-    conf.set(CLIENT_ID.key(), CLIENT_NAME);
+    conf.set(TOPIC.hadoopConfKey(), TOPIC_NAME);
+    conf.set(BOOTSTRAP_SERVERS.hadoopConfKey(), BOOTSTRAP_SERVERS_STRING);
+    conf.set(GROUP_ID.hadoopConfKey(), GROUP_NAME);
+    conf.set(CLIENT_ID.hadoopConfKey(), CLIENT_NAME);
     reader = new KafkaMessageReader(conf, serDe, consumer);
   }
 
@@ -90,13 +90,13 @@ public class KafkaMessageReaderTest {
 
   @Test(expected = NullPointerException.class)
   public void missingBootstrapServers() {
-    conf.unset(BOOTSTRAP_SERVERS.key());
+    conf.unset(BOOTSTRAP_SERVERS.hadoopConfKey());
     KafkaMessageReader.kafkaProperties(conf);
   }
 
   @Test(expected = NullPointerException.class)
   public void missingGroupId() {
-    conf.unset(GROUP_ID.key());
+    conf.unset(GROUP_ID.hadoopConfKey());
     KafkaMessageReader.kafkaProperties(conf);
   }
 

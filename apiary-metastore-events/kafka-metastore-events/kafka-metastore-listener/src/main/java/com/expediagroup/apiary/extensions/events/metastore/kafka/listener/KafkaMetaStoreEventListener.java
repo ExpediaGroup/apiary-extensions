@@ -64,13 +64,8 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   }
 
   public KafkaMetaStoreEventListener(Configuration config) {
-    this(config, new ApiaryListenerEventFactory(getConfig(config, METASTOREURIS.varname)),
-      serDeForClassName(stringProperty(config, SERDE_CLASS)), new KafkaMessageSender(config));
-  }
-
-  public static String getConfig(Configuration config, String key) {
-    String value = System.getenv(key);
-    return value == null ? config.get(key) : value;
+    this(config, new ApiaryListenerEventFactory(), serDeForClassName(stringProperty(config, SERDE_CLASS)),
+      new KafkaMessageSender(config));
   }
 
   @VisibleForTesting

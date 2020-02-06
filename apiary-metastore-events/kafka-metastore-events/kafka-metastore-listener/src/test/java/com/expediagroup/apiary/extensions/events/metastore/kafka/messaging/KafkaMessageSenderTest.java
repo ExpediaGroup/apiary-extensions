@@ -75,13 +75,13 @@ public class KafkaMessageSenderTest {
 
   @Test
   public void populateKafkaProperties() {
-    conf.set(BOOTSTRAP_SERVERS.key(), "broker");
-    conf.set(ACKS.key(), "acknowledgements");
-    conf.set(RETRIES.key(), "1");
-    conf.set(MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION.key(), "2");
-    conf.set(BATCH_SIZE.key(), "3");
-    conf.set(LINGER_MS.key(), "4");
-    conf.set(BUFFER_MEMORY.key(), "5");
+    conf.set(BOOTSTRAP_SERVERS.hadoopConfKey(), "broker");
+    conf.set(ACKS.hadoopConfKey(), "acknowledgements");
+    conf.set(RETRIES.hadoopConfKey(), "1");
+    conf.set(MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION.hadoopConfKey(), "2");
+    conf.set(BATCH_SIZE.hadoopConfKey(), "3");
+    conf.set(LINGER_MS.hadoopConfKey(), "4");
+    conf.set(BUFFER_MEMORY.hadoopConfKey(), "5");
     Properties props = kafkaProperties(conf);
     assertThat(props.get("bootstrap.servers")).isEqualTo("broker");
     assertThat(props.get("acks")).isEqualTo("acknowledgements");
@@ -96,7 +96,7 @@ public class KafkaMessageSenderTest {
 
   @Test
   public void topicIsNotNull() {
-    conf.set(TOPIC.key(), TOPIC_NAME);
+    conf.set(TOPIC.hadoopConfKey(), TOPIC_NAME);
     assertThat(topic(conf)).isEqualTo(TOPIC_NAME);
   }
 

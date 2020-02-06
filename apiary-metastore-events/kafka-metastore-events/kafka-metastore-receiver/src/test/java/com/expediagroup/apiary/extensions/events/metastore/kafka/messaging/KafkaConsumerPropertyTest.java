@@ -37,8 +37,12 @@ import org.junit.Test;
 
 public class KafkaConsumerPropertyTest {
 
-  private static String prefixedKey(String key) {
+  private static String hadoopPrefixedKey(String key) {
     return "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging." + key;
+  }
+
+  private static String kafkaPrefixedKey(String key) {
+    return "KAFKA_" + key;
   }
 
   @Test
@@ -49,105 +53,120 @@ public class KafkaConsumerPropertyTest {
   @Test
   public void topic() {
     assertThat(TOPIC.unprefixedKey()).isEqualTo("topic");
-    assertThat(TOPIC.key()).isEqualTo(prefixedKey("topic"));
+    assertThat(TOPIC.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("topic"));
+    assertThat(TOPIC.environmentKey()).isEqualTo(kafkaPrefixedKey("TOPIC"));
     assertThat(TOPIC.defaultValue()).isNull();
   }
 
   @Test
   public void bootstrapServers() {
     assertThat(BOOTSTRAP_SERVERS.unprefixedKey()).isEqualTo("bootstrap.servers");
-    assertThat(BOOTSTRAP_SERVERS.key()).isEqualTo(prefixedKey("bootstrap.servers"));
+    assertThat(BOOTSTRAP_SERVERS.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("bootstrap.servers"));
+    assertThat(BOOTSTRAP_SERVERS.environmentKey()).isEqualTo(kafkaPrefixedKey("BOOTSTRAP_SERVERS"));
     assertThat(BOOTSTRAP_SERVERS.defaultValue()).isNull();
   }
 
   @Test
   public void groupId() {
     assertThat(GROUP_ID.unprefixedKey()).isEqualTo("group.id");
-    assertThat(GROUP_ID.key()).isEqualTo(prefixedKey("group.id"));
+    assertThat(GROUP_ID.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("group.id"));
+    assertThat(GROUP_ID.environmentKey()).isEqualTo(kafkaPrefixedKey("GROUP_ID"));
     assertThat(GROUP_ID.defaultValue()).isNull();
   }
 
   @Test
   public void clientId() {
     assertThat(CLIENT_ID.unprefixedKey()).isEqualTo("client.id");
-    assertThat(CLIENT_ID.key()).isEqualTo(prefixedKey("client.id"));
-    assertThat(CLIENT_ID.defaultValue()).isEqualTo("ApiaryKafkaMetaStoreReceiver");
+    assertThat(CLIENT_ID.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("client.id"));
+    assertThat(CLIENT_ID.environmentKey()).isEqualTo(kafkaPrefixedKey("CLIENT_ID"));
+    assertThat(CLIENT_ID.defaultValue()).isNull();
   }
 
   @Test
   public void sessionTimeoutMs() {
     assertThat(SESSION_TIMEOUT_MS.unprefixedKey()).isEqualTo("session.timeout.ms");
-    assertThat(SESSION_TIMEOUT_MS.key()).isEqualTo(prefixedKey("session.timeout.ms"));
+    assertThat(SESSION_TIMEOUT_MS.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("session.timeout.ms"));
+    assertThat(SESSION_TIMEOUT_MS.environmentKey()).isEqualTo(kafkaPrefixedKey("SESSION_TIMEOUT_MS"));
     assertThat(SESSION_TIMEOUT_MS.defaultValue()).isEqualTo(30000);
   }
 
   @Test
   public void connectionsMaxIdleMs() {
     assertThat(CONNECTIONS_MAX_IDLE_MS.unprefixedKey()).isEqualTo("connections.max.idle.ms");
-    assertThat(CONNECTIONS_MAX_IDLE_MS.key()).isEqualTo(prefixedKey("connections.max.idle.ms"));
+    assertThat(CONNECTIONS_MAX_IDLE_MS.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("connections.max.idle.ms"));
+    assertThat(CONNECTIONS_MAX_IDLE_MS.environmentKey()).isEqualTo(kafkaPrefixedKey("CONNECTIONS_MAX_IDLE_MS"));
     assertThat(CONNECTIONS_MAX_IDLE_MS.defaultValue()).isEqualTo(540000L);
   }
 
   @Test
   public void reconnectBackoffMaxMs() {
     assertThat(RECONNECT_BACKOFF_MAX_MS.unprefixedKey()).isEqualTo("reconnect.backoff.max.ms");
-    assertThat(RECONNECT_BACKOFF_MAX_MS.key()).isEqualTo(prefixedKey("reconnect.backoff.max.ms"));
+    assertThat(RECONNECT_BACKOFF_MAX_MS.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("reconnect.backoff.max.ms"));
+    assertThat(RECONNECT_BACKOFF_MAX_MS.environmentKey()).isEqualTo(kafkaPrefixedKey("RECONNECT_BACKOFF_MAX_MS"));
     assertThat(RECONNECT_BACKOFF_MAX_MS.defaultValue()).isEqualTo(1000L);
   }
 
   @Test
   public void reconnectBackoffMs() {
     assertThat(RECONNECT_BACKOFF_MS.unprefixedKey()).isEqualTo("reconnect.backoff.ms");
-    assertThat(RECONNECT_BACKOFF_MS.key()).isEqualTo(prefixedKey("reconnect.backoff.ms"));
+    assertThat(RECONNECT_BACKOFF_MS.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("reconnect.backoff.ms"));
+    assertThat(RECONNECT_BACKOFF_MS.environmentKey()).isEqualTo(kafkaPrefixedKey("RECONNECT_BACKOFF_MS"));
     assertThat(RECONNECT_BACKOFF_MS.defaultValue()).isEqualTo(50L);
   }
 
   @Test
   public void retryBackoffMs() {
     assertThat(RETRY_BACKOFF_MS.unprefixedKey()).isEqualTo("retry.backoff.ms");
-    assertThat(RETRY_BACKOFF_MS.key()).isEqualTo(prefixedKey("retry.backoff.ms"));
+    assertThat(RETRY_BACKOFF_MS.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("retry.backoff.ms"));
+    assertThat(RETRY_BACKOFF_MS.environmentKey()).isEqualTo(kafkaPrefixedKey("RETRY_BACKOFF_MS"));
     assertThat(RETRY_BACKOFF_MS.defaultValue()).isEqualTo(100L);
   }
 
   @Test
   public void maxPollIntervalMs() {
     assertThat(MAX_POLL_INTERVAL_MS.unprefixedKey()).isEqualTo("max.poll.interval.ms");
-    assertThat(MAX_POLL_INTERVAL_MS.key()).isEqualTo(prefixedKey("max.poll.interval.ms"));
+    assertThat(MAX_POLL_INTERVAL_MS.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("max.poll.interval.ms"));
+    assertThat(MAX_POLL_INTERVAL_MS.environmentKey()).isEqualTo(kafkaPrefixedKey("MAX_POLL_INTERVAL_MS"));
     assertThat(MAX_POLL_INTERVAL_MS.defaultValue()).isEqualTo(300000);
   }
 
   @Test
   public void maxPollRecords() {
     assertThat(MAX_POLL_RECORDS.unprefixedKey()).isEqualTo("max.poll.records");
-    assertThat(MAX_POLL_RECORDS.key()).isEqualTo(prefixedKey("max.poll.records"));
+    assertThat(MAX_POLL_RECORDS.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("max.poll.records"));
+    assertThat(MAX_POLL_RECORDS.environmentKey()).isEqualTo(kafkaPrefixedKey("MAX_POLL_RECORDS"));
     assertThat(MAX_POLL_RECORDS.defaultValue()).isEqualTo(500);
   }
 
   @Test
   public void enableAutoCommit() {
     assertThat(ENABLE_AUTO_COMMIT.unprefixedKey()).isEqualTo("enable.auto.commit");
-    assertThat(ENABLE_AUTO_COMMIT.key()).isEqualTo(prefixedKey("enable.auto.commit"));
+    assertThat(ENABLE_AUTO_COMMIT.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("enable.auto.commit"));
+    assertThat(ENABLE_AUTO_COMMIT.environmentKey()).isEqualTo(kafkaPrefixedKey("ENABLE_AUTO_COMMIT"));
     assertThat(ENABLE_AUTO_COMMIT.defaultValue()).isEqualTo(Boolean.TRUE);
   }
 
   @Test
   public void autoCommitIntervalMs() {
     assertThat(AUTO_COMMIT_INTERVAL_MS.unprefixedKey()).isEqualTo("auto.commit.interval.ms");
-    assertThat(AUTO_COMMIT_INTERVAL_MS.key()).isEqualTo(prefixedKey("auto.commit.interval.ms"));
+    assertThat(AUTO_COMMIT_INTERVAL_MS.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("auto.commit.interval.ms"));
+    assertThat(AUTO_COMMIT_INTERVAL_MS.environmentKey()).isEqualTo(kafkaPrefixedKey("AUTO_COMMIT_INTERVAL_MS"));
     assertThat(AUTO_COMMIT_INTERVAL_MS.defaultValue()).isEqualTo(5000);
   }
 
   @Test
   public void fetchMaxBytes() {
     assertThat(FETCH_MAX_BYTES.unprefixedKey()).isEqualTo("fetch.max.bytes");
-    assertThat(FETCH_MAX_BYTES.key()).isEqualTo(prefixedKey("fetch.max.bytes"));
+    assertThat(FETCH_MAX_BYTES.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("fetch.max.bytes"));
+    assertThat(FETCH_MAX_BYTES.environmentKey()).isEqualTo(kafkaPrefixedKey("FETCH_MAX_BYTES"));
     assertThat(FETCH_MAX_BYTES.defaultValue()).isEqualTo(52428800);
   }
 
   @Test
   public void receiveBufferBytes() {
     assertThat(RECEIVE_BUFFER_BYTES.unprefixedKey()).isEqualTo("receive.buffer.bytes");
-    assertThat(RECEIVE_BUFFER_BYTES.key()).isEqualTo(prefixedKey("receive.buffer.bytes"));
+    assertThat(RECEIVE_BUFFER_BYTES.hadoopConfKey()).isEqualTo(hadoopPrefixedKey("receive.buffer.bytes"));
+    assertThat(RECEIVE_BUFFER_BYTES.environmentKey()).isEqualTo(kafkaPrefixedKey("RECEIVE_BUFFER_BYTES"));
     assertThat(RECEIVE_BUFFER_BYTES.defaultValue()).isEqualTo(65536);
   }
 

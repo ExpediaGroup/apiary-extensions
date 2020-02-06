@@ -31,18 +31,6 @@ import org.apache.hive.common.util.HiveVersionInfo;
 
 public class ApiaryListenerEventFactory {
 
-  private String hiveMetaStoreUris;
-
-  public ApiaryListenerEventFactory(String hiveMetaStoreUris) {
-    this.hiveMetaStoreUris = hiveMetaStoreUris != null ? hiveMetaStoreUris : "";
-  }
-
-  private <T extends ListenerEvent> T addParams(T event) {
-    event.putParameter(HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
-    event.putParameter(METASTOREURIS.varname, hiveMetaStoreUris);
-    return event;
-  }
-
   public ApiaryCreateTableEvent create(CreateTableEvent event) {
     return new ApiaryCreateTableEvent(addParams(event));
   }
@@ -69,6 +57,11 @@ public class ApiaryListenerEventFactory {
 
   public ApiaryInsertEvent create(InsertEvent event) {
     return new ApiaryInsertEvent(addParams(event));
+  }
+
+  private <T extends ListenerEvent> T addParams(T event) {
+    event.putParameter(HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
+    return event;
   }
 
 }

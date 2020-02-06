@@ -84,9 +84,9 @@ public class KafkaApiaryMetastoreIntegrationTest {
 
   @BeforeClass
   public static void init() {
-    CONF.set(BOOTSTRAP_SERVERS.key(), KAFKA.getKafkaConnectString());
-    CONF.set(GROUP_ID.key(), "1");
-    CONF.set(TOPIC.key(), TOPIC_NAME);
+    CONF.set(BOOTSTRAP_SERVERS.hadoopConfKey(), KAFKA.getKafkaConnectString());
+    CONF.set(GROUP_ID.hadoopConfKey(), "1");
+    CONF.set(TOPIC.hadoopConfKey(), TOPIC_NAME);
     KAFKA.getKafkaTestUtils().createTopic(TOPIC_NAME, 1, (short) 1);
 
     kafkaMetaStoreEventListener = new KafkaMetaStoreEventListener(CONF);

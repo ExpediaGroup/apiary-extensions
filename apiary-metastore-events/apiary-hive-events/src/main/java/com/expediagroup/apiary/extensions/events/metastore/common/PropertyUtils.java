@@ -22,33 +22,33 @@ public class PropertyUtils {
   private PropertyUtils() {}
 
   public static String stringProperty(Configuration conf, Property property) {
-    String value = System.getenv(property.key());
+    String value = System.getenv(property.environmentKey());
     if (value == null) {
-      return conf.get(property.key(), (String) property.defaultValue());
+      return conf.get(property.hadoopConfKey(), (String) property.defaultValue());
     }
     return value;
   }
 
   public static boolean booleanProperty(Configuration conf, Property property) {
-    String value = System.getenv(property.key());
+    String value = System.getenv(property.environmentKey());
     if (value == null) {
-      return conf.getBoolean(property.key(), (boolean) property.defaultValue());
+      return conf.getBoolean(property.hadoopConfKey(), (boolean) property.defaultValue());
     }
     return Boolean.parseBoolean(value);
   }
 
   public static int intProperty(Configuration conf, Property property) {
-    String value = System.getenv(property.key());
+    String value = System.getenv(property.environmentKey());
     if (value == null) {
-      return conf.getInt(property.key(), (int) property.defaultValue());
+      return conf.getInt(property.hadoopConfKey(), (int) property.defaultValue());
     }
     return Integer.parseInt(value);
   }
 
   public static long longProperty(Configuration conf, Property property) {
-    String value = System.getenv(property.key());
+    String value = System.getenv(property.environmentKey());
     if (value == null) {
-      return conf.getLong(property.key(), (long) property.defaultValue());
+      return conf.getLong(property.hadoopConfKey(), (long) property.defaultValue());
     }
     return Long.parseLong(value);
   }
