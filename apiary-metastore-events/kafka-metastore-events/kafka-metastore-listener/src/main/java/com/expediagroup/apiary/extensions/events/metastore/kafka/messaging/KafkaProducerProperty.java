@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.expediagroup.apiary.extensions.events.metastore.common.Property;
 import com.expediagroup.apiary.extensions.events.metastore.io.jackson.JsonMetaStoreEventSerDe;
 
 public enum KafkaProducerProperty implements Property {
-  TOPIC("topic", null),
+  TOPIC_NAME("topic", null),
   BOOTSTRAP_SERVERS("bootstrap.servers", null),
   CLIENT_ID("client.id", null),
   ACKS("acks", "all"),
@@ -30,7 +30,6 @@ public enum KafkaProducerProperty implements Property {
   BUFFER_MEMORY("buffer.memory", 33554432L),
   SERDE_CLASS("serde.class", JsonMetaStoreEventSerDe.class.getName());
 
-  private static final String ENVIRONMENT_PREFIX = "KAFKA_";
   private static final String HADOOP_CONF_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
 
   private final String unprefixedKey;
@@ -42,13 +41,8 @@ public enum KafkaProducerProperty implements Property {
   }
 
   @Override
-  public String hadoopConfKey() {
+  public String key() {
     return HADOOP_CONF_PREFIX + unprefixedKey;
-  }
-
-  @Override
-  public String environmentKey() {
-    return ENVIRONMENT_PREFIX + this.name();
   }
 
   @Override
@@ -63,7 +57,7 @@ public enum KafkaProducerProperty implements Property {
 
   @Override
   public String toString() {
-    return hadoopConfKey();
+    return key();
   }
 
 }

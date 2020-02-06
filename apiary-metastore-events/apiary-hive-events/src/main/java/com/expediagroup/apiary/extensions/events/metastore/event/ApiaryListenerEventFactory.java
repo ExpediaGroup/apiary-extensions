@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2020 Expedia, Inc.
+ * Copyright (C) 2018-2019 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.event;
 
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREURIS;
 
 import static com.expediagroup.apiary.extensions.events.metastore.event.CustomEventParameters.HIVE_VERSION;
 

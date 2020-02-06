@@ -15,9 +15,7 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.kafka.listener;
 
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREURIS;
-
-import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.*;
+import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.stringProperty;
 import static com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe.serDeForClassName;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.listener.ListenerUtils.error;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.SERDE_CLASS;
@@ -53,15 +51,10 @@ import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.Kafka
 
 public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   private static final Logger log = LoggerFactory.getLogger(KafkaMetaStoreEventListener.class);
-  private static final Configuration EMPTY_CONFIG = new Configuration();
 
   private final MetaStoreEventSerDe eventSerDe;
   private final KafkaMessageSender kafkaMessageSender;
   private final ApiaryListenerEventFactory apiaryListenerEventFactory;
-
-  public KafkaMetaStoreEventListener() {
-    this(EMPTY_CONFIG);
-  }
 
   public KafkaMetaStoreEventListener(Configuration config) {
     this(config, new ApiaryListenerEventFactory(), serDeForClassName(stringProperty(config, SERDE_CLASS)),

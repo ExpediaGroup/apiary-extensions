@@ -17,9 +17,7 @@ package com.expediagroup.apiary.extensions.events.metastore.common;
 
 public interface Property {
 
-  String hadoopConfKey();
-
-  String environmentKey();
+  String key();
 
   String unprefixedKey();
 

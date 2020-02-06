@@ -19,7 +19,6 @@ import static com.expediagroup.apiary.extensions.events.metastore.common.Precond
 import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.intProperty;
 import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.longProperty;
 import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.stringProperty;
-
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.ACKS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BATCH_SIZE;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BOOTSTRAP_SERVERS;
@@ -28,7 +27,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.LINGER_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.RETRIES;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC_NAME;
 
 import java.util.Properties;
 
@@ -85,7 +84,7 @@ public class KafkaMessageSender {
 
   @VisibleForTesting
   static String topic(Configuration conf) {
-    return checkNotNull(stringProperty(conf, TOPIC), "Property " + TOPIC + " is not set");
+    return checkNotNull(stringProperty(conf, TOPIC_NAME), "Property " + TOPIC_NAME + " is not set");
   }
 
 }
