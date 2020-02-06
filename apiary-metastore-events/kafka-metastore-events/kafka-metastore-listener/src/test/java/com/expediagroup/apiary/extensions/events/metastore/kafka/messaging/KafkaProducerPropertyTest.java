@@ -45,8 +45,8 @@ public class KafkaProducerPropertyTest {
 
   @Test
   public void topic() {
-    assertThat(TOPIC_NAME.unprefixedKey()).isEqualTo("topic");
-    assertThat(TOPIC_NAME.key()).isEqualTo(prefixedKey("topic"));
+    assertThat(TOPIC_NAME.unprefixedKey()).isEqualTo("topic.name");
+    assertThat(TOPIC_NAME.key()).isEqualTo(prefixedKey("topic.name"));
     assertThat(TOPIC_NAME.defaultValue()).isNull();
   }
 

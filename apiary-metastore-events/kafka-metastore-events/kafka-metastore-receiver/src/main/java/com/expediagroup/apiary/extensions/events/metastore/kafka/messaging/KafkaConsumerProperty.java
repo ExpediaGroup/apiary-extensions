@@ -21,7 +21,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import com.expediagroup.apiary.extensions.events.metastore.common.Property;
 
 public enum KafkaConsumerProperty implements Property {
-  TOPIC_NAME("topic", null),
+  TOPIC_NAME("topic.name", null),
   BOOTSTRAP_SERVERS("bootstrap.servers", null),
   GROUP_ID("group.id", null),
   CLIENT_ID("client.id", null),

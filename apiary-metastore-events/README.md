@@ -9,9 +9,7 @@ Currently, the following modules are defined:
 
 ## Kafka Configuration
 
-To configure the listener or receiver, Hadoop configuration can be used.
-
-To configure using hadoop, use the configuration below and prefix all parameters with `com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.`.
+To configure the listener, use the configuration below and prefix all parameters with `com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.`.
 
 ### Kafka Metastore Listener
 

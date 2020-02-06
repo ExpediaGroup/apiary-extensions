@@ -19,7 +19,7 @@ import com.expediagroup.apiary.extensions.events.metastore.common.Property;
 import com.expediagroup.apiary.extensions.events.metastore.io.jackson.JsonMetaStoreEventSerDe;
 
 public enum KafkaProducerProperty implements Property {
-  TOPIC_NAME("topic", null),
+  TOPIC_NAME("topic.name", null),
   BOOTSTRAP_SERVERS("bootstrap.servers", null),
   CLIENT_ID("client.id", null),
   ACKS("acks", "all"),
