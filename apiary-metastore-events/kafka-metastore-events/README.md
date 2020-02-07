@@ -1,4 +1,4 @@
-# Apiary Metastore Events
+# Apiary Kafka Metastore Events
 
 ## Overview
 Apiary Metastore Events contains a set of modules responsible for retrieving and processing Hive Metastore events.
