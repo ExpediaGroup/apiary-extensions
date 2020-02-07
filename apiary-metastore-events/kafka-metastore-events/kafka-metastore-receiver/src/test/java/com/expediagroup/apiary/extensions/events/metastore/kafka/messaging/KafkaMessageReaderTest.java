@@ -76,15 +76,15 @@ public class KafkaMessageReaderTest {
   public void kafkaConsumerProperties() {
     Properties props = KafkaMessageReader.KafkaConsumerPropertiesBuilder
       .aKafkaConsumerProperties(BOOTSTRAP_SERVERS_STRING, GROUP_NAME, CLIENT_NAME)
-      .withSessionTimeoutMS(1)
-      .withConnectionsMaxIdleMS(2L)
-      .withReconnectBackoffMaxMS(3L)
-      .withReconnectBackoffMS(4L)
-      .withRetryBackoffMS(5L)
-      .withMaxPollIntervalMS(6)
+      .withSessionTimeoutMillis(1)
+      .withConnectionsMaxIdleMillis(2L)
+      .withReconnectBackoffMaxMillis(3L)
+      .withReconnectBackoffMillis(4L)
+      .withRetryBackoffMillis(5L)
+      .withMaxPollIntervalMillis(6)
       .withMaxPollRecords(7)
       .withEnableAutoCommit(true)
-      .withAutoCommitIntervalMS(8)
+      .withAutoCommitIntervalMillis(8)
       .withFetchMaxBytes(9)
       .withReceiveBufferBytes(10)
       .build();

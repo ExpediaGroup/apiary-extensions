@@ -1,4 +1,4 @@
-# Apiary Metastore Events
+# Apiary Kafka Metastore Receiver
 
 ## Overview
 
