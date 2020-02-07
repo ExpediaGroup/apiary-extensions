@@ -15,11 +15,7 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
-import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotNull;
-import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.booleanProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.intProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.longProperty;
-import static com.expediagroup.apiary.extensions.events.metastore.common.PropertyUtils.stringProperty;
+import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotEmpty;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.AUTO_COMMIT_INTERVAL_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.BOOTSTRAP_SERVERS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CLIENT_ID;
@@ -34,15 +30,13 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECONNECT_BACKOFF_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RETRY_BACKOFF_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.SESSION_TIMEOUT_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.TOPIC_NAME;
 
 import java.io.Closeable;
 import java.time.Duration;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Properties;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
@@ -55,52 +49,19 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
 
   private static final Duration POLL_TIMEOUT = Duration.ofHours(1);
 
-  private Configuration conf;
   private KafkaConsumer<Long, byte[]> consumer;
   private MetaStoreEventSerDe eventSerDe;
   private Iterator<ConsumerRecord<Long, byte[]>> records;
-  private String topic;
 
-  public KafkaMessageReader(Configuration conf, MetaStoreEventSerDe eventSerDe) {
-    this(conf, eventSerDe, new KafkaConsumer<>(kafkaProperties(conf)));
+  public KafkaMessageReader(MetaStoreEventSerDe eventSerDe, String topicName, Properties properties) {
+    this(eventSerDe, topicName, new KafkaConsumer<>(properties));
   }
 
   @VisibleForTesting
-  KafkaMessageReader(Configuration conf, MetaStoreEventSerDe eventSerDe, KafkaConsumer<Long, byte[]> consumer) {
-    this.conf = conf;
-    this.consumer = consumer;
+  KafkaMessageReader(MetaStoreEventSerDe eventSerDe, String topicName, KafkaConsumer<Long, byte[]> consumer) {
     this.eventSerDe = eventSerDe;
-    init();
-  }
-
-  @VisibleForTesting
-  static Properties kafkaProperties(Configuration conf) {
-    Properties props = new Properties();
-    props.put(BOOTSTRAP_SERVERS.unprefixedKey(),
-      checkNotNull(stringProperty(conf, BOOTSTRAP_SERVERS), "Property " + BOOTSTRAP_SERVERS + " is not set"));
-    props.put(GROUP_ID.unprefixedKey(),
-      checkNotNull(stringProperty(conf, GROUP_ID), "Property " + GROUP_ID + " is not set"));
-    props.put(CLIENT_ID.unprefixedKey(),
-      checkNotNull(stringProperty(conf, CLIENT_ID), "Property " + CLIENT_ID + " is not set"));
-    props.put(SESSION_TIMEOUT_MS.unprefixedKey(), intProperty(conf, SESSION_TIMEOUT_MS));
-    props.put(CONNECTIONS_MAX_IDLE_MS.unprefixedKey(), longProperty(conf, CONNECTIONS_MAX_IDLE_MS));
-    props.put(RECONNECT_BACKOFF_MAX_MS.unprefixedKey(), longProperty(conf, RECONNECT_BACKOFF_MAX_MS));
-    props.put(RECONNECT_BACKOFF_MS.unprefixedKey(), longProperty(conf, RECONNECT_BACKOFF_MS));
-    props.put(RETRY_BACKOFF_MS.unprefixedKey(), longProperty(conf, RETRY_BACKOFF_MS));
-    props.put(MAX_POLL_INTERVAL_MS.unprefixedKey(), intProperty(conf, MAX_POLL_INTERVAL_MS));
-    props.put(MAX_POLL_RECORDS.unprefixedKey(), intProperty(conf, MAX_POLL_RECORDS));
-    props.put(ENABLE_AUTO_COMMIT.unprefixedKey(), booleanProperty(conf, ENABLE_AUTO_COMMIT));
-    props.put(AUTO_COMMIT_INTERVAL_MS.unprefixedKey(), intProperty(conf, AUTO_COMMIT_INTERVAL_MS));
-    props.put(FETCH_MAX_BYTES.unprefixedKey(), intProperty(conf, FETCH_MAX_BYTES));
-    props.put(RECEIVE_BUFFER_BYTES.unprefixedKey(), intProperty(conf, RECEIVE_BUFFER_BYTES));
-    props.put("key.deserializer", "org.apache.kafka.common.serialization.LongDeserializer");
-    props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-    return props;
-  }
-
-  private void init() {
-    topic = checkNotNull(stringProperty(conf, TOPIC_NAME), "Property " + TOPIC_NAME + " is not set");
-    consumer.subscribe(Arrays.asList(topic));
+    this.consumer = consumer;
+    this.consumer.subscribe(Collections.singletonList(checkNotEmpty(topicName, "Topic name is not set.")));
   }
 
   @Override
@@ -110,7 +71,7 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
 
   @Override
   public void remove() {
-    throw new UnsupportedOperationException("Cannot remove message from Kafka topic");
+    throw new UnsupportedOperationException("Cannot remove message from Kafka topic.");
   }
 
   @Override
@@ -131,4 +92,109 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
     }
   }
 
+  public static final class KafkaConsumerPropertiesBuilder {
+
+    private String bootstrapServers;
+    private String groupId;
+    private String clientId;
+    private int sessionTimeoutMS = (int) SESSION_TIMEOUT_MS.defaultValue();
+    private long connectionsMaxIdleMS = (long) CONNECTIONS_MAX_IDLE_MS.defaultValue();
+    private long reconnectBackoffMaxMS = (long) RECONNECT_BACKOFF_MAX_MS.defaultValue();
+    private long reconnectBackoffMS = (long) RECONNECT_BACKOFF_MS.defaultValue();
+    private long retryBackoffMS = (long) RETRY_BACKOFF_MS.defaultValue();
+    private int maxPollIntervalMS = (int) MAX_POLL_INTERVAL_MS.defaultValue();
+    private int maxPollRecords = (int) MAX_POLL_RECORDS.defaultValue();
+    private boolean enableAutoCommit = (boolean) ENABLE_AUTO_COMMIT.defaultValue();
+    private int autoCommitIntervalMS = (int) AUTO_COMMIT_INTERVAL_MS.defaultValue();
+    private int fetchMaxBytes = (int) FETCH_MAX_BYTES.defaultValue();
+    private int receiveBufferBytes = (int) RECEIVE_BUFFER_BYTES.defaultValue();
+
+    private KafkaConsumerPropertiesBuilder(String bootstrapServers, String groupId, String clientId) {
+      this.bootstrapServers = bootstrapServers;
+      this.groupId = groupId;
+      this.clientId = clientId;
+    }
+
+    public static KafkaConsumerPropertiesBuilder aKafkaConsumerProperties(String bootstrapServers, String groupId,
+        String clientId) {
+      return new KafkaConsumerPropertiesBuilder(bootstrapServers, groupId, clientId);
+    }
+
+    public KafkaConsumerPropertiesBuilder withSessionTimeoutMS(int sessionTimeoutMS) {
+      this.sessionTimeoutMS = sessionTimeoutMS;
+      return this;
+    }
+
+    public KafkaConsumerPropertiesBuilder withConnectionsMaxIdleMS(long connectionsMaxIdleMS) {
+      this.connectionsMaxIdleMS = connectionsMaxIdleMS;
+      return this;
+    }
+
+    public KafkaConsumerPropertiesBuilder withReconnectBackoffMaxMS(long reconnectBackoffMaxMS) {
+      this.reconnectBackoffMaxMS = reconnectBackoffMaxMS;
+      return this;
+    }
+
+    public KafkaConsumerPropertiesBuilder withReconnectBackoffMS(long reconnectBackoffMS) {
+      this.reconnectBackoffMS = reconnectBackoffMS;
+      return this;
+    }
+
+    public KafkaConsumerPropertiesBuilder withRetryBackoffMS(long retryBackoffMS) {
+      this.retryBackoffMS = retryBackoffMS;
+      return this;
+    }
+
+    public KafkaConsumerPropertiesBuilder withMaxPollIntervalMS(int maxPollIntervalMS) {
+      this.maxPollIntervalMS = maxPollIntervalMS;
+      return this;
+    }
+
+    public KafkaConsumerPropertiesBuilder withMaxPollRecords(int maxPollRecords) {
+      this.maxPollRecords = maxPollRecords;
+      return this;
+    }
+
+    public KafkaConsumerPropertiesBuilder withEnableAutoCommit(boolean enableAutoCommit) {
+      this.enableAutoCommit = enableAutoCommit;
+      return this;
+    }
+
+    public KafkaConsumerPropertiesBuilder withAutoCommitIntervalMS(int autoCommitIntervalMS) {
+      this.autoCommitIntervalMS = autoCommitIntervalMS;
+      return this;
+    }
+
+    public KafkaConsumerPropertiesBuilder withFetchMaxBytes(int fetchMaxBytes) {
+      this.fetchMaxBytes = fetchMaxBytes;
+      return this;
+    }
+
+    public KafkaConsumerPropertiesBuilder withReceiveBufferBytes(int receiveBufferBytes) {
+      this.receiveBufferBytes = receiveBufferBytes;
+      return this;
+    }
+
+    public Properties build() {
+      Properties props = new Properties();
+      props.put(BOOTSTRAP_SERVERS.unprefixedKey(),
+          checkNotEmpty(bootstrapServers, "Property " + BOOTSTRAP_SERVERS + " is not set"));
+      props.put(GROUP_ID.unprefixedKey(), checkNotEmpty(groupId, "Property " + GROUP_ID + " is not set"));
+      props.put(CLIENT_ID.unprefixedKey(), checkNotEmpty(clientId, "Property " + CLIENT_ID + " is not set"));
+      props.put(SESSION_TIMEOUT_MS.unprefixedKey(), sessionTimeoutMS);
+      props.put(CONNECTIONS_MAX_IDLE_MS.unprefixedKey(), connectionsMaxIdleMS);
+      props.put(RECONNECT_BACKOFF_MAX_MS.unprefixedKey(), reconnectBackoffMaxMS);
+      props.put(RECONNECT_BACKOFF_MS.unprefixedKey(), reconnectBackoffMS);
+      props.put(RETRY_BACKOFF_MS.unprefixedKey(), retryBackoffMS);
+      props.put(MAX_POLL_INTERVAL_MS.unprefixedKey(), maxPollIntervalMS);
+      props.put(MAX_POLL_RECORDS.unprefixedKey(), maxPollRecords);
+      props.put(ENABLE_AUTO_COMMIT.unprefixedKey(), enableAutoCommit);
+      props.put(AUTO_COMMIT_INTERVAL_MS.unprefixedKey(), autoCommitIntervalMS);
+      props.put(FETCH_MAX_BYTES.unprefixedKey(), fetchMaxBytes);
+      props.put(RECEIVE_BUFFER_BYTES.unprefixedKey(), receiveBufferBytes);
+      props.put("key.deserializer", "org.apache.kafka.common.serialization.LongDeserializer");
+      props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+      return props;
+    }
+  }
 }

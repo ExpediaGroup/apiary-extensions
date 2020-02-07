@@ -37,8 +37,6 @@ public enum KafkaConsumerProperty implements Property {
   FETCH_MAX_BYTES("fetch.max.bytes", 52428800),
   RECEIVE_BUFFER_BYTES("receive.buffer.bytes", 65536);
 
-  private static final String HADOOP_CONF_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
-
   private final String unprefixedKey;
   private final Object defaultValue;
 
@@ -49,7 +47,7 @@ public enum KafkaConsumerProperty implements Property {
 
   @Override
   public String key() {
-    return HADOOP_CONF_PREFIX + unprefixedKey;
+    return unprefixedKey;
   }
 
   @Override
