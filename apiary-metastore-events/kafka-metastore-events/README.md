@@ -1,7 +1,7 @@
 # Apiary Kafka Metastore Events
 
 ## Overview
-Apiary Metastore Events contains a set of modules responsible for retrieving and processing Hive Metastore events.
+Apiary Kafka Metastore Events contains a set of modules responsible for retrieving and processing Hive Metastore events using Kafka.
 
 Currently, the following modules are defined:
  - [kafka-metastore-integration-tests](kafka-metastore-integration-tests) - Contains integration tests for Kafka Metastore Listener and Receiver.
