@@ -15,21 +15,11 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
+import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.CLIENT_ID_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+
 import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotEmpty;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.AUTO_COMMIT_INTERVAL_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.BOOTSTRAP_SERVERS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CLIENT_ID;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CONNECTIONS_MAX_IDLE_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.ENABLE_AUTO_COMMIT;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.FETCH_MAX_BYTES;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.GROUP_ID;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.MAX_POLL_INTERVAL_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.MAX_POLL_RECORDS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECEIVE_BUFFER_BYTES;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECONNECT_BACKOFF_MAX_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECONNECT_BACKOFF_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RETRY_BACKOFF_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.SESSION_TIMEOUT_MS;
 
 import java.io.Closeable;
 import java.time.Duration;
@@ -44,6 +34,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
 import com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe;
+import com.expediagroup.apiary.extensions.events.metastore.io.jackson.JsonMetaStoreEventSerDe;
 
 public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closeable {
 
@@ -53,15 +44,15 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
   private MetaStoreEventSerDe eventSerDe;
   private Iterator<ConsumerRecord<Long, byte[]>> records;
 
-  public KafkaMessageReader(MetaStoreEventSerDe eventSerDe, String topicName, Properties properties) {
-    this(eventSerDe, topicName, new KafkaConsumer<>(properties));
+  private KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, Properties consumerProperties) {
+    this(topicName, eventSerDe, new KafkaConsumer(consumerProperties));
   }
 
   @VisibleForTesting
-  KafkaMessageReader(MetaStoreEventSerDe eventSerDe, String topicName, KafkaConsumer<Long, byte[]> consumer) {
+  KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, KafkaConsumer<Long, byte[]> consumer) {
     this.eventSerDe = eventSerDe;
     this.consumer = consumer;
-    this.consumer.subscribe(Collections.singletonList(checkNotEmpty(topicName, "Topic name is not set.")));
+    this.consumer.subscribe(Collections.singletonList(topicName));
   }
 
   @Override
@@ -92,109 +83,52 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
     }
   }
 
-  public static final class KafkaConsumerPropertiesBuilder {
+  public static final class Builder {
 
     private String bootstrapServers;
+    private String topicName;
     private String groupId;
-    private String clientId;
-    private int sessionTimeoutMillis = (int) SESSION_TIMEOUT_MS.defaultValue();
-    private long connectionsMaxIdleMillis = (long) CONNECTIONS_MAX_IDLE_MS.defaultValue();
-    private long reconnectBackoffMaxMillis = (long) RECONNECT_BACKOFF_MAX_MS.defaultValue();
-    private long reconnectBackoffMillis = (long) RECONNECT_BACKOFF_MS.defaultValue();
-    private long retryBackoffMillis = (long) RETRY_BACKOFF_MS.defaultValue();
-    private int maxPollIntervalMillis = (int) MAX_POLL_INTERVAL_MS.defaultValue();
-    private int maxPollRecords = (int) MAX_POLL_RECORDS.defaultValue();
-    private boolean enableAutoCommit = (boolean) ENABLE_AUTO_COMMIT.defaultValue();
-    private int autoCommitIntervalMillis = (int) AUTO_COMMIT_INTERVAL_MS.defaultValue();
-    private int fetchMaxBytes = (int) FETCH_MAX_BYTES.defaultValue();
-    private int receiveBufferBytes = (int) RECEIVE_BUFFER_BYTES.defaultValue();
+    private String clientId = "ApiaryMetastoreReceiver";
+    private MetaStoreEventSerDe metaStoreEventSerDe = new JsonMetaStoreEventSerDe();
+    private Properties consumerProperties = new Properties();
 
-    private KafkaConsumerPropertiesBuilder(String bootstrapServers, String groupId, String clientId) {
+    private Builder(String bootstrapServers, String topicName, String groupId) {
       this.bootstrapServers = bootstrapServers;
+      this.topicName = topicName;
       this.groupId = groupId;
+    }
+
+    public static Builder aKafkaMessageReader(String bootstrapServers, String topicName, String groupId) {
+      return new Builder(bootstrapServers, topicName, groupId);
+    }
+
+    public Builder withClientId(String clientId) {
       this.clientId = clientId;
-    }
-
-    public static KafkaConsumerPropertiesBuilder aKafkaConsumerProperties(String bootstrapServers, String groupId,
-        String clientId) {
-      return new KafkaConsumerPropertiesBuilder(bootstrapServers, groupId, clientId);
-    }
-
-    public KafkaConsumerPropertiesBuilder withSessionTimeoutMillis(int sessionTimeoutMillis) {
-      this.sessionTimeoutMillis = sessionTimeoutMillis;
       return this;
     }
 
-    public KafkaConsumerPropertiesBuilder withConnectionsMaxIdleMillis(long connectionsMaxIdleMillis) {
-      this.connectionsMaxIdleMillis = connectionsMaxIdleMillis;
+    public Builder withMetaStoreEventSerDe(MetaStoreEventSerDe metaStoreEventSerDe) {
+      this.metaStoreEventSerDe = metaStoreEventSerDe;
       return this;
     }
 
-    public KafkaConsumerPropertiesBuilder withReconnectBackoffMaxMillis(long reconnectBackoffMaxMillis) {
-      this.reconnectBackoffMaxMillis = reconnectBackoffMaxMillis;
+    public Builder withConsumerProperties(Properties consumerProperties) {
+      this.consumerProperties = consumerProperties;
       return this;
     }
 
-    public KafkaConsumerPropertiesBuilder withReconnectBackoffMillis(long reconnectBackoffMillis) {
-      this.reconnectBackoffMillis = reconnectBackoffMillis;
-      return this;
-    }
-
-    public KafkaConsumerPropertiesBuilder withRetryBackoffMillis(long retryBackoffMillis) {
-      this.retryBackoffMillis = retryBackoffMillis;
-      return this;
-    }
-
-    public KafkaConsumerPropertiesBuilder withMaxPollIntervalMillis(int maxPollIntervalMillis) {
-      this.maxPollIntervalMillis = maxPollIntervalMillis;
-      return this;
-    }
-
-    public KafkaConsumerPropertiesBuilder withMaxPollRecords(int maxPollRecords) {
-      this.maxPollRecords = maxPollRecords;
-      return this;
-    }
-
-    public KafkaConsumerPropertiesBuilder withEnableAutoCommit(boolean enableAutoCommit) {
-      this.enableAutoCommit = enableAutoCommit;
-      return this;
-    }
-
-    public KafkaConsumerPropertiesBuilder withAutoCommitIntervalMillis(int autoCommitIntervalMillis) {
-      this.autoCommitIntervalMillis = autoCommitIntervalMillis;
-      return this;
-    }
-
-    public KafkaConsumerPropertiesBuilder withFetchMaxBytes(int fetchMaxBytes) {
-      this.fetchMaxBytes = fetchMaxBytes;
-      return this;
-    }
-
-    public KafkaConsumerPropertiesBuilder withReceiveBufferBytes(int receiveBufferBytes) {
-      this.receiveBufferBytes = receiveBufferBytes;
-      return this;
-    }
-
-    public Properties build() {
+    public KafkaMessageReader build() {
       Properties props = new Properties();
-      props.put(BOOTSTRAP_SERVERS.unprefixedKey(),
-          checkNotEmpty(bootstrapServers, "Property " + BOOTSTRAP_SERVERS + " is not set"));
-      props.put(GROUP_ID.unprefixedKey(), checkNotEmpty(groupId, "Property " + GROUP_ID + " is not set"));
-      props.put(CLIENT_ID.unprefixedKey(), checkNotEmpty(clientId, "Property " + CLIENT_ID + " is not set"));
-      props.put(SESSION_TIMEOUT_MS.unprefixedKey(), sessionTimeoutMillis);
-      props.put(CONNECTIONS_MAX_IDLE_MS.unprefixedKey(), connectionsMaxIdleMillis);
-      props.put(RECONNECT_BACKOFF_MAX_MS.unprefixedKey(), reconnectBackoffMaxMillis);
-      props.put(RECONNECT_BACKOFF_MS.unprefixedKey(), reconnectBackoffMillis);
-      props.put(RETRY_BACKOFF_MS.unprefixedKey(), retryBackoffMillis);
-      props.put(MAX_POLL_INTERVAL_MS.unprefixedKey(), maxPollIntervalMillis);
-      props.put(MAX_POLL_RECORDS.unprefixedKey(), maxPollRecords);
-      props.put(ENABLE_AUTO_COMMIT.unprefixedKey(), enableAutoCommit);
-      props.put(AUTO_COMMIT_INTERVAL_MS.unprefixedKey(), autoCommitIntervalMillis);
-      props.put(FETCH_MAX_BYTES.unprefixedKey(), fetchMaxBytes);
-      props.put(RECEIVE_BUFFER_BYTES.unprefixedKey(), receiveBufferBytes);
+      props.put(BOOTSTRAP_SERVERS_CONFIG,
+          checkNotEmpty(bootstrapServers, "Property " + BOOTSTRAP_SERVERS_CONFIG + " is not set"));
+      props.put(GROUP_ID_CONFIG, checkNotEmpty(groupId, "Property " + GROUP_ID_CONFIG + " is not set"));
+      props.put(CLIENT_ID_CONFIG, clientId);
       props.put("key.deserializer", "org.apache.kafka.common.serialization.LongDeserializer");
       props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-      return props;
+      consumerProperties.forEach(
+          (key, value) -> props.merge(key, value, (v1, v2) -> v1)
+      );
+      return new KafkaMessageReader(checkNotEmpty(topicName, "Topic name is not set."), metaStoreEventSerDe, props);
     }
   }
 }
