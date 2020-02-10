@@ -6,7 +6,18 @@ This module contains classes for retrieving and processing Hive Metastore events
 
 ## Kafa Metastore Receiver Configuration
 
-To configure the receiver, a builder is provided. The builder requires that bootstrap servers, a topic name and a group id are specified. 
+To configure the receiver, a builder is provided. The builder requires that bootstrap servers, a topic name and a group id are specified.
+
+The receiver uses a client id of `ApiaryMetastoreReceiver` by default, however this can be overridden.
+
+```
+Properties additionalProperties = new Properties();
+additionalProperties.put(key, value);
+KafkaMessageReader reader = KafkaMessageReader.Builder.aKafkaMessageReader(bootstapServers, topicName, groupId)
+  .withClientId("OverriddenClientId")
+  .withConsumerProperties(additionalProperties)
+  .build();
+```
 
 Additional properties to configure the Kafka consumer may be configured too, please see documentation for more details on what configuration is available [here](https://kafka.apache.org/documentation/#consumerconfigs).
 

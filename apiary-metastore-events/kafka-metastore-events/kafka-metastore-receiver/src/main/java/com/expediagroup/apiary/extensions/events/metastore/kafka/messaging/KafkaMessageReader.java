@@ -38,7 +38,7 @@ import com.expediagroup.apiary.extensions.events.metastore.io.jackson.JsonMetaSt
 
 public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closeable {
 
-  private static final Duration POLL_TIMEOUT = Duration.ofHours(1);
+  private static final Duration POLL_TIMEOUT = Duration.ofMinutes(5);
 
   private KafkaConsumer<Long, byte[]> consumer;
   private MetaStoreEventSerDe eventSerDe;
