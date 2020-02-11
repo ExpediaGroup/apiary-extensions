@@ -16,7 +16,6 @@
 package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.CLIENT_ID_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 
 import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotEmpty;
@@ -56,13 +55,10 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
   }
 
   @Override
-  public void close() {
-    consumer.close();
-  }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException("Cannot remove message from Kafka topic.");
+  public ApiaryListenerEvent next() {
+    readRecordsIfNeeded();
+    ConsumerRecord<Long, byte[]> next = records.next();
+    return eventSerDe.unmarshal(next.value());
   }
 
   @Override
@@ -71,10 +67,13 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
   }
 
   @Override
-  public ApiaryListenerEvent next() {
-    readRecordsIfNeeded();
-    ConsumerRecord<Long, byte[]> next = records.next();
-    return eventSerDe.unmarshal(next.value());
+  public void remove() {
+    throw new UnsupportedOperationException("Cannot remove message from Kafka topic");
+  }
+
+  @Override
+  public void close() {
+    consumer.close();
   }
 
   private void readRecordsIfNeeded() {
@@ -83,52 +82,46 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
     }
   }
 
-  public static final class Builder {
+  public static final class KafkaMessageReaderBuilder {
 
     private String bootstrapServers;
     private String topicName;
-    private String groupId;
-    private String clientId = "ApiaryMetastoreReceiver";
+    private String groupId = "apiary-kafka-metastore-receiver-";
     private MetaStoreEventSerDe metaStoreEventSerDe = new JsonMetaStoreEventSerDe();
     private Properties consumerProperties = new Properties();
 
-    private Builder(String bootstrapServers, String topicName, String groupId) {
+    private KafkaMessageReaderBuilder(String bootstrapServers, String topicName, String applicationName) {
       this.bootstrapServers = bootstrapServers;
       this.topicName = topicName;
-      this.groupId = groupId;
+      this.groupId = groupId + applicationName;
     }
 
-    public static Builder aKafkaMessageReader(String bootstrapServers, String topicName, String groupId) {
-      return new Builder(bootstrapServers, topicName, groupId);
+    public static KafkaMessageReaderBuilder builder(String bootstrapServers, String topicName, String applicationName) {
+      return new KafkaMessageReaderBuilder(
+          checkNotEmpty(bootstrapServers, "Bootstrap servers is not set"),
+          checkNotEmpty(topicName, "Topic name is not set"),
+          checkNotEmpty(applicationName, "Application name is not set")
+      );
     }
 
-    public Builder withClientId(String clientId) {
-      this.clientId = clientId;
-      return this;
-    }
-
-    public Builder withMetaStoreEventSerDe(MetaStoreEventSerDe metaStoreEventSerDe) {
+    public KafkaMessageReaderBuilder withMetaStoreEventSerDe(MetaStoreEventSerDe metaStoreEventSerDe) {
       this.metaStoreEventSerDe = metaStoreEventSerDe;
       return this;
     }
 
-    public Builder withConsumerProperties(Properties consumerProperties) {
+    public KafkaMessageReaderBuilder withConsumerProperties(Properties consumerProperties) {
       this.consumerProperties = consumerProperties;
       return this;
     }
 
     public KafkaMessageReader build() {
       Properties props = new Properties();
-      props.put(BOOTSTRAP_SERVERS_CONFIG,
-          checkNotEmpty(bootstrapServers, "Property " + BOOTSTRAP_SERVERS_CONFIG + " is not set"));
-      props.put(GROUP_ID_CONFIG, checkNotEmpty(groupId, "Property " + GROUP_ID_CONFIG + " is not set"));
-      props.put(CLIENT_ID_CONFIG, clientId);
+      props.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+      props.put(GROUP_ID_CONFIG, groupId);
       props.put("key.deserializer", "org.apache.kafka.common.serialization.LongDeserializer");
       props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-      consumerProperties.forEach(
-          (key, value) -> props.merge(key, value, (v1, v2) -> v1)
-      );
-      return new KafkaMessageReader(checkNotEmpty(topicName, "Topic name is not set."), metaStoreEventSerDe, props);
+      consumerProperties.forEach((key, value) -> props.merge(key, value, (v1, v2) -> v1));
+      return new KafkaMessageReader(topicName, metaStoreEventSerDe, props);
     }
   }
 }

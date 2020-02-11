@@ -21,6 +21,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageReader.KafkaMessageReaderBuilder;
+
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +50,7 @@ public class KafkaMessageReaderTest {
   private static final int PARTITION = 0;
   private static final byte[] MESSAGE_CONTENT = "message".getBytes();
   private static final String BOOTSTRAP_SERVERS_STRING = "bootstrap_servers";
-  private static final String GROUP_NAME = "group";
+  private static final String APPLICATION_NAME = "app";
   private static final String TOPIC_NAME = "topic";
 
   private @Mock MetaStoreEventSerDe serDe;
@@ -71,40 +73,6 @@ public class KafkaMessageReaderTest {
     reader = new KafkaMessageReader(TOPIC_NAME, serDe, consumer);
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void missingBootstrapServers() {
-    KafkaMessageReader.Builder.aKafkaMessageReader("", TOPIC_NAME, GROUP_NAME)
-        .build();
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void missingTopicName() {
-    KafkaMessageReader.Builder.aKafkaMessageReader(BOOTSTRAP_SERVERS_STRING, "", GROUP_NAME)
-        .build();
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void missingGroupId() {
-    KafkaMessageReader.Builder.aKafkaMessageReader(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, "")
-        .build();
-  }
-
-  @Test
-  public void close() {
-    reader.close();
-    verify(consumer).close();
-  }
-
-  @Test(expected = UnsupportedOperationException.class)
-  public void remove() {
-    reader.remove();
-  }
-
-  @Test
-  public void hasNext() {
-    assertThat(reader.hasNext()).isTrue();
-  }
-
   @Test
   public void nextReadsRecordsFromQueue() {
     assertThat(reader.next()).isSameAs(event);
@@ -120,10 +88,62 @@ public class KafkaMessageReaderTest {
     verify(serDe).unmarshal(MESSAGE_CONTENT);
   }
 
+  @Test(expected = UnsupportedOperationException.class)
+  public void remove() {
+    reader.remove();
+  }
+
+  @Test
+  public void hasNext() {
+    assertThat(reader.hasNext()).isTrue();
+  }
+
+  @Test
+  public void close() {
+    reader.close();
+    verify(consumer).close();
+  }
+
   @Test(expected = SerDeException.class)
   public void unmarhsallThrowsException() {
     when(serDe.unmarshal(any(byte[].class))).thenThrow(SerDeException.class);
     reader.next();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void nullBootstrapServers() {
+    KafkaMessageReaderBuilder.builder(null, TOPIC_NAME, APPLICATION_NAME)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void nullTopicName() {
+    KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, null, APPLICATION_NAME)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void nullApplicationNAme() {
+    KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, null)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyBootstrapServers() {
+    KafkaMessageReaderBuilder.builder("", TOPIC_NAME, APPLICATION_NAME)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyTopicName() {
+    KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, "", APPLICATION_NAME)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyApplicationNAme() {
+    KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, "")
+        .build();
   }
 
 }

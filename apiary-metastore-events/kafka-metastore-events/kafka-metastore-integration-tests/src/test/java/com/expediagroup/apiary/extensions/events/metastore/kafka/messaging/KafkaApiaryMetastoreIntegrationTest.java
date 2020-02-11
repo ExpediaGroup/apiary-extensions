@@ -23,6 +23,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildQualifiedTableName;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildTable;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildTableParameters;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageReader.KafkaMessageReaderBuilder;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BOOTSTRAP_SERVERS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.CLIENT_ID;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC_NAME;
@@ -45,7 +46,6 @@ import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -92,8 +92,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
     Properties consumerProperties = new Properties();
     consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    kafkaMessageReader = KafkaMessageReader.Builder.aKafkaMessageReader(KAFKA.getKafkaConnectString(), "topic",
-      "group")
+    kafkaMessageReader = KafkaMessageReaderBuilder.builder(KAFKA.getKafkaConnectString(), "topic", "app")
       .withConsumerProperties(consumerProperties)
       .build();
   }
