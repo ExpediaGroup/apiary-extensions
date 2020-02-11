@@ -13,7 +13,7 @@ The receiver uses the application name to create a unique group id for each cons
 ```
 Properties additionalProperties = new Properties();
 additionalProperties.put(key, value);
-KafkaMessageReader reader = KafkaMessageReader.Builder.aKafkaMessageReader(bootstapServers, topicName, applicationName)
+KafkaMessageReader reader = KafkaMessageReaderBuilder.builder(bootstapServers, topicName, applicationName)
   .withConsumerProperties(additionalProperties)
   .build();
 ```
