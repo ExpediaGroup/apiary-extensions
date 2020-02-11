@@ -3,11 +3,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 5.0.3 - TBD
+## 6.0.0 - TBD
 ### Changed
-- `client.id` is now required to configure Kafka Receiver and Listener.
+- `client.id` is now required to configure Listener.
 - `topic` Kafka configuration parameter is now called `topic.name`.
 - No longer sending MetaStore uris with Kafka message.
+- Kafka Receiver is now configured using a builder.
 
 ## 5.0.2 - 2020-02-04
 ### Changed

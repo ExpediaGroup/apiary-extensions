@@ -19,13 +19,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CLIENT_ID;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.GROUP_ID;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildPartition;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildQualifiedTableName;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildTable;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildTableParameters;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageReader.KafkaMessageReaderBuilder;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BOOTSTRAP_SERVERS;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.CLIENT_ID;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC_NAME;
 
 import java.util.ArrayList;
@@ -46,7 +46,6 @@ import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -65,7 +64,6 @@ import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryDropParti
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryDropTableEvent;
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryInsertEvent;
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
-import com.expediagroup.apiary.extensions.events.metastore.io.jackson.JsonMetaStoreEventSerDe;
 import com.expediagroup.apiary.extensions.events.metastore.kafka.listener.KafkaMetaStoreEventListener;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -76,27 +74,27 @@ public class KafkaApiaryMetastoreIntegrationTest {
 
   private static final long TEST_TIMEOUT_MS = 10000;
   private static Configuration CONF = new Configuration();
-
   private static KafkaMetaStoreEventListener kafkaMetaStoreEventListener;
   private static KafkaMessageReader kafkaMessageReader;
-  
+
   private @Mock HMSHandler hmsHandler;
 
   @BeforeClass
   public static void init() {
     CONF.set(BOOTSTRAP_SERVERS.key(), KAFKA.getKafkaConnectString());
-    CONF.set(GROUP_ID.key(), "1");
     CONF.set(CLIENT_ID.key(), "client");
     CONF.set(TOPIC_NAME.key(), "topic");
     KAFKA.getKafkaTestUtils().createTopic("topic", 1, (short) 1);
 
     kafkaMetaStoreEventListener = new KafkaMetaStoreEventListener(CONF);
 
-    Properties receiverProperties = KafkaMessageReader.kafkaProperties(CONF);
     //this makes sure the consumer starts from the beginning on the first read
-    receiverProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    kafkaMessageReader = new KafkaMessageReader(CONF, new JsonMetaStoreEventSerDe(),
-      new KafkaConsumer<>(receiverProperties));
+    Properties consumerProperties = new Properties();
+    consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+    kafkaMessageReader = KafkaMessageReaderBuilder.builder(KAFKA.getKafkaConnectString(), "topic", "app")
+      .withConsumerProperties(consumerProperties)
+      .build();
   }
 
   @Test(timeout = TEST_TIMEOUT_MS)
@@ -154,7 +152,8 @@ public class KafkaApiaryMetastoreIntegrationTest {
 
   @Test(timeout = TEST_TIMEOUT_MS)
   public void dropPartitionEvent() {
-    DropPartitionEvent dropPartitionEvent = new DropPartitionEvent(buildTable(), buildPartition(), true, false, hmsHandler);
+    DropPartitionEvent dropPartitionEvent = new DropPartitionEvent(buildTable(), buildPartition(), true, false,
+      hmsHandler);
     kafkaMetaStoreEventListener.onDropPartition(dropPartitionEvent);
     ApiaryListenerEvent result = kafkaMessageReader.next();
     assertThat(result).isInstanceOf(ApiaryDropPartitionEvent.class);
@@ -201,5 +200,4 @@ public class KafkaApiaryMetastoreIntegrationTest {
     assertThat(event.getQualifiedTableName()).isEqualTo(buildQualifiedTableName());
     assertThat(event.getStatus()).isEqualTo(true);
   }
-
 }

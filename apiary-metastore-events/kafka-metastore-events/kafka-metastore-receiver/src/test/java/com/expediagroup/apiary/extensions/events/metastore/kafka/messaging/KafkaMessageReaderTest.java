@@ -21,29 +21,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.AUTO_COMMIT_INTERVAL_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.BOOTSTRAP_SERVERS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CLIENT_ID;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.CONNECTIONS_MAX_IDLE_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.ENABLE_AUTO_COMMIT;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.FETCH_MAX_BYTES;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.GROUP_ID;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.MAX_POLL_INTERVAL_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.MAX_POLL_RECORDS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECEIVE_BUFFER_BYTES;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECONNECT_BACKOFF_MAX_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RECONNECT_BACKOFF_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.RETRY_BACKOFF_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.SESSION_TIMEOUT_MS;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaConsumerProperty.TOPIC_NAME;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageReader.kafkaProperties;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageReader.KafkaMessageReaderBuilder;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -67,15 +50,14 @@ public class KafkaMessageReaderTest {
   private static final int PARTITION = 0;
   private static final byte[] MESSAGE_CONTENT = "message".getBytes();
   private static final String BOOTSTRAP_SERVERS_STRING = "bootstrap_servers";
-  private static final String GROUP_NAME = "group";
-  private static final String CLIENT_NAME = "client";
+  private static final String APPLICATION_NAME = "app";
+  private static final String TOPIC_NAME = "topic";
 
   private @Mock MetaStoreEventSerDe serDe;
   private @Mock KafkaConsumer<Long, byte[]> consumer;
   private @Mock ConsumerRecord<Long, byte[]> message;
   private @Mock ApiaryListenerEvent event;
 
-  private final Configuration conf = new Configuration();
   private ConsumerRecords<Long, byte[]> messages;
   private KafkaMessageReader reader;
 
@@ -83,76 +65,12 @@ public class KafkaMessageReaderTest {
   public void init() {
     List<ConsumerRecord<Long, byte[]>> messageList = ImmutableList.of(message);
     Map<TopicPartition, List<ConsumerRecord<Long, byte[]>>> messageMap = ImmutableMap
-        .of(new TopicPartition("topic", PARTITION), messageList);
+        .of(new TopicPartition(TOPIC_NAME, PARTITION), messageList);
     messages = new ConsumerRecords<>(messageMap);
     when(consumer.poll(any(Duration.class))).thenReturn(messages);
     when(message.value()).thenReturn(MESSAGE_CONTENT);
     when(serDe.unmarshal(MESSAGE_CONTENT)).thenReturn(event);
-    conf.set(TOPIC_NAME.key(), "topic");
-    conf.set(BOOTSTRAP_SERVERS.key(), BOOTSTRAP_SERVERS_STRING);
-    conf.set(GROUP_ID.key(), GROUP_NAME);
-    conf.set(CLIENT_ID.key(), CLIENT_NAME);
-    reader = new KafkaMessageReader(conf, serDe, consumer);
-  }
-
-  @Test
-  public void populateKafkaPropertiesFromHadoop() {
-    conf.set(SESSION_TIMEOUT_MS.key(), "1");
-    conf.set(CONNECTIONS_MAX_IDLE_MS.key(), "2");
-    conf.set(RECONNECT_BACKOFF_MAX_MS.key(), "3");
-    conf.set(RECONNECT_BACKOFF_MS.key(), "4");
-    conf.set(RETRY_BACKOFF_MS.key(), "5");
-    conf.set(MAX_POLL_INTERVAL_MS.key(), "6");
-    conf.set(MAX_POLL_RECORDS.key(), "7");
-    conf.set(ENABLE_AUTO_COMMIT.key(), "true");
-    conf.set(AUTO_COMMIT_INTERVAL_MS.key(), "9");
-    conf.set(FETCH_MAX_BYTES.key(), "10");
-    conf.set(RECEIVE_BUFFER_BYTES.key(), "11");
-    Properties props = kafkaProperties(conf);
-    assertThat(props.get("bootstrap.servers")).isEqualTo(BOOTSTRAP_SERVERS_STRING);
-    assertThat(props.get("group.id")).isEqualTo(GROUP_NAME);
-    assertThat(props.get("client.id")).isEqualTo(CLIENT_NAME);
-    assertThat(props.get("session.timeout.ms")).isEqualTo(1);
-    assertThat(props.get("connections.max.idle.ms")).isEqualTo(2L);
-    assertThat(props.get("reconnect.backoff.max.ms")).isEqualTo(3L);
-    assertThat(props.get("reconnect.backoff.ms")).isEqualTo(4L);
-    assertThat(props.get("retry.backoff.ms")).isEqualTo(5L);
-    assertThat(props.get("max.poll.interval.ms")).isEqualTo(6);
-    assertThat(props.get("max.poll.records")).isEqualTo(7);
-    assertThat(props.get("enable.auto.commit")).isEqualTo(true);
-    assertThat(props.get("auto.commit.interval.ms")).isEqualTo(9);
-    assertThat(props.get("fetch.max.bytes")).isEqualTo(10);
-    assertThat(props.get("receive.buffer.bytes")).isEqualTo(11);
-    assertThat(props.get("key.deserializer")).isEqualTo("org.apache.kafka.common.serialization.LongDeserializer");
-    assertThat(props.get("value.deserializer")).isEqualTo("org.apache.kafka.common.serialization.ByteArrayDeserializer");
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void missingBootstrapServers() {
-    conf.unset(BOOTSTRAP_SERVERS.key());
-    kafkaProperties(conf);
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void missingGroupId() {
-    conf.unset(GROUP_ID.key());
-    kafkaProperties(conf);
-  }
-
-  @Test
-  public void close() {
-    reader.close();
-    verify(consumer).close();
-  }
-
-  @Test(expected = UnsupportedOperationException.class)
-  public void remove() {
-    reader.remove();
-  }
-
-  @Test
-  public void hasNext() {
-    assertThat(reader.hasNext()).isTrue();
+    reader = new KafkaMessageReader(TOPIC_NAME, serDe, consumer);
   }
 
   @Test
@@ -170,10 +88,62 @@ public class KafkaMessageReaderTest {
     verify(serDe).unmarshal(MESSAGE_CONTENT);
   }
 
+  @Test(expected = UnsupportedOperationException.class)
+  public void remove() {
+    reader.remove();
+  }
+
+  @Test
+  public void hasNext() {
+    assertThat(reader.hasNext()).isTrue();
+  }
+
+  @Test
+  public void close() {
+    reader.close();
+    verify(consumer).close();
+  }
+
   @Test(expected = SerDeException.class)
   public void unmarhsallThrowsException() {
     when(serDe.unmarshal(any(byte[].class))).thenThrow(SerDeException.class);
     reader.next();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void nullBootstrapServers() {
+    KafkaMessageReaderBuilder.builder(null, TOPIC_NAME, APPLICATION_NAME)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void nullTopicName() {
+    KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, null, APPLICATION_NAME)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void nullApplicationNAme() {
+    KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, null)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyBootstrapServers() {
+    KafkaMessageReaderBuilder.builder("", TOPIC_NAME, APPLICATION_NAME)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyTopicName() {
+    KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, "", APPLICATION_NAME)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyApplicationNAme() {
+    KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, "")
+        .build();
   }
 
 }
