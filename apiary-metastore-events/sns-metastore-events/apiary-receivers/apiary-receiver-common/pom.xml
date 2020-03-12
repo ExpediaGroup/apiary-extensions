@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
     <artifactId>apiary-receivers-parent</artifactId>
-    <version>5.0.3-SNAPSHOT</version>
+    <version>6.0.0</version>
   </parent>
 
   <artifactId>apiary-receiver-common</artifactId>
