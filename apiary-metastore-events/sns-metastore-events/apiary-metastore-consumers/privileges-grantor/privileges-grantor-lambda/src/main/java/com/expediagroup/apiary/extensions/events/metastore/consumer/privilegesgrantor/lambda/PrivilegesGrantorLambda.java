@@ -131,10 +131,12 @@ public class PrivilegesGrantorLambda implements RequestHandler<SQSEvent, Respons
     Response response = new Response();
     StringBuffer description = new StringBuffer();
     if (failedEvents.isEmpty()) {
+      logger.log("Privileges granted successfully: " + successfulTableNames + "\n");
       description.append("Privileges granted successfully: " + successfulTableNames + "\n");
       response.setStatusCode(HttpStatus.SC_OK);
     } else {
       if (!successfulTableNames.isEmpty()) {
+        logger.log("Privileges granted successfully: " + successfulTableNames + "\n");
         description.append("Privileges granted successfully: " + successfulTableNames + "\n");
       }
       description.append("Failed to grant privileges: " + failedEvents + "\n");
