@@ -123,8 +123,8 @@ public class PrivilegesGrantorLambda implements RequestHandler<SQSEvent, Respons
 
   private MessageDeserializer defaultMessageDeserializer() {
     ObjectMapper mapper = new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-    JsonMetaStoreEventDeserializer delegateSerDe = new JsonMetaStoreEventDeserializer(mapper);
-    return new DefaultSqsMessageDeserializer(delegateSerDe, mapper);
+    JsonMetaStoreEventDeserializer delegateDeserializer = new JsonMetaStoreEventDeserializer(mapper);
+    return new DefaultSqsMessageDeserializer(delegateDeserializer, mapper);
   }
 
   private Response createResponse(List<String> successfulTableNames, List<String> failedEvents) {

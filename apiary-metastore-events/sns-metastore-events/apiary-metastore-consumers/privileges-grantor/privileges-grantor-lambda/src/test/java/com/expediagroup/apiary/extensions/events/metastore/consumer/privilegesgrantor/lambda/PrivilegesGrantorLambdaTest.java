@@ -47,6 +47,16 @@ import com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgr
 @RunWith(MockitoJUnitRunner.class)
 public class PrivilegesGrantorLambdaTest {
 
+  private static final String BASE_EVENT_FROM_SNS = "{"
+      + "  \"Type\" : \"Notification\","
+      + "  \"MessageId\" : \"message-id\","
+      + "  \"TopicArn\" : \"arn:aws:sns:us-west-2:sns-topic\","
+      + "  \"Timestamp\" : \"2018-10-23T13:01:54.507Z\","
+      + "  \"SignatureVersion\" : \"1\","
+      + "  \"Signature\" : \"signature\","
+      + "  \"SigningCertURL\" : \"https://sns.us-west-2.amazonaws.com/SimpleNotificationService-xxxx\","
+      + "  \"UnsubscribeURL\" : \"https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-west-2:440000000000:sns-topic\",";
+
   public final @Rule EnvironmentVariables env = new EnvironmentVariables();
 
   private @Mock PriviligesGrantorFactory priviligesGrantorFactory;
@@ -162,16 +172,6 @@ public class PrivilegesGrantorLambdaTest {
     assertThat(response.getDescription(), containsString("Failed to grant privileges"));
     assertThat(response.getDescription(), containsString("Privileges granted successfully"));
   }
-
-  private static final String BASE_EVENT_FROM_SNS = "{"
-      + "  \"Type\" : \"Notification\","
-      + "  \"MessageId\" : \"message-id\","
-      + "  \"TopicArn\" : \"arn:aws:sns:us-west-2:sns-topic\","
-      + "  \"Timestamp\" : \"2018-10-23T13:01:54.507Z\","
-      + "  \"SignatureVersion\" : \"1\","
-      + "  \"Signature\" : \"signature\","
-      + "  \"SigningCertURL\" : \"https://sns.us-west-2.amazonaws.com/SimpleNotificationService-xxxx\","
-      + "  \"UnsubscribeURL\" : \"https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-west-2:440407435941:sns-topic\",";
 
   private String getSnsMessage(String eventMessage) {
     return BASE_EVENT_FROM_SNS + eventMessage + "}";
