@@ -27,7 +27,7 @@
         </dependency>
         <dependency>
             <groupId>com.expediagroup.apiary</groupId>
-            <artifactId>apiary-receiver-common</artifactId>
+            <artifactId>apiary-receiver-sqs</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

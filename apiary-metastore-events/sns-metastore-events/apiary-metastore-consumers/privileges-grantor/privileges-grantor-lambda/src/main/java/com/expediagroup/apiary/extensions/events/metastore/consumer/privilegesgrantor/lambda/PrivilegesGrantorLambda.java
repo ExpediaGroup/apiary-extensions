@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgrantor.lambda;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +27,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 
@@ -39,7 +40,8 @@ import com.expediagroup.apiary.extensions.events.receiver.common.event.AlterTabl
 import com.expediagroup.apiary.extensions.events.receiver.common.event.EventType;
 import com.expediagroup.apiary.extensions.events.receiver.common.event.ListenerEvent;
 import com.expediagroup.apiary.extensions.events.receiver.common.messaging.JsonMetaStoreEventDeserializer;
-import com.expediagroup.apiary.extensions.events.receiver.common.messaging.MetaStoreEventDeserializer;
+import com.expediagroup.apiary.extensions.events.receiver.common.messaging.MessageDeserializer;
+import com.expediagroup.apiary.extensions.events.receiver.sqs.messaging.DefaultSqsMessageDeserializer;
 
 /**
  * Consumes events from the SQS queue and grants Public privileges to a table.
@@ -75,7 +77,7 @@ public class PrivilegesGrantorLambda implements RequestHandler<SQSEvent, Respons
           .newInstance(THRIFT_CONNECTION_URI, THRIFT_CONNECTION_TIMEOUT);
       metaStoreClient = thriftHiveClient.getMetaStoreClient();
       PrivilegesGrantor privilegesGrantor = priviligesGrantorFactory.newInstance(metaStoreClient);
-      MetaStoreEventDeserializer metaStoreEventDeserializer = newMetaStoreEventDeserializer();
+      MessageDeserializer metaStoreEventDeserializer = defaultMessageDeserializer();
       for (SQSEvent.SQSMessage record : event.getRecords()) {
         handleRecord(failedEvents, successfulTableNames, privilegesGrantor, metaStoreEventDeserializer, record);
       }
@@ -97,7 +99,7 @@ public class PrivilegesGrantorLambda implements RequestHandler<SQSEvent, Respons
       List<String> failedEvents,
       List<String> successfulTableNames,
       PrivilegesGrantor privilegesGrantor,
-      MetaStoreEventDeserializer metaStoreEventDeserializer,
+      MessageDeserializer metaStoreEventDeserializer,
       SQSEvent.SQSMessage record) {
     try {
       logger.log("Processing Event: " + record.getBody());
@@ -119,20 +121,22 @@ public class PrivilegesGrantorLambda implements RequestHandler<SQSEvent, Respons
     }
   }
 
-  private MetaStoreEventDeserializer newMetaStoreEventDeserializer() {
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-    return new JsonMetaStoreEventDeserializer(objectMapper);
+  private MessageDeserializer defaultMessageDeserializer() {
+    ObjectMapper mapper = new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+    JsonMetaStoreEventDeserializer delegateDeserializer = new JsonMetaStoreEventDeserializer(mapper);
+    return new DefaultSqsMessageDeserializer(delegateDeserializer, mapper);
   }
 
   private Response createResponse(List<String> successfulTableNames, List<String> failedEvents) {
     Response response = new Response();
     StringBuffer description = new StringBuffer();
     if (failedEvents.isEmpty()) {
+      logger.log("Privileges granted successfully: " + successfulTableNames + "\n");
       description.append("Privileges granted successfully: " + successfulTableNames + "\n");
       response.setStatusCode(HttpStatus.SC_OK);
     } else {
       if (!successfulTableNames.isEmpty()) {
+        logger.log("Privileges granted successfully: " + successfulTableNames + "\n");
         description.append("Privileges granted successfully: " + successfulTableNames + "\n");
       }
       description.append("Failed to grant privileges: " + failedEvents + "\n");

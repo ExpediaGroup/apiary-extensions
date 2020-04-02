@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,16 @@ import com.expediagroup.apiary.extensions.events.metastore.consumer.privilegesgr
 @RunWith(MockitoJUnitRunner.class)
 public class PrivilegesGrantorLambdaTest {
 
+  private static final String BASE_EVENT_FROM_SNS = "{"
+      + "  \"Type\" : \"Notification\","
+      + "  \"MessageId\" : \"message-id\","
+      + "  \"TopicArn\" : \"arn:aws:sns:us-west-2:sns-topic\","
+      + "  \"Timestamp\" : \"2018-10-23T13:01:54.507Z\","
+      + "  \"SignatureVersion\" : \"1\","
+      + "  \"Signature\" : \"signature\","
+      + "  \"SigningCertURL\" : \"https://sns.us-west-2.amazonaws.com/SimpleNotificationService-xxxx\","
+      + "  \"UnsubscribeURL\" : \"https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-west-2:440000000000:sns-topic\",";
+
   public final @Rule EnvironmentVariables env = new EnvironmentVariables();
 
   private @Mock PriviligesGrantorFactory priviligesGrantorFactory;
@@ -72,7 +82,9 @@ public class PrivilegesGrantorLambdaTest {
   public void createTable() throws Exception {
     SQSEvent event = new SQSEvent();
     SQSEvent.SQSMessage record = new SQSEvent.SQSMessage();
-    record.setBody(createTableJson());
+    String message = createTableJson();
+    String payload = "\"Message\" : \"" + message.replace("\"", "\\\"") + "\"";
+    record.setBody(getSnsMessage(payload));
     event.setRecords(Lists.newArrayList(record));
     Response response = privilegesGrantorLambda.handleRequest(event, context);
     verify(privilegesGrantor).grantSelectPrivileges("some_db", "some_table1");
@@ -83,7 +95,9 @@ public class PrivilegesGrantorLambdaTest {
   public void renameTable() throws Exception {
     SQSEvent event = new SQSEvent();
     SQSEvent.SQSMessage record = new SQSEvent.SQSMessage();
-    record.setBody(alterTableRenameJson());
+    String message = alterTableRenameJson();
+    String payload = "\"Message\" : \"" + message.replace("\"", "\\\"") + "\"";
+    record.setBody(getSnsMessage(payload));
     event.setRecords(Lists.newArrayList(record));
     Response response = privilegesGrantorLambda.handleRequest(event, context);
     verify(privilegesGrantor).grantSelectPrivileges("some_db", "some_table2");
@@ -94,10 +108,16 @@ public class PrivilegesGrantorLambdaTest {
   public void multipleRecords() throws Exception {
     SQSEvent event = new SQSEvent();
     SQSEvent.SQSMessage record1 = new SQSEvent.SQSMessage();
-    record1.setBody(alterTableRenameJson());
+    String message = alterTableRenameJson();
+    String payload = "\"Message\" : \"" + message.replace("\"", "\\\"") + "\"";
+    record1.setBody(getSnsMessage(payload));
+
     SQSEvent.SQSMessage record2 = new SQSEvent.SQSMessage();
-    record2.setBody(createTableJson());
+    message = createTableJson();
+    payload = "\"Message\" : \"" + message.replace("\"", "\\\"") + "\"";
+    record2.setBody(getSnsMessage(payload));
     event.setRecords(Lists.newArrayList(record1, record2));
+
     Response response = privilegesGrantorLambda.handleRequest(event, context);
     verify(privilegesGrantor).grantSelectPrivileges("some_db", "some_table1");
     verify(privilegesGrantor).grantSelectPrivileges("some_db", "some_table2");
@@ -132,10 +152,16 @@ public class PrivilegesGrantorLambdaTest {
   public void clientErrorOnFirstRecordsSecondRecordOk() throws Exception {
     SQSEvent event = new SQSEvent();
     SQSEvent.SQSMessage record1 = new SQSEvent.SQSMessage();
-    record1.setBody(createTableJson());
+    String message = alterTableRenameJson();
+    String payload = "\"Message\" : \"" + message.replace("\"", "\\\"") + "\"";
+    record1.setBody(getSnsMessage(payload));
+
     SQSEvent.SQSMessage record2 = new SQSEvent.SQSMessage();
-    record2.setBody(alterTableRenameJson());
+    message = createTableJson();
+    payload = "\"Message\" : \"" + message.replace("\"", "\\\"") + "\"";
+    record2.setBody(getSnsMessage(payload));
     event.setRecords(Lists.newArrayList(record1, record2));
+
     doThrow(new HiveClientException("init error"))
         .doNothing()
         .when(privilegesGrantor)
@@ -145,6 +171,10 @@ public class PrivilegesGrantorLambdaTest {
     // should contains both messages
     assertThat(response.getDescription(), containsString("Failed to grant privileges"));
     assertThat(response.getDescription(), containsString("Privileges granted successfully"));
+  }
+
+  private String getSnsMessage(String eventMessage) {
+    return BASE_EVENT_FROM_SNS + eventMessage + "}";
   }
 
   private String createTableJson() {
