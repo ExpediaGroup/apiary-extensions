@@ -36,8 +36,7 @@ import com.expediagroup.apiary.extensions.events.receiver.sqs.messaging.DefaultS
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultSqsMessageDeserializerTest {
   private @Mock MetaStoreEventDeserializer delegateSerDe;
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-      .configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
   private static final String BASE_EVENT_FROM_SNS = "{"
       + "  \"Type\" : \"Notification\","
       + "  \"MessageId\" : \"message-id\","
@@ -46,7 +45,7 @@ public class DefaultSqsMessageDeserializerTest {
       + "  \"SignatureVersion\" : \"1\","
       + "  \"Signature\" : \"signature\","
       + "  \"SigningCertURL\" : \"https://sns.us-west-2.amazonaws.com/SimpleNotificationService-xxxx\","
-      + "  \"UnsubscribeURL\" : \"https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-west-2:440407435941:sns-topic\",";
+      + "  \"UnsubscribeURL\" : \"https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-west-2:440000000000:sns-topic\",";
 
   private DefaultSqsMessageDeserializer sqsMessageDeserializer;
 
