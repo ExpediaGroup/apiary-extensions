@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.metastore.events.AddIndexEvent;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
-import org.apache.hadoop.hive.metastore.events.AlterIndexEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
 import org.apache.hadoop.hive.metastore.events.ConfigChangeEvent;
@@ -33,7 +31,6 @@ import org.apache.hadoop.hive.metastore.events.CreateFunctionEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.DropFunctionEvent;
-import org.apache.hadoop.hive.metastore.events.DropIndexEvent;
 import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
@@ -178,27 +175,6 @@ public class KafkaMetaStoreEventListenerTest {
   @Test
   public void onLoadPartitionDone() {
     listener.onLoadPartitionDone(mock(LoadPartitionDoneEvent.class));
-    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
-  }
-
-  @Test
-  public void onAddIndex() {
-    listener.onAddIndex(mock(AddIndexEvent.class));
-    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
-  }
-
-  @Test
-  public void onDropIndex() {
-    listener.onDropIndex(mock(DropIndexEvent.class));
-    verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
-  }
-
-  @Test
-  public void onAlterIndex() {
-    listener.onAlterIndex(mock(AlterIndexEvent.class));
     verify(kafkaMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }

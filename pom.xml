@@ -25,8 +25,8 @@
 
   <properties>
     <aws-java-sdk.version>1.11.333</aws-java-sdk.version>
-    <hadoop.version>2.7.1</hadoop.version>
-    <hive.version>2.3.3</hive.version>
+    <hadoop.version>3.2.1</hadoop.version>
+    <hive.version>3.1.2</hive.version>
     <ranger.version>2.0.0</ranger.version>
     <solr.version>7.7.1</solr.version>
     <junit.version>4.12</junit.version>

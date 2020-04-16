@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.event;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 
 public class ApiaryInsertEvent extends ApiaryListenerEvent {
@@ -34,12 +37,25 @@ public class ApiaryInsertEvent extends ApiaryListenerEvent {
 
   public ApiaryInsertEvent(InsertEvent event) {
     super(event);
-    databaseName = event.getDb();
-    tableName = event.getTable();
-    partitionKeyValues = event.getPartitionKeyValues();
+
+    Table table = event.getTableObj();
+    databaseName = table.getDbName();
+    tableName = table.getTableName();
+
+    partitionKeyValues =  new LinkedHashMap<>();
+    if (event.getPartitionObj() != null) {
+      List<FieldSchema> partitionKeys = table.getPartitionKeys();
+      List<String> partitionValues = event.getPartitionObj().getValues();
+      for (int i = 0; i < partitionKeys.size(); i++) {
+        partitionKeyValues.put(partitionKeys.get(i).getName(), partitionValues.get(i));
+      }
+    }
+
     files = event.getFiles();
     fileChecksums = event.getFileChecksums();
   }
+
+
 
   @Override
   public String getDatabaseName() {

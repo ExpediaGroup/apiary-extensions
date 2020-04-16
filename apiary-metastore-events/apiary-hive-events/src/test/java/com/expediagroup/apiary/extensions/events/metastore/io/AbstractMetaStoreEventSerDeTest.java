@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,8 +79,12 @@ public abstract class AbstractMetaStoreEventSerDeTest {
   }
 
   private static ApiaryAlterTableEvent serializableAlterTableEvent() throws Exception {
-    AlterTableEvent event = new AlterTableEvent(createTable(), createTable(new FieldSchema("new_col", "string", null)),
-        true, mockHandler());
+    AlterTableEvent event = new AlterTableEvent(
+        createTable(),
+        createTable(new FieldSchema("new_col", "string", null)),
+        false,
+        true,
+        mockHandler());
     event.setEnvironmentContext(createEnvironmentContext());
     return new ApiaryAlterTableEvent(event);
   }
@@ -98,7 +102,7 @@ public abstract class AbstractMetaStoreEventSerDeTest {
   }
 
   private static ApiaryAlterPartitionEvent serializableAlterPartitionEvent() throws Exception {
-    AlterPartitionEvent event = new AlterPartitionEvent(createPartition("a"), createPartition("b"), createTable(), true,
+    AlterPartitionEvent event = new AlterPartitionEvent(createPartition("a"), createPartition("b"), createTable(), false, true,
         mockHandler());
     event.setEnvironmentContext(createEnvironmentContext());
     return new ApiaryAlterPartitionEvent(event);
@@ -111,8 +115,9 @@ public abstract class AbstractMetaStoreEventSerDeTest {
   }
 
   private static ApiaryInsertEvent serializableInsertEvent() throws Exception {
-    InsertEvent event = new InsertEvent(DATABASE, TABLE, Arrays.asList("a"), mockInsertEventRequestData(), true,
+    InsertEvent event = new InsertEvent("CATNAME",DATABASE, TABLE, Arrays.asList("a"), mockInsertEventRequestData(), true,
         mockHandler());
+
     event.setEnvironmentContext(createEnvironmentContext());
     return new ApiaryInsertEvent(event);
   }

@@ -22,9 +22,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
-import org.apache.hadoop.hive.metastore.events.AddIndexEvent;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
-import org.apache.hadoop.hive.metastore.events.AlterIndexEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
 import org.apache.hadoop.hive.metastore.events.ConfigChangeEvent;
@@ -33,7 +31,6 @@ import org.apache.hadoop.hive.metastore.events.CreateFunctionEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.DropFunctionEvent;
-import org.apache.hadoop.hive.metastore.events.DropIndexEvent;
 import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
@@ -163,15 +160,6 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
 
   @Override
   public void onLoadPartitionDone(LoadPartitionDoneEvent partSetDoneEvent) {}
-
-  @Override
-  public void onAddIndex(AddIndexEvent indexEvent) {}
-
-  @Override
-  public void onDropIndex(DropIndexEvent indexEvent) {}
-
-  @Override
-  public void onAlterIndex(AlterIndexEvent indexEvent) {}
 
   @Override
   public void onCreateFunction(CreateFunctionEvent fnEvent) {}
