@@ -8,10 +8,10 @@
     <version>1.2.0</version>
   </parent>
 
-  <groupId>com.expediagroup.apiary</groupId>
-  <artifactId>apiary-extensions-parent</artifactId>
+  <groupId>com.expediagroup.apiary-internal</groupId>
+  <artifactId>apiary-extensions-parent-internal</artifactId>
   <description>Various extensions to Apiary that provide additional, optional functionality</description>
-  <version>6.0.2-SNAPSHOT</version>
+  <version>6.0.2internal-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apiary Extensions Parent</name>
   <inceptionYear>2018</inceptionYear>
@@ -46,6 +46,18 @@
     <module>apiary-metastore-metrics</module>
     <module>hive-metastore-events</module>
   </modules>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>egdl-maven-snapshot-local</id>
+      <url>https://artylab.expedia.biz/egdl-maven-snapshot-local</url>
+    </snapshotRepository>
+    <repository>
+      <id>egdl-maven-release-local</id>
+      <url>https://artylab.expedia.biz/egdl-maven-release-local</url>
+    </repository>
+  </distributionManagement>
+
 
   <dependencyManagement>
     <dependencies>

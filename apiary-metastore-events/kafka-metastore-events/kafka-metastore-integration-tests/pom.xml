@@ -4,21 +4,21 @@
 
   <parent>
     <artifactId>kafka-metastore-events-parent</artifactId>
-    <groupId>com.expediagroup.apiary</groupId>
-    <version>6.0.2-SNAPSHOT</version>
+    <groupId>com.expediagroup.apiary-internal</groupId>
+    <version>6.0.2internal-SNAPSHOT</version>
   </parent>
 
   <artifactId>kafka-metastore-integration-tests</artifactId>
 
   <dependencies>
     <dependency>
-      <groupId>com.expediagroup.apiary</groupId>
+      <groupId>com.expediagroup.apiary-internal</groupId>
       <artifactId>kafka-metastore-listener</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.expediagroup.apiary</groupId>
+      <groupId>com.expediagroup.apiary-internal</groupId>
       <artifactId>kafka-metastore-receiver</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
