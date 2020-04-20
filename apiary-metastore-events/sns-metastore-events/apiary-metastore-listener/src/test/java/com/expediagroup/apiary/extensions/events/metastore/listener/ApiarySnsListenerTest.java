@@ -27,7 +27,6 @@ import static com.expediagroup.apiary.extensions.events.metastore.listener.Apiar
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
@@ -246,17 +245,23 @@ public class ApiarySnsListenerTest {
   public void onInsert() throws MetaException {
     InsertEvent event = mock(InsertEvent.class);
     when(event.getStatus()).thenReturn(true);
-    when(event.getTable()).thenReturn(TABLE_NAME);
-    when(event.getDb()).thenReturn(DB_NAME);
+
+    Table table = new Table();
+    table.setDbName(DB_NAME);
+    table.setTableName(TABLE_NAME);
+    table.setPartitionKeys(ImmutableList.of(
+        new FieldSchema("load_date", null, null),
+        new FieldSchema("variant_code", null, null)));
+    when(event.getTableObj()).thenReturn(table);
+
+    Partition partition = new Partition();
+    partition.setValues(ImmutableList.of("2013-03-24", "EN"));
+    when(event.getPartitionObj()).thenReturn(partition);
+
     List<String> files = Arrays.asList("file:/a/b.txt", "file:/a/c.txt");
     when(event.getFiles()).thenReturn(files);
     List<String> fileChecksums = Arrays.asList("123", "456");
     when(event.getFileChecksums()).thenReturn(fileChecksums);
-
-    Map<String, String> partitionKeyValues = new HashMap<>();
-    partitionKeyValues.put("load_date", "2013-03-24");
-    partitionKeyValues.put("variant_code", "EN");
-    when(event.getPartitionKeyValues()).thenReturn(partitionKeyValues);
 
     snsListener.onInsert(event);
     verify(snsClient).publish(requestCaptor.capture());

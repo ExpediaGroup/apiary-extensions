@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,12 @@ import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.metastore.events.PreAddIndexEvent;
 import org.apache.hadoop.hive.metastore.events.PreAddPartitionEvent;
-import org.apache.hadoop.hive.metastore.events.PreAlterIndexEvent;
 import org.apache.hadoop.hive.metastore.events.PreAlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.PreAlterTableEvent;
 import org.apache.hadoop.hive.metastore.events.PreCreateDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.PreCreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.PreDropDatabaseEvent;
-import org.apache.hadoop.hive.metastore.events.PreDropIndexEvent;
 import org.apache.hadoop.hive.metastore.events.PreDropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.PreDropTableEvent;
 import org.apache.hadoop.hive.metastore.events.PreEventContext;
@@ -162,30 +159,6 @@ public class ApiaryRangerAuthPreEventListener extends MetaStorePreEventListener 
       tableName = ((PreAlterPartitionEvent) context).getTableName();
       accessType = HiveAccessType.ALTER;
       operationName = "ALTERPARTITION";
-      resource.setValue("database", databaseName);
-      resource.setValue("table", tableName);
-      break;
-    case ADD_INDEX:
-      databaseName = ((PreAddIndexEvent) context).getIndex().getDbName();
-      tableName = ((PreAddIndexEvent) context).getIndex().getOrigTableName();
-      operationName = "ADDINDEX";
-      accessType = HiveAccessType.CREATE;
-      resource.setValue("database", databaseName);
-      resource.setValue("table", tableName);
-      break;
-    case DROP_INDEX:
-      operationName = "DROPINDEX";
-      accessType = HiveAccessType.DROP;
-      databaseName = ((PreDropIndexEvent) context).getIndex().getDbName();
-      tableName = ((PreDropIndexEvent) context).getIndex().getOrigTableName();
-      resource.setValue("database", databaseName);
-      resource.setValue("table", tableName);
-      break;
-    case ALTER_INDEX:
-      operationName = "ALTERINDEX";
-      accessType = HiveAccessType.ALTER;
-      databaseName = ((PreAlterIndexEvent) context).getOldIndex().getDbName();
-      tableName = ((PreAlterIndexEvent) context).getOldIndex().getOrigTableName();
       resource.setValue("database", databaseName);
       resource.setValue("table", tableName);
       break;

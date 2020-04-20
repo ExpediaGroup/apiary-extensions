@@ -134,7 +134,21 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishInsertEvent(EventType.INSERT, event.getDb(), event.getTable(), event.getPartitionKeyValues(),
+
+    Table table = event.getTableObj();
+    String databaseName = table.getDbName();
+    String tableName = table.getTableName();
+
+    LinkedHashMap<String, String> partitionKeyValues =  new LinkedHashMap<>();
+    if (event.getPartitionObj() != null) {
+      List<FieldSchema> partitionKeys = table.getPartitionKeys();
+      List<String> partitionValues = event.getPartitionObj().getValues();
+      for (int i = 0; i < partitionKeys.size(); i++) {
+        partitionKeyValues.put(partitionKeys.get(i).getName(), partitionValues.get(i));
+      }
+    }
+
+    publishInsertEvent(EventType.INSERT, databaseName, tableName, partitionKeyValues,
         event.getFiles(), event.getFileChecksums());
   }
 
