@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - Update `hadoop-mapreduce-client-common` to `3.2.1` (was `2.7.1`).
 
 ### Removed
+- Drop support for Hive / Hadoop 2.
 - Drop support for `INDEX` type events in all `apiary-metastore-events` modules.
 
 ## 6.0.1 - 2020-04-02
