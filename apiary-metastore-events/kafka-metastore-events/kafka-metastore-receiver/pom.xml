@@ -5,7 +5,7 @@
   <parent>
     <artifactId>kafka-metastore-events-parent</artifactId>
     <groupId>com.expediagroup.apiary</groupId>
-    <version>6.0.2-SNAPSHOT</version>
+    <version>6.0.2</version>
   </parent>
 
   <artifactId>kafka-metastore-receiver</artifactId>
