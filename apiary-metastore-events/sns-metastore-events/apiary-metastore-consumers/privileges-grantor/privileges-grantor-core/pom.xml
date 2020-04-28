@@ -3,16 +3,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.expediagroup.apiary-internal</groupId>
+        <groupId>com.expediagroup.apiary</groupId>
         <artifactId>apiary-privileges-grantor-parent</artifactId>
-        <version>6.0.2internal-SNAPSHOT</version>
+        <version>6.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>apiary-privileges-grantor-core</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>com.expediagroup.apiary-internal</groupId>
+            <groupId>com.expediagroup.apiary</groupId>
             <artifactId>metastore-consumer-common</artifactId>
             <version>${project.version}</version>
         </dependency>

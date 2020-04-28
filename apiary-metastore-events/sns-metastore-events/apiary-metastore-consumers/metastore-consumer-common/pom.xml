@@ -2,9 +2,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.expediagroup.apiary-internal</groupId>
+        <groupId>com.expediagroup.apiary</groupId>
         <artifactId>apiary-metastore-consumers-parent</artifactId>
-        <version>6.0.2internal-SNAPSHOT</version>
+        <version>6.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>metastore-consumer-common</artifactId>

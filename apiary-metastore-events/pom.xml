@@ -2,9 +2,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.expediagroup.apiary-internal</groupId>
-    <artifactId>apiary-extensions-parent-internal</artifactId>
-    <version>6.0.2internal-SNAPSHOT</version>
+    <groupId>com.expediagroup.apiary</groupId>
+    <artifactId>apiary-extensions-parent</artifactId>
+    <version>6.0.2-SNAPSHOT</version>
 
   </parent>
 
