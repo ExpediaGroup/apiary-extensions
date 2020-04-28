@@ -47,18 +47,6 @@
     <module>hive-metastore-events</module>
   </modules>
 
-  <distributionManagement>
-    <snapshotRepository>
-      <id>egdl-maven-snapshot-local</id>
-      <url>https://artylab.expedia.biz/egdl-maven-snapshot-local</url>
-    </snapshotRepository>
-    <repository>
-      <id>egdl-maven-release-local</id>
-      <url>https://artylab.expedia.biz/egdl-maven-release-local</url>
-    </repository>
-  </distributionManagement>
-
-
   <dependencyManagement>
     <dependencies>
 <!--      Hadoop Dependencies -->
