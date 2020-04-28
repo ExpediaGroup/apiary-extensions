@@ -7,7 +7,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 - Renamed `hive-metastore-events` submodule to `hive-event-listeners`.
 
-
 ## 6.0.2 - 2020-04-24
 ### Changed
 - Upgraded version of `hive.version` to `2.3.7` (was `2.3.3`). Allows apiary-extensions to be used on JDK>=9.
