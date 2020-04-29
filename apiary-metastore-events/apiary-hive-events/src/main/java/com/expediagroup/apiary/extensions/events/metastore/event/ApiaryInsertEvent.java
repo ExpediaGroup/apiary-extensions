@@ -47,8 +47,8 @@ public class ApiaryInsertEvent extends ApiaryListenerEvent {
     fileChecksums = event.getFileChecksums();
   }
 
-  public static Map<String, String> createPartitionKeyValues(Table table, Partition partition) {
-    Map<String, String> partitionKeyValues = new LinkedHashMap<>();
+  public static LinkedHashMap<String, String> createPartitionKeyValues(Table table, Partition partition) {
+    LinkedHashMap<String, String> partitionKeyValues = new LinkedHashMap<>();
     if (partition != null) {
       List<FieldSchema> partitionKeys = table.getPartitionKeys();
       List<String> partitionValues = partition.getValues();
