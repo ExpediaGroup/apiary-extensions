@@ -9,8 +9,8 @@ Currently, the following modules are defined:
  - [apiary-ranger-metastore-plugin](apiary-ranger-metastore-plugin) - RangerAuth pre-event listener which handles authorization and auditing using Ranger.
 
 ### Note
-This **does not** include the following modules:
- - [kafka-metastore-events](../apiary-metastore-events/kafka-metastore-events) - Set of modules responsible for retrieving and processing Hive Metastore.
+Related modules which also provide Hive Metastore Event Listeners for Kafka and SNS can be found at:
+ - [kafka-metastore-events](../apiary-metastore-events/kafka-metastore-events) - Set of modules responsible for retrieving and processing Hive Metastore for Kafka.
  - [sns-metastore-events](../apiary-metastore-events/sns-metastore-events) - Set of modules responsible for retrieving and processing Hive Metastore events for SNS.
 
 # Legal
