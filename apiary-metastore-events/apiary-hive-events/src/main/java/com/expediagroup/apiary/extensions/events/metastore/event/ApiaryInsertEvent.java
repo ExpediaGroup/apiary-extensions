@@ -55,8 +55,6 @@ public class ApiaryInsertEvent extends ApiaryListenerEvent {
     fileChecksums = event.getFileChecksums();
   }
 
-
-
   @Override
   public String getDatabaseName() {
     return databaseName;
