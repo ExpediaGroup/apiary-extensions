@@ -21,6 +21,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -46,6 +47,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryListenerEventFactoryTest {
@@ -145,6 +147,9 @@ public class ApiaryListenerEventFactoryTest {
     ApiaryListenerEvent serializableEvent = factory.create(event);
     assertCommon(serializableEvent);
     assertThat(serializableEvent.getEventType()).isSameAs(EventType.ON_INSERT);
+    assertThat(((ApiaryInsertEvent) serializableEvent).getPartitionKeyValues()).isEqualTo(
+        ImmutableMap.of("KEY", "VALUE")
+    );
   }
 
 }
