@@ -140,7 +140,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     Table table = event.getTableObj();
     String databaseName = table.getDbName();
     String tableName = table.getTableName();
-    LinkedHashMap<String, String> partitionKeyValues = ApiaryInsertEvent.createPartitionKeyValues(table, event.getPartitionObj());
+    Map<String, String> partitionKeyValues = ApiaryInsertEvent.createPartitionKeyValues(table, event.getPartitionObj());
 
     publishInsertEvent(EventType.INSERT, databaseName, tableName, partitionKeyValues,
         event.getFiles(), event.getFileChecksums());
