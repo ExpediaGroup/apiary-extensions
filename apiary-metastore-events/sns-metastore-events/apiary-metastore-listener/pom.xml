@@ -13,6 +13,16 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.expediagroup.apiary</groupId>
+      <artifactId>apiary-hive-events</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-sns</artifactId>
+      <version>${aws-java-sdk.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-sns</artifactId>
       <version>${aws-java-sdk.version}</version>

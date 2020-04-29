@@ -48,6 +48,8 @@ import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryInsertEvent;
+
 /**
  * <p>
  * A simple Hive Metastore Event Listener which spits out Event Information in JSON format to SNS Topic specified
@@ -138,15 +140,7 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     Table table = event.getTableObj();
     String databaseName = table.getDbName();
     String tableName = table.getTableName();
-
-    LinkedHashMap<String, String> partitionKeyValues =  new LinkedHashMap<>();
-    if (event.getPartitionObj() != null) {
-      List<FieldSchema> partitionKeys = table.getPartitionKeys();
-      List<String> partitionValues = event.getPartitionObj().getValues();
-      for (int i = 0; i < partitionKeys.size(); i++) {
-        partitionKeyValues.put(partitionKeys.get(i).getName(), partitionValues.get(i));
-      }
-    }
+    LinkedHashMap<String, String> partitionKeyValues = ApiaryInsertEvent.createPartitionKeyValues(table, event.getPartitionObj());
 
     publishInsertEvent(EventType.INSERT, databaseName, tableName, partitionKeyValues,
         event.getFiles(), event.getFileChecksums());

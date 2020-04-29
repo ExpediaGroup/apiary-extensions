@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 
@@ -41,18 +42,21 @@ public class ApiaryInsertEvent extends ApiaryListenerEvent {
     Table table = event.getTableObj();
     databaseName = table.getDbName();
     tableName = table.getTableName();
+    partitionKeyValues = createPartitionKeyValues(table, event.getPartitionObj());
+    files = event.getFiles();
+    fileChecksums = event.getFileChecksums();
+  }
 
-    partitionKeyValues =  new LinkedHashMap<>();
-    if (event.getPartitionObj() != null) {
+  public static LinkedHashMap<String, String> createPartitionKeyValues(Table table, Partition partition) {
+    LinkedHashMap<String, String> partitionKeyValues = new LinkedHashMap<>();
+    if (partition != null) {
       List<FieldSchema> partitionKeys = table.getPartitionKeys();
-      List<String> partitionValues = event.getPartitionObj().getValues();
+      List<String> partitionValues = partition.getValues();
       for (int i = 0; i < partitionKeys.size(); i++) {
         partitionKeyValues.put(partitionKeys.get(i).getName(), partitionValues.get(i));
       }
     }
-
-    files = event.getFiles();
-    fileChecksums = event.getFileChecksums();
+    return partitionKeyValues;
   }
 
   @Override
