@@ -20,6 +20,12 @@
       <version>${project.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-metastore</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- AWS -->
     <dependency>
       <groupId>com.amazonaws</groupId>
