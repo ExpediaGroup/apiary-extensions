@@ -12,7 +12,6 @@
   <properties>
     <commons.lang3.version>3.7</commons.lang3.version>
     <lastcommons.version>5.2.1</lastcommons.version>
-    <assertj.version>3.10.0</assertj.version>
   </properties>
 
   <dependencies>
@@ -24,7 +23,6 @@
     <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-metastore</artifactId>
-      <version>${hive.version}</version>
     </dependency>
 
     <dependency>
@@ -40,7 +38,6 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -62,7 +59,6 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>${assertj.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

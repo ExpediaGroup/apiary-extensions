@@ -14,15 +14,13 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.hive</groupId>
-      <artifactId>hive-metastore</artifactId>
-      <version>${hive.version}</version>
+      <artifactId>hive-standalone-metastore</artifactId>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-contrib</artifactId>
-      <version>${hive.version}</version>
       <scope>provided</scope>
     </dependency>
 
