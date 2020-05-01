@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.expediagroup.apiary.extensions.events.metastore.kafka.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.util.List;
 
@@ -24,6 +25,7 @@ import org.apache.hadoop.hive.common.metrics.metrics2.CodahaleMetrics;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
+import org.awaitility.Durations;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -51,7 +53,7 @@ public class ListenerUtilsTest {
     CodahaleMetrics metrics = (CodahaleMetrics) MetricsFactory.getInstance();
     Counter counter = metrics.getMetricRegistry()
       .counter(MetricsConstant.LISTENER_SUCCESSES);
-    assertThat(counter.getCount()).isEqualTo(1L);
+    await().atMost(Durations.FIVE_SECONDS).until(() -> counter.getCount() == 1L);
   }
 
   @Test
@@ -61,7 +63,8 @@ public class ListenerUtilsTest {
     CodahaleMetrics metrics = (CodahaleMetrics) MetricsFactory.getInstance();
     Counter counter = metrics.getMetricRegistry()
       .counter(MetricsConstant.LISTENER_FAILURES);
-    assertThat(counter.getCount()).isEqualTo(1L);
+
+    await().atMost(Durations.FIVE_SECONDS).until(() -> counter.getCount() == 1L);
     // We want to make sure these keywords are logged
     List<LoggingEvent> events = appender.getEvents();
     assertThat(events).hasSize(1);

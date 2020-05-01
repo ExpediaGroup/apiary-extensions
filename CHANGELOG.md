@@ -3,6 +3,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 7.0.0 - TBD
+
+### Added
+- Pin `guava` to `29.0-jre`.
+- Pin `jackson-databind` & `jackson-annotations` to `2.10.3`.
+- Add test dependency `testcontainers` (version `1.13.0`).
+- Add test dependency `awaitility` (version `4.0.2`).
+
+### Changed
+- Replace `hive-metastore` to `hive-standalone-metastore` version `3.1.2`.
+- Update `hive-common` to `3.1.2` (was `2.3.3`).
+- Update `hive-exec` to `3.1.2` (was `2.3.3`).
+- Update `hadoop-common` to `3.2.1` (was `2.7.1`).
+- Update `hadoop-mapreduce-client-common` to `3.2.1` (was `2.7.1`).
+
+### Removed
+- Drop support for Hive / Hadoop 2.
+- Drop support for `INDEX` type events in all `apiary-metastore-events` modules.
+
 ## 6.0.2 - 2020-04-24
 ### Changed
 - Upgraded version of `hive.version` to `2.3.7` (was `2.3.3`). Allows apiary-extensions to be used on JDK>=9.

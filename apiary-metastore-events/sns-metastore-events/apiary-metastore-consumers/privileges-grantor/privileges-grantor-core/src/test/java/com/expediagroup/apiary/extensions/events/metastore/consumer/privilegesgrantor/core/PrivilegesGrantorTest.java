@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class PrivilegesGrantorTest {
     assertTrue(privilegesGrantor.isSelectPrivilegeGranted(DB_NAME, TABLE_NAME));
   }
 
-  @Test(expected = HiveClientException.class)
+  @Test(expected = HiveClientException.class, timeout = 1000)
   public void testAddingPrivilegesFailure() {
     privilegesGrantor.grantSelectPrivileges(DB_NAME, null);
   }

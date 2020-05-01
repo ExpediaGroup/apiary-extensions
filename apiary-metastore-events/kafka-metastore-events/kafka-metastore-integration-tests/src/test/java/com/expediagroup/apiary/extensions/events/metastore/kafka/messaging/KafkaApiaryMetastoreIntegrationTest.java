@@ -28,6 +28,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.CLIENT_ID;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC_NAME;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -46,15 +47,16 @@ import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.testcontainers.containers.Container;
+import org.testcontainers.containers.KafkaContainer;
 
 import com.google.common.collect.Lists;
-import com.salesforce.kafka.test.junit4.SharedKafkaTestResource;
 
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAddPartitionEvent;
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAlterPartitionEvent;
@@ -69,9 +71,7 @@ import com.expediagroup.apiary.extensions.events.metastore.kafka.listener.KafkaM
 @RunWith(MockitoJUnitRunner.class)
 public class KafkaApiaryMetastoreIntegrationTest {
 
-  @ClassRule
-  public static final SharedKafkaTestResource KAFKA = new SharedKafkaTestResource();
-
+  private static final KafkaContainer kafkaContainer = new KafkaContainer();
   private static final long TEST_TIMEOUT_MS = 10000;
   private static Configuration CONF = new Configuration();
   private static KafkaMetaStoreEventListener kafkaMetaStoreEventListener;
@@ -80,11 +80,25 @@ public class KafkaApiaryMetastoreIntegrationTest {
   private @Mock HMSHandler hmsHandler;
 
   @BeforeClass
-  public static void init() {
-    CONF.set(BOOTSTRAP_SERVERS.key(), KAFKA.getKafkaConnectString());
+  public static void init() throws IOException, InterruptedException {
+    kafkaContainer.start();
+    CONF.set(BOOTSTRAP_SERVERS.key(), kafkaContainer.getBootstrapServers());
     CONF.set(CLIENT_ID.key(), "client");
     CONF.set(TOPIC_NAME.key(), "topic");
-    KAFKA.getKafkaTestUtils().createTopic("topic", 1, (short) 1);
+
+    Container.ExecResult result = kafkaContainer.execInContainer(
+        "kafka-topics",
+        "--create",
+        "--if-not-exists",
+        "--zookeeper", "localhost:2181",
+        "--partitions", "1",
+        "--replication-factor", "1",
+        "--topic", "topic"
+    );
+
+    if (result.getExitCode() != 0) {
+      throw new RuntimeException("Failed to initialize topic \n" + result.getStderr());
+    }
 
     kafkaMetaStoreEventListener = new KafkaMetaStoreEventListener(CONF);
 
@@ -92,10 +106,16 @@ public class KafkaApiaryMetastoreIntegrationTest {
     Properties consumerProperties = new Properties();
     consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    kafkaMessageReader = KafkaMessageReaderBuilder.builder(KAFKA.getKafkaConnectString(), "topic", "app")
+    kafkaMessageReader = KafkaMessageReaderBuilder.builder(kafkaContainer.getBootstrapServers(), "topic", "app")
       .withConsumerProperties(consumerProperties)
       .build();
   }
+
+  @AfterClass
+  public static void tearDown() {
+    kafkaContainer.stop();
+  }
+
 
   @Test(timeout = TEST_TIMEOUT_MS)
   public void createTableEvent() {
@@ -123,7 +143,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
 
   @Test(timeout = TEST_TIMEOUT_MS)
   public void alterTableEvent() {
-    AlterTableEvent alterTableEvent = new AlterTableEvent(buildTable("old_table"), buildTable("new_table"), true,
+    AlterTableEvent alterTableEvent = new AlterTableEvent(buildTable("old_table"), buildTable("new_table"), false,true,
       hmsHandler);
     kafkaMetaStoreEventListener.onAlterTable(alterTableEvent);
     ApiaryListenerEvent result = kafkaMessageReader.next();
@@ -168,7 +188,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
   public void alterPartitionEvent() {
     Partition oldPartition = buildPartition("old_partition");
     Partition newPartition = buildPartition("new_partition");
-    AlterPartitionEvent alterPartitionEvent = new AlterPartitionEvent(oldPartition, newPartition, buildTable(), true,
+    AlterPartitionEvent alterPartitionEvent = new AlterPartitionEvent(oldPartition, newPartition, buildTable(), false, true,
       hmsHandler);
     kafkaMetaStoreEventListener.onAlterPartition(alterPartitionEvent);
     ApiaryListenerEvent result = kafkaMessageReader.next();
@@ -186,6 +206,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
     when(hmsHandler.get_table_req(any())).thenReturn(new GetTableResult(buildTable()));
     ArrayList<String> partitionValues = Lists.newArrayList("value1", "value2");
     InsertEvent insertEvent = new InsertEvent(
+      "catName",
       "database",
       "table",
       partitionValues,

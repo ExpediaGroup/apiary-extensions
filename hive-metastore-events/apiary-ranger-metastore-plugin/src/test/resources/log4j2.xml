@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (C) 2018-2019 Expedia, Inc.
+  Copyright (C) 2018-2020 Expedia, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 -->
 <Configuration>
   <Appenders>
-    <Console name="STDOUT" target="SYSTEM_OUT">
+    <Console name="STDOUT" target="SYSTEM_ERR">
       <PatternLayout pattern="%d{ISO8601} %-5p %c:%L - %m%n"/>
     </Console>
+    <Null name="devnull" />
   </Appenders>
   <Loggers>
     <Logger name="com.expediagroup.apiary" level="debug"/>
-    <Root level="info">
-      <AppenderRef ref="STDOUT"/>
+    <Root level="fatal">
+      <AppenderRef ref="devnull"/>
     </Root>
   </Loggers>
 </Configuration>

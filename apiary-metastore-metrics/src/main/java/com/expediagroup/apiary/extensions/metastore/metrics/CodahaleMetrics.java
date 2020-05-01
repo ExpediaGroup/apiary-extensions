@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -301,6 +301,18 @@ public class CodahaleMetrics implements org.apache.hadoop.hive.common.metrics.co
     } finally {
       countersLock.unlock();
     }
+  }
+
+  @Override
+  public void removeGauge(String name) {
+
+    if (!metricRegistry.getGauges().containsKey(name)) {
+      LOGGER.warn("Cannot remove gauge[" + name + "] as it is not currently registered.");
+      return;
+    }
+
+    gauges.remove(name);
+    metricRegistry.remove(name);
   }
 
   @Override

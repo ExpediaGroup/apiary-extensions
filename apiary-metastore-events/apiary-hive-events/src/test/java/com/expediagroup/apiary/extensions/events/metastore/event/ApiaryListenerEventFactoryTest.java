@@ -25,7 +25,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
@@ -42,6 +44,9 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryListenerEventFactoryTest {
@@ -129,9 +134,21 @@ public class ApiaryListenerEventFactoryTest {
   @Test
   public void createSerializableInsertEvent() {
     InsertEvent event = mockEvent(InsertEvent.class);
+
+    Table table = new Table();
+    table.setPartitionKeys(ImmutableList.of(new FieldSchema("KEY", null, null)));
+    Partition partition = new Partition();
+    partition.setValues(ImmutableList.of("VALUE"));
+
+    when(event.getTableObj()).thenReturn(table);
+    when(event.getPartitionObj()).thenReturn(partition);
+
     ApiaryListenerEvent serializableEvent = factory.create(event);
     assertCommon(serializableEvent);
     assertThat(serializableEvent.getEventType()).isSameAs(EventType.ON_INSERT);
+    assertThat(((ApiaryInsertEvent) serializableEvent).getPartitionKeyValues()).isEqualTo(
+        ImmutableMap.of("KEY", "VALUE")
+    );
   }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2020 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package com.expediagroup.apiary.extensions.events.metastore.event;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,9 +47,16 @@ public class SerializableInsertEventTest {
 
   @Before
   public void init() {
-    when(insertEvent.getDb()).thenReturn(DATABASE);
-    when(insertEvent.getTable()).thenReturn(TABLE);
-    when(insertEvent.getPartitionKeyValues()).thenReturn(ImmutableMap.of(KEY, VALUE));
+    Table table = new Table();
+    table.setDbName(DATABASE);
+    table.setTableName(TABLE);
+    table.setPartitionKeys(ImmutableList.of(new FieldSchema(KEY, null, null)));
+
+    Partition partition = new Partition();
+    partition.setValues(ImmutableList.of(VALUE));
+
+    when(insertEvent.getTableObj()).thenReturn(table);
+    when(insertEvent.getPartitionObj()).thenReturn(partition);
     when(insertEvent.getFiles()).thenReturn(ImmutableList.of(FILE));
     when(insertEvent.getFileChecksums()).thenReturn(ImmutableList.of(CHECKSUM));
     event = new ApiaryInsertEvent(insertEvent);
