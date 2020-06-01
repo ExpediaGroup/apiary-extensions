@@ -43,6 +43,15 @@
                                     <include>org.apache.kafka:*</include>
                                 </includes>
                             </artifactSet>
+                            <relocations combine.children="append">
+                                <relocation>
+                                    <pattern>org.apache.kafka</pattern>
+                                    <shadedPattern>com.expediagroup.apiary.extensions.shaded.org.apache.kafka</shadedPattern>
+                                    <includes>
+                                        <include>org.apache.kafka.**</include>
+                                    </includes>
+                                </relocation>
+                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
