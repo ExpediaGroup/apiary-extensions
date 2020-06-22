@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## 7.0.1 - TBD
 ### Changed
-- Relocated Kafka libraries in `kafka-metastore-listener` under `com.expediagroup.apiary.extensions.shaded.org.apache.kafka` to avoid clashes when moving other components to newer version of Kafka.
+- Relocated Kafka libraries in `kafka-metastore-listener` under `com.expediagroup.apiary.extensions.shaded.org.apache.kafka` to avoid clashes when moving other components to a newer version of Kafka.
 
 ## 7.0.0 - 2020-04-29
 ### Changed
