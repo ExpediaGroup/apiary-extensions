@@ -1,3 +1,5 @@
+![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.expediagroup/beeju/badge.svg?subject=com.expediagroup:apiary-extensions)](https://maven-badges.herokuapp.com/maven-central/com.expediagroup/apiary-extensions) [![Build Status](https://travis-ci.org/ExpediaGroup/apiary-extensions.svg?branch=master)](https://travis-ci.org/ExpediaGroup/apiary-extensions) ![build](https://github.com/ExpediaGroup/apiary-extensions/workflows/build/badge.svg?event=push) [![Coverage Status](https://coveralls.io/repos/github/ExpediaGroup/apiary-extensions/badge.svg?branch=master)](https://coveralls.io/github/ExpediaGroup/apiary-extensions) ![GitHub license](https://img.shields.io/github/license/ExpediaGroup/apiary-extensions.svg)
+
 # Overview
 
 A collection of useful extensions to Apiary. These optional extensions can be seamlessly integrated with Apiary components.
