@@ -22,4 +22,4 @@ If you would like to ask any questions about or discuss Apiary please join our m
 # Legal
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
-Copyright 2018-2020 Expedia, Inc.
+Copyright 2018-2021 Expedia, Inc.

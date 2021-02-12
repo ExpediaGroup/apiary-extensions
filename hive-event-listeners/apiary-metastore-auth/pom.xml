@@ -17,6 +17,12 @@
       <artifactId>hive-metastore</artifactId>
       <version>${hive.version}</version>
       <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>jdk.tools</groupId>
+          <artifactId>jdk.tools</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
