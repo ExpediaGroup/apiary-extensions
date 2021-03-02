@@ -2,17 +2,16 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
+    <artifactId>apiary-extensions-parent</artifactId>
     <groupId>com.expediagroup.apiary</groupId>
-    <artifactId>sns-metastore-events-parent</artifactId>
     <version>7.2.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>apiary-receivers-parent</artifactId>
+  <artifactId>hive-hooks-parent</artifactId>
   <packaging>pom</packaging>
 
   <modules>
-    <module>apiary-receiver-common</module>
-    <module>apiary-receiver-sqs</module>
+    <module>path-conversion-hook</module>
   </modules>
 
 </project>
