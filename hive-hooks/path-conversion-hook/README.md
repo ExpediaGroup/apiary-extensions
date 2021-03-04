@@ -25,7 +25,7 @@ required, Ranger authentication should be configured at the metastore level.
 | Index Names     | false    |
 
 ## Installation
-1. Copy the JAR `target/apiary-metastore-filter-<version>-all.jar` to
+1. Install the JAR `apiary-metastore-filter-<version>-all.jar` to
    the classpath of Hive. On AWS EMR, this is `/usr/lib/hive/lib`.
 2. Add the following section to the `hive-site.xml` configuration file. For EMR, this will
    take the form of adding `"Classification": "hive-site"` properties in
