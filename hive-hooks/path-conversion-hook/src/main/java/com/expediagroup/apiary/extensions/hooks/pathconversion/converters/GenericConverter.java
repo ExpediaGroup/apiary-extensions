@@ -32,8 +32,16 @@ public abstract class GenericConverter {
     this.configuration = configuration;
   }
 
+  /**
+   * Converts a path for the given Table.
+   *
+   * @param table Table location to potentially alter.
+   * @return true if table location is altered, false otherwise.
+   */
   public boolean convertPath(Table table) {
     if (!configuration.isPathConversionEnabled()) {
+      log.trace("[{}-Filter] pathConversion is disabled. Skipping path conversion for table.",
+          getClass().getSimpleName());
       return false;
     }
 
@@ -42,8 +50,16 @@ public abstract class GenericConverter {
     return convertPath(sd);
   }
 
+  /**
+   * Converts a path for the given Partition.
+   *
+   * @param partition Partition location to potentially alter.
+   * @return true if partition location is altered, false otherwise.
+   */
   public boolean convertPath(Partition partition) {
     if (!configuration.isPathConversionEnabled()) {
+      log.trace("[{}-Filter] pathConversion is disabled. Skipping path conversion for partition.",
+          getClass().getSimpleName());
       return false;
     }
 
@@ -56,5 +72,11 @@ public abstract class GenericConverter {
     return configuration;
   }
 
+  /**
+   * Converts a path for the given StorageDescriptor.
+   *
+   * @param sd StorageDescriptor to potentially alter.
+   * @return true if location is altered, false otherwise.
+   */
   public abstract boolean convertPath(StorageDescriptor sd);
 }
