@@ -67,13 +67,13 @@ required, Ranger authentication should be configured at the metastore level.
        <value>1,2</value>
    </property>
     ```
-   **NOTE**: Each defined KV pair of these regex and value matchers must have a matching pair or else the hook will throw.
+   **NOTE**: Each defined key-value pair of these regex and value matchers must have a matching pair or else the hook will ignore it.
    
 ## Configurations
 
 | Property                                | Description                                                                            | Default |
 |-----------------------------------------|----------------------------------------------------------------------------------------|---------|
-| apiary.path.replacement.enabled         | Bool to determine if we should enable path replacement aspect of this hive hook.       | false   |
+| apiary.path.replacement.enabled         | Boolean to determine if we should enable path replacement aspect of this Hive hook.    | false   |
 | apiary.path.replacement.regex.*         | Defined regex patterns to check for replacement. Requires matching value.              | []      |
 | apiary.path.replacement.value.*         | Defined value patterns to check for replacement. Requires matching regex.              | []      |
 | apiary.path.replacement.capturegroups.* | (Optional) Comma delimited list of capture group indexes to use for regex replacement. | [1]     |
