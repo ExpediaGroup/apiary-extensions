@@ -20,7 +20,6 @@ import static java.lang.String.format;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -51,40 +50,40 @@ public class Configuration {
   private final List<PathConversion> pathConversions;
 
   public Configuration(HiveConf conf) {
-    Properties props = conf.getAllProperties();
+    Properties hiveProperties = conf.getAllProperties();
 
-    if (Objects.isNull(props)) {
+    if (hiveProperties == null) {
       log.warn("Could not load properties from HiveConf! Hive may be mis-configured.");
-      props = new Properties();
+      hiveProperties = new Properties();
     }
 
-    properties = props;
-    pathConversionEnabled = BooleanUtils.toBoolean(props.getProperty(PATH_REPLACEMENT_ENABLED, "false"));
+    properties = hiveProperties;
+    pathConversionEnabled = BooleanUtils.toBoolean(hiveProperties.getProperty(PATH_REPLACEMENT_ENABLED, "false"));
     pathConversions = initializePathReplacements();
   }
 
   private List<PathConversion> initializePathReplacements() {
     List<PathConversion> pathConversions = new ArrayList<>();
-    for (Object keyObj : properties.keySet()) {
-      String curPropName = (String) keyObj;
+    for (Object key : properties.keySet()) {
+      String currentPropertyName = (String) key;
 
-      if (curPropName.startsWith(PATH_REPLACEMENT_REGEX)) {
-        String valuePropName = curPropName.replace(PATH_REPLACEMENT_REGEX, PATH_REPLACEMENT_VALUES);
-        String value = properties.getProperty(valuePropName);
+      if (currentPropertyName.startsWith(PATH_REPLACEMENT_REGEX)) {
+        String valuePropertyName = currentPropertyName.replace(PATH_REPLACEMENT_REGEX, PATH_REPLACEMENT_VALUES);
+        String value = properties.getProperty(valuePropertyName);
 
-        String captureGroupPropName = curPropName.replace(PATH_REPLACEMENT_REGEX, PATH_REPLACEMENT_GROUPS);
-        List<Integer> captureGroups = getCaptureGroups(captureGroupPropName);
-
-        if (Objects.isNull(value)) {
+        if (value == null) {
           log.warn("Non-existent value property for PathMatchProperty[{}]. " +
                   "This will not be replaced, please reconfigure Apiary Metastore Filter in hive-site.xml",
-              curPropName);
+              currentPropertyName);
           continue;
         }
 
-        Pattern pattern = Pattern.compile(properties.getProperty(curPropName));
+        String captureGroupPropertyName = currentPropertyName.replace(PATH_REPLACEMENT_REGEX, PATH_REPLACEMENT_GROUPS);
+        List<Integer> captureGroups = getCaptureGroups(captureGroupPropertyName);
+
+        Pattern pattern = Pattern.compile(properties.getProperty(currentPropertyName));
         pathConversions.add(new PathConversion(pattern, value, captureGroups));
-        log.debug("Tracking PathMatchProperty[{}] for path conversion.", curPropName);
+        log.debug("Tracking PathMatchProperty[{}] for path conversion.", currentPropertyName);
       }
     }
     return ImmutableList.copyOf(pathConversions);
