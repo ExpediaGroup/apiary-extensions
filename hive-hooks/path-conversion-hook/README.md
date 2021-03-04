@@ -69,6 +69,23 @@ required, Ranger authentication should be configured at the metastore level.
     ```
    **NOTE**: Each defined key-value pair of these regex and value matchers must have a matching pair or else the hook will ignore it.
    
+   For example if one wanted to convert any path starting with a s3 protocol and containing the `us-west-1` region
+   to instead point at an Alluxio cluster endpoint, they can configure the hook like so:
+   ```
+   <property>
+       <name>apiary.path.replacement.regex.alluxio</name>
+       <value>^(s3://)(?:.*us-west-1.*)</value>
+   </property>
+   <property>
+       <name>apiary.path.replacement.value.alluxio</name>
+       <value>alluxio://alluxio.myserver.com:19998/</value>
+   </property>
+   <property>
+       <name>apiary.path.replacement.capturegroups.alluxio</name>
+       <value>1</value>
+   </property>
+   ```
+   
 ## Configurations
 
 | Property                                | Description                                                                            | Default |
