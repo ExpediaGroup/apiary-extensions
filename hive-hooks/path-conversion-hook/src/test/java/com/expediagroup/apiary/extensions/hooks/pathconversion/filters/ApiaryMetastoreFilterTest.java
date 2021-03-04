@@ -16,6 +16,7 @@
 package com.expediagroup.apiary.extensions.hooks.pathconversion.filters;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -29,14 +30,12 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.PartitionSpec;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 import com.google.common.collect.ImmutableList;
 
@@ -114,91 +113,53 @@ public class ApiaryMetastoreFilterTest {
 
   @Test
   public void shouldMutateTables() throws MetaException {
-    String mutatedLocation = "targetLocation";
-
-    StorageDescriptor srcSd = new StorageDescriptor();
-    srcSd.setLocation("sourceLocation");
-
-    Table sourceTable = new Table();
-    sourceTable.setSd(srcSd);
-
-    List<Table> tableList = ImmutableList.of(sourceTable);
-
-    when(converter.convertPath(sourceTable))
-        .then((Answer<Boolean>) invocation -> {
-          Table inputTable = invocation.getArgument(0);
-          inputTable.getSd().setLocation(mutatedLocation);
-          return true;
-        });
+    List<Table> tableList = ImmutableList.of(
+        createMockTable("tableOne"),
+        createMockTable("tableTwo")
+    );
 
     List<Table> result = hook.filterTables(tableList);
-    assertEquals(tableList.size(), result.size());
-    assertEquals(mutatedLocation, result.get(0).getSd().getLocation());
+    assertEquals(result.size(), tableList.size());
+    tableList.stream().forEach(table -> verify(converter).convertPath(table));
   }
 
   @Test
   public void shouldMutateTable() throws MetaException, NoSuchObjectException {
-    String mutatedLocation = "targetLocation";
-
-    StorageDescriptor srcSd = new StorageDescriptor();
-    srcSd.setLocation("sourceLocation");
-
-    Table sourceTable = new Table();
-    sourceTable.setSd(srcSd);
-
-    when(converter.convertPath(sourceTable))
-        .then((Answer<Boolean>) invocation -> {
-          Table inputTable = invocation.getArgument(0);
-          inputTable.getSd().setLocation(mutatedLocation);
-          return true;
-        });
-
+    Table sourceTable = createMockTable("mockTable");
     Table result = hook.filterTable(sourceTable);
-    assertEquals(mutatedLocation, result.getSd().getLocation());
+    assertEquals(result, sourceTable);
+    verify(converter).convertPath(sourceTable);
   }
 
   @Test
   public void shouldMutatePartitions() throws MetaException, NoSuchObjectException {
-    String mutatedLocation = "targetLocation";
-
-    StorageDescriptor srcSd = new StorageDescriptor();
-    srcSd.setLocation("sourceLocation");
-
-    Partition sourcePartition = new Partition();
-    sourcePartition.setSd(srcSd);
-
-    List<Partition> partitionList = ImmutableList.of(sourcePartition);
-
-    when(converter.convertPath(sourcePartition))
-        .then((Answer<Boolean>) invocation -> {
-          Partition inputPartition = invocation.getArgument(0);
-          inputPartition.getSd().setLocation(mutatedLocation);
-          return true;
-        });
+    List<Partition> partitionList = ImmutableList.of(
+        createMockPartition("tableOne"),
+        createMockPartition("tableTwo")
+    );
 
     List<Partition> result = hook.filterPartitions(partitionList);
-    assertEquals(partitionList.size(), result.size());
-    assertEquals(mutatedLocation, result.get(0).getSd().getLocation());
+    assertEquals(result.size(), partitionList.size());
+    partitionList.stream().forEach(partition -> verify(converter).convertPath(partition));
   }
 
   @Test
   public void shouldMutatePartition() throws MetaException, NoSuchObjectException {
-    String mutatedLocation = "targetLocation";
-
-    StorageDescriptor srcSd = new StorageDescriptor();
-    srcSd.setLocation("sourceLocation");
-
-    Partition sourcePartition = new Partition();
-    sourcePartition.setSd(srcSd);
-
-    when(converter.convertPath(sourcePartition))
-        .then((Answer<Boolean>) invocation -> {
-          Partition inputPartition = invocation.getArgument(0);
-          inputPartition.getSd().setLocation(mutatedLocation);
-          return true;
-        });
-
+    Partition sourcePartition = createMockPartition("mockPartition");
     Partition result = hook.filterPartition(sourcePartition);
-    assertEquals(mutatedLocation, result.getSd().getLocation());
+    assertEquals(sourcePartition, result);
+    verify(converter).convertPath(sourcePartition);
+  }
+
+  private Table createMockTable(String tableName) {
+    Table table = new Table();
+    table.setTableName(tableName);
+    return table;
+  }
+
+  private Partition createMockPartition(String tableName) {
+    Partition partition = new Partition();
+    partition.setTableName(tableName);
+    return partition;
   }
 }
