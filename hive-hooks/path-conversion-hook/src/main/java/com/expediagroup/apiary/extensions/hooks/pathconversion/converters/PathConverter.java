@@ -33,7 +33,7 @@ public class PathConverter extends GenericConverter {
 
   @Override
   public boolean convertPath(StorageDescriptor sd) {
-    boolean changedScheme = false;
+    boolean pathConverted = false;
     for (PathConversion pathConversion : getConfiguration().getPathConversions()) {
       Matcher matcher = pathConversion.pathPattern.matcher(sd.getLocation());
       if (matcher.find()) {
@@ -42,13 +42,13 @@ public class PathConverter extends GenericConverter {
             String newLocation = sd.getLocation().replace(matcher.group(captureGroup), pathConversion.replacementValue);
             log.info("Switching storage location {} to {}.", sd.getLocation(), newLocation);
             sd.setLocation(newLocation);
-            changedScheme = true;
+            pathConverted = true;
           }
         }
       }
     }
 
-    return changedScheme;
+    return pathConverted;
   }
 
   private boolean hasCaptureGroup(Matcher matcher, int groupNumber, String location) {
