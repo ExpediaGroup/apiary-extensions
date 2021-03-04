@@ -23,7 +23,14 @@ import java.util.Properties;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreFilterHook;
-import org.apache.hadoop.hive.metastore.api.*;
+import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.Index;
+import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.PartitionSpec;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,161 +44,161 @@ import com.expediagroup.apiary.extensions.hooks.pathconversion.converters.Generi
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryMetastoreFilterTest {
-    @Mock HiveConf hiveConf;
-    @Mock GenericConverter converter;
-    private MetaStoreFilterHook hook;
 
-    @Before
-    public void init() {
-        Properties mockProps = new Properties();
-        when(hiveConf.getAllProperties()).thenReturn(mockProps);
-        hook = new ApiaryMetastoreFilter(hiveConf, converter);
-    }
+  @Mock private HiveConf hiveConf;
+  @Mock private GenericConverter converter;
+  private MetaStoreFilterHook hook;
 
-    @Test
-    public void shouldNotMutateDatabases() throws MetaException {
-        List<String> dbNames = ImmutableList.of("test");
-        List<String> result = hook.filterDatabases(dbNames);
-        assertEquals(dbNames, result);
-    }
+  @Before
+  public void init() {
+    Properties mockProps = new Properties();
+    when(hiveConf.getAllProperties()).thenReturn(mockProps);
+    hook = new ApiaryMetastoreFilter(hiveConf, converter);
+  }
 
-    @Test
-    public void shouldNotMutateDatabase() throws MetaException, NoSuchObjectException {
-        Database db = new Database();
-        Database result = hook.filterDatabase(db);
-        assertEquals(db, result);
-    }
+  @Test
+  public void shouldNotMutateDatabases() throws MetaException {
+    List<String> dbNames = ImmutableList.of("test");
+    List<String> result = hook.filterDatabases(dbNames);
+    assertEquals(dbNames, result);
+  }
 
-    @Test
-    public void shouldNotMutateTableNames() throws MetaException {
-        List<String> tableNames = ImmutableList.of("test");
-        List<String> result = hook.filterTableNames("db", tableNames);
-        assertEquals(tableNames, result);
-    }
+  @Test
+  public void shouldNotMutateDatabase() throws MetaException, NoSuchObjectException {
+    Database db = new Database();
+    Database result = hook.filterDatabase(db);
+    assertEquals(db, result);
+  }
 
-    @Test
-    public void shouldNotMutatePartitionSpec() throws MetaException {
-        List<PartitionSpec> partitionSpecs = ImmutableList.of(new PartitionSpec());
-        List<PartitionSpec> result = hook.filterPartitionSpecs(partitionSpecs);
-        assertEquals(partitionSpecs, result);
-    }
+  @Test
+  public void shouldNotMutateTableNames() throws MetaException {
+    List<String> tableNames = ImmutableList.of("test");
+    List<String> result = hook.filterTableNames("db", tableNames);
+    assertEquals(tableNames, result);
+  }
 
-    @Test
-    public void shouldNotMutatePartitionNames() throws MetaException {
-        List<String> partitionNames = ImmutableList.of("test");
-        List<String> result = hook.filterPartitionNames("db", "tbl", partitionNames);
-        assertEquals(partitionNames, result);
-    }
+  @Test
+  public void shouldNotMutatePartitionSpec() throws MetaException {
+    List<PartitionSpec> partitionSpecs = ImmutableList.of(new PartitionSpec());
+    List<PartitionSpec> result = hook.filterPartitionSpecs(partitionSpecs);
+    assertEquals(partitionSpecs, result);
+  }
 
-    @Test
-    public void shouldNotMutateIndex() throws MetaException, NoSuchObjectException {
-        Index index = new Index();
-        Index result = hook.filterIndex(index);
-        assertEquals(index, result);
-    }
+  @Test
+  public void shouldNotMutatePartitionNames() throws MetaException {
+    List<String> partitionNames = ImmutableList.of("test");
+    List<String> result = hook.filterPartitionNames("db", "tbl", partitionNames);
+    assertEquals(partitionNames, result);
+  }
 
-    @Test
-    public void shouldNotMutateIndexNames() throws MetaException {
-        List<String> indexNames = ImmutableList.of("test");
-        List<String> result = hook.filterIndexNames("db", "tbl", indexNames);
-        assertEquals(indexNames, result);
-    }
+  @Test
+  public void shouldNotMutateIndex() throws MetaException, NoSuchObjectException {
+    Index index = new Index();
+    Index result = hook.filterIndex(index);
+    assertEquals(index, result);
+  }
 
-    @Test
-    public void shouldNotMutateIndexes() throws MetaException {
-        List<Index> indexList = ImmutableList.of(new Index());
-        List<Index> result = hook.filterIndexes(indexList);
-        assertEquals(indexList, result);
-    }
+  @Test
+  public void shouldNotMutateIndexNames() throws MetaException {
+    List<String> indexNames = ImmutableList.of("test");
+    List<String> result = hook.filterIndexNames("db", "tbl", indexNames);
+    assertEquals(indexNames, result);
+  }
 
-    @Test
-    public void shouldMutateTables() throws MetaException {
-        String mutatedLocation = "targetLocation";
+  @Test
+  public void shouldNotMutateIndexes() throws MetaException {
+    List<Index> indexList = ImmutableList.of(new Index());
+    List<Index> result = hook.filterIndexes(indexList);
+    assertEquals(indexList, result);
+  }
 
-        StorageDescriptor srcSd = new StorageDescriptor();
-        srcSd.setLocation("sourceLocation");
+  @Test
+  public void shouldMutateTables() throws MetaException {
+    String mutatedLocation = "targetLocation";
 
-        Table sourceTable = new Table();
-        sourceTable.setSd(srcSd);
+    StorageDescriptor srcSd = new StorageDescriptor();
+    srcSd.setLocation("sourceLocation");
 
-        List<Table> tableList = ImmutableList.of(sourceTable);
+    Table sourceTable = new Table();
+    sourceTable.setSd(srcSd);
 
-        when(converter.convertPath(sourceTable))
-            .then((Answer<Boolean>) invocation -> {
-                Table inputTable = invocation.getArgument(0);
-                inputTable.getSd().setLocation(mutatedLocation);
-                return true;
-            });
+    List<Table> tableList = ImmutableList.of(sourceTable);
 
-        List<Table> result = hook.filterTables(tableList);
-        assertEquals(tableList.size(), result.size());
-        assertEquals(mutatedLocation, result.get(0).getSd().getLocation());
-    }
+    when(converter.convertPath(sourceTable))
+        .then((Answer<Boolean>) invocation -> {
+          Table inputTable = invocation.getArgument(0);
+          inputTable.getSd().setLocation(mutatedLocation);
+          return true;
+        });
 
+    List<Table> result = hook.filterTables(tableList);
+    assertEquals(tableList.size(), result.size());
+    assertEquals(mutatedLocation, result.get(0).getSd().getLocation());
+  }
 
-    @Test
-    public void shouldMutateTable() throws MetaException, NoSuchObjectException {
-        String mutatedLocation = "targetLocation";
+  @Test
+  public void shouldMutateTable() throws MetaException, NoSuchObjectException {
+    String mutatedLocation = "targetLocation";
 
-        StorageDescriptor srcSd = new StorageDescriptor();
-        srcSd.setLocation("sourceLocation");
+    StorageDescriptor srcSd = new StorageDescriptor();
+    srcSd.setLocation("sourceLocation");
 
-        Table sourceTable = new Table();
-        sourceTable.setSd(srcSd);
+    Table sourceTable = new Table();
+    sourceTable.setSd(srcSd);
 
-        when(converter.convertPath(sourceTable))
-                .then((Answer<Boolean>) invocation -> {
-                    Table inputTable = invocation.getArgument(0);
-                    inputTable.getSd().setLocation(mutatedLocation);
-                    return true;
-                });
+    when(converter.convertPath(sourceTable))
+        .then((Answer<Boolean>) invocation -> {
+          Table inputTable = invocation.getArgument(0);
+          inputTable.getSd().setLocation(mutatedLocation);
+          return true;
+        });
 
-        Table result = hook.filterTable(sourceTable);
-        assertEquals(mutatedLocation, result.getSd().getLocation());
-    }
+    Table result = hook.filterTable(sourceTable);
+    assertEquals(mutatedLocation, result.getSd().getLocation());
+  }
 
-    @Test
-    public void shouldMutatePartitions() throws MetaException, NoSuchObjectException {
-        String mutatedLocation = "targetLocation";
+  @Test
+  public void shouldMutatePartitions() throws MetaException, NoSuchObjectException {
+    String mutatedLocation = "targetLocation";
 
-        StorageDescriptor srcSd = new StorageDescriptor();
-        srcSd.setLocation("sourceLocation");
+    StorageDescriptor srcSd = new StorageDescriptor();
+    srcSd.setLocation("sourceLocation");
 
-        Partition sourcePartition = new Partition();
-        sourcePartition.setSd(srcSd);
+    Partition sourcePartition = new Partition();
+    sourcePartition.setSd(srcSd);
 
-        List<Partition> partitionList = ImmutableList.of(sourcePartition);
+    List<Partition> partitionList = ImmutableList.of(sourcePartition);
 
-        when(converter.convertPath(sourcePartition))
-                .then((Answer<Boolean>) invocation -> {
-                    Partition inputPartition = invocation.getArgument(0);
-                    inputPartition.getSd().setLocation(mutatedLocation);
-                    return true;
-                });
+    when(converter.convertPath(sourcePartition))
+        .then((Answer<Boolean>) invocation -> {
+          Partition inputPartition = invocation.getArgument(0);
+          inputPartition.getSd().setLocation(mutatedLocation);
+          return true;
+        });
 
-        List<Partition> result = hook.filterPartitions(partitionList);
-        assertEquals(partitionList.size(), result.size());
-        assertEquals(mutatedLocation, result.get(0).getSd().getLocation());
-    }
+    List<Partition> result = hook.filterPartitions(partitionList);
+    assertEquals(partitionList.size(), result.size());
+    assertEquals(mutatedLocation, result.get(0).getSd().getLocation());
+  }
 
-    @Test
-    public void shouldMutatePartition() throws MetaException, NoSuchObjectException {
-        String mutatedLocation = "targetLocation";
+  @Test
+  public void shouldMutatePartition() throws MetaException, NoSuchObjectException {
+    String mutatedLocation = "targetLocation";
 
-        StorageDescriptor srcSd = new StorageDescriptor();
-        srcSd.setLocation("sourceLocation");
+    StorageDescriptor srcSd = new StorageDescriptor();
+    srcSd.setLocation("sourceLocation");
 
-        Partition sourcePartition = new Partition();
-        sourcePartition.setSd(srcSd);
+    Partition sourcePartition = new Partition();
+    sourcePartition.setSd(srcSd);
 
-        when(converter.convertPath(sourcePartition))
-                .then((Answer<Boolean>) invocation -> {
-                    Partition inputPartition = invocation.getArgument(0);
-                    inputPartition.getSd().setLocation(mutatedLocation);
-                    return true;
-                });
+    when(converter.convertPath(sourcePartition))
+        .then((Answer<Boolean>) invocation -> {
+          Partition inputPartition = invocation.getArgument(0);
+          inputPartition.getSd().setLocation(mutatedLocation);
+          return true;
+        });
 
-        Partition result = hook.filterPartition(sourcePartition);
-        assertEquals(mutatedLocation, result.getSd().getLocation());
-    }
+    Partition result = hook.filterPartition(sourcePartition);
+    assertEquals(mutatedLocation, result.getSd().getLocation());
+  }
 }

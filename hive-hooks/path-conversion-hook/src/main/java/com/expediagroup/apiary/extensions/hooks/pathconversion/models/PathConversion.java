@@ -22,7 +22,8 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class PathConversion {
-    public Pattern pathPattern;
-    public String replacementValue;
-    public List<Integer> captureGroups;
+
+  public Pattern pathPattern;
+  public String replacementValue;
+  public List<Integer> captureGroups;
 }

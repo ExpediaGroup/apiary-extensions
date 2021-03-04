@@ -26,36 +26,35 @@ import com.expediagroup.apiary.extensions.hooks.pathconversion.config.Configurat
 @Slf4j
 public abstract class GenericConverter {
 
-    private final Configuration configuration;
+  private final Configuration configuration;
 
-    public GenericConverter(Configuration configuration) {
-        this.configuration = configuration;
+  GenericConverter(Configuration configuration) {
+    this.configuration = configuration;
+  }
+
+  public boolean convertPath(Table table) {
+    if (!configuration.isPathConversionEnabled()) {
+      return false;
     }
 
-    public boolean convertPath(Table table) {
-        if (!configuration.isPathConversionEnabled()) {
-            return false;
-        }
+    StorageDescriptor sd = table.getSd();
+    log.debug("[{}-Filter] Examining table location: {}", getClass().getSimpleName(), sd.getLocation());
+    return convertPath(sd);
+  }
 
-        StorageDescriptor sd = table.getSd();
-        log.debug("[{}-Filter] Examining table location: {}", this.getClass().getSimpleName(), sd.getLocation());
-        return convertPath(sd);
+  public boolean convertPath(Partition partition) {
+    if (!configuration.isPathConversionEnabled()) {
+      return false;
     }
 
+    StorageDescriptor sd = partition.getSd();
+    log.debug("[{}-Filter] Examining partition location: {}", getClass().getSimpleName(), sd.getLocation());
+    return convertPath(sd);
+  }
 
-    public boolean convertPath(Partition partition) {
-        if (!configuration.isPathConversionEnabled()) {
-            return false;
-        }
+  Configuration getConfiguration() {
+    return configuration;
+  }
 
-        StorageDescriptor sd = partition.getSd();
-        log.debug("[{}-Filter] Examining partition location: {}",  this.getClass().getSimpleName(), sd.getLocation());
-        return convertPath(sd);
-    }
-
-    protected Configuration getConfiguration() {
-        return configuration;
-    }
-
-    public abstract boolean convertPath(StorageDescriptor sd);
+  public abstract boolean convertPath(StorageDescriptor sd);
 }

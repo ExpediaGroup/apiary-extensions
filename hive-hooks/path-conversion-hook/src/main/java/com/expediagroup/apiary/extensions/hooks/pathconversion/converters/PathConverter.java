@@ -27,36 +27,37 @@ import com.expediagroup.apiary.extensions.hooks.pathconversion.models.PathConver
 @Slf4j
 public class PathConverter extends GenericConverter {
 
-    public PathConverter(Configuration configuration) {
-        super(configuration);
-    }
+  public PathConverter(Configuration configuration) {
+    super(configuration);
+  }
 
-    public boolean convertPath(StorageDescriptor sd) {
-        boolean changedScheme = false;
-        for (PathConversion pathConversion : getConfiguration().getPathConversions()) {
-            Matcher matcher = pathConversion.pathPattern.matcher(sd.getLocation());
-            if (matcher.find()) {
-                for (Integer captureGroup : pathConversion.captureGroups) {
-                    if (hasCaptureGroup(matcher, captureGroup, sd.getLocation())) {
-                        String newLocation = sd.getLocation().replace(matcher.group(captureGroup), pathConversion.replacementValue);
-                        log.info("Switching storage location {} to {}.", sd.getLocation(), newLocation);
-                        sd.setLocation(newLocation);
-                        changedScheme = true;
-                    }
-                }
-            }
+  @Override
+  public boolean convertPath(StorageDescriptor sd) {
+    boolean changedScheme = false;
+    for (PathConversion pathConversion : getConfiguration().getPathConversions()) {
+      Matcher matcher = pathConversion.pathPattern.matcher(sd.getLocation());
+      if (matcher.find()) {
+        for (Integer captureGroup : pathConversion.captureGroups) {
+          if (hasCaptureGroup(matcher, captureGroup, sd.getLocation())) {
+            String newLocation = sd.getLocation().replace(matcher.group(captureGroup), pathConversion.replacementValue);
+            log.info("Switching storage location {} to {}.", sd.getLocation(), newLocation);
+            sd.setLocation(newLocation);
+            changedScheme = true;
+          }
         }
-
-        return changedScheme;
+      }
     }
 
-    private boolean hasCaptureGroup(Matcher matcher, int groupNumber, String location) {
-        try {
-            matcher.group(groupNumber);
-            return true;
-        } catch (IndexOutOfBoundsException ex) {
-            log.warn("No capture group number {} found on location[{}]", groupNumber, location);
-            return false;
-        }
+    return changedScheme;
+  }
+
+  private boolean hasCaptureGroup(Matcher matcher, int groupNumber, String location) {
+    try {
+      matcher.group(groupNumber);
+      return true;
+    } catch (IndexOutOfBoundsException ex) {
+      log.warn("No capture group number {} found on location[{}]", groupNumber, location);
+      return false;
     }
+  }
 }

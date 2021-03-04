@@ -28,48 +28,63 @@ import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvide
 import org.apache.hadoop.hive.ql.security.authorization.Privilege;
 
 public class ApiaryNullAuthorizationProvider implements HiveAuthorizationProvider {
-    private Configuration conf;
-    private HiveAuthenticationProvider hiveAuthenticationProvider;
 
-    /** Set the configuration to be used by this object. */
-    public void setConf(Configuration conf) {
-        this.conf = conf;
-    }
+  private Configuration conf;
+  private HiveAuthenticationProvider hiveAuthenticationProvider;
 
-    /** Return the configuration used by this object. */
-    public Configuration getConf() {
-        return this.conf;
-    }
+  /**
+   * Return the configuration used by this object.
+   */
+  @Override
+  public Configuration getConf() {
+    return conf;
+  }
 
-    public void init(Configuration conf) throws HiveException {
-    }
+  /**
+   * Set the configuration to be used by this object.
+   */
+  @Override
+  public void setConf(Configuration conf) {
+    this.conf = conf;
+  }
 
-    public HiveAuthenticationProvider getAuthenticator() {
-        return hiveAuthenticationProvider;
-    }
+  @Override
+  public void init(Configuration conf) throws HiveException {
+  }
 
-    public void setAuthenticator(HiveAuthenticationProvider authenticator) {
-        this.hiveAuthenticationProvider = authenticator;
-    }
+  @Override
+  public HiveAuthenticationProvider getAuthenticator() {
+    return hiveAuthenticationProvider;
+  }
 
-    public void authorize(Privilege[] readRequiredPriv,
-                          Privilege[] writeRequiredPriv) throws HiveException, AuthorizationException {
-    }
+  @Override
+  public void setAuthenticator(HiveAuthenticationProvider authenticator) {
+      hiveAuthenticationProvider = authenticator;
+  }
 
-    public void authorize(Database db, Privilege[] readRequiredPriv,
-                          Privilege[] writeRequiredPriv) throws HiveException, AuthorizationException {
-    }
+  @Override
+  public void authorize(Privilege[] readRequiredPriv,
+      Privilege[] writeRequiredPriv) throws HiveException, AuthorizationException {
+  }
 
-    public void authorize(Table table, Privilege[] readRequiredPriv,
-                          Privilege[] writeRequiredPriv) throws HiveException, AuthorizationException {
-    }
+  @Override
+  public void authorize(Database db, Privilege[] readRequiredPriv,
+      Privilege[] writeRequiredPriv) throws HiveException, AuthorizationException {
+  }
 
-    public void authorize(Partition part, Privilege[] readRequiredPriv,
-                          Privilege[] writeRequiredPriv) throws HiveException, AuthorizationException {
-    }
+  @Override
+  public void authorize(Table table, Privilege[] readRequiredPriv,
+      Privilege[] writeRequiredPriv) throws HiveException, AuthorizationException {
+  }
 
-    public void authorize(Table table, Partition part, List<String> columns,
-                          Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
-            throws HiveException, AuthorizationException {
-    }
+  @Override
+  public void authorize(Partition part, Privilege[] readRequiredPriv,
+      Privilege[] writeRequiredPriv) throws HiveException, AuthorizationException {
+  }
+
+  @Override
+  public void authorize(Table table, Partition part, List<String> columns,
+      Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
+      throws HiveException, AuthorizationException {
+  }
 }

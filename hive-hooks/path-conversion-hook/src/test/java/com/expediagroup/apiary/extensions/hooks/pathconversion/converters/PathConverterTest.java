@@ -15,7 +15,9 @@
  */
 package com.expediagroup.apiary.extensions.hooks.pathconversion.converters;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -38,168 +40,164 @@ import com.expediagroup.apiary.extensions.hooks.pathconversion.models.PathConver
 @RunWith(MockitoJUnitRunner.class)
 public class PathConverterTest {
 
-    @Mock private Configuration config;
-    private PathConverter converter;
+  @Mock private Configuration config;
+  private PathConverter converter;
 
-    @Before
-    public void init() {
-        converter = new PathConverter(config);
-    }
+  @Before
+  public void init() {
+    converter = new PathConverter(config);
+  }
 
+  @Test
+  public void shouldProperlyConvertPath() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "s3://some-foo";
 
-    @Test
-    public void shouldProperlyConvertPath() {
-        String testInputLocation = "s3d://some-foo";
-        String testOutputLocation = "s3://some-foo";
+    List<PathConversion> testConversions = ImmutableList.of(
+        new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1))
+    );
 
-        List<PathConversion> testConversions = ImmutableList.of(
-                new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1))
-        );
+    when(config.getPathConversions()).thenReturn(testConversions);
 
-        when(config.getPathConversions()).thenReturn(testConversions);
+    StorageDescriptor testSD = sdSetup(testInputLocation);
+    boolean result = converter.convertPath(testSD);
+    assertTrue(result);
+    assertEquals(testOutputLocation, testSD.getLocation());
+  }
 
-        StorageDescriptor testSD = sdSetup(testInputLocation);
-        boolean result = converter.convertPath(testSD);
-        assertTrue(result);
-        assertEquals(testOutputLocation, testSD.getLocation());
-    }
+  @Test
+  public void shouldProperlyApplyMultipleConversionsPath() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "alluxio://some-foo";
 
-    @Test
-    public void shouldProperlyApplyMultipleConversionsPath() {
-        String testInputLocation = "s3d://some-foo";
-        String testOutputLocation = "alluxio://some-foo";
+    List<PathConversion> testConversions = ImmutableList.of(
+        new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)),
+        new PathConversion(Pattern.compile("^(s3)(?:.*)"), "alluxio", ImmutableList.of(1))
+    );
 
-        List<PathConversion> testConversions = ImmutableList.of(
-                new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)),
-                new PathConversion(Pattern.compile("^(s3)(?:.*)"), "alluxio", ImmutableList.of(1))
-        );
+    when(config.getPathConversions()).thenReturn(testConversions);
 
-        when(config.getPathConversions()).thenReturn(testConversions);
+    StorageDescriptor testSD = sdSetup(testInputLocation);
+    boolean result = converter.convertPath(testSD);
+    assertTrue(result);
+    assertEquals(testOutputLocation, testSD.getLocation());
+  }
 
-        StorageDescriptor testSD = sdSetup(testInputLocation);
-        boolean result = converter.convertPath(testSD);
-        assertTrue(result);
-        assertEquals(testOutputLocation, testSD.getLocation());
-    }
+  @Test
+  public void shouldProperlyApplyMoreComplexRegexExpression() {
+    String testInputLocation = "s3://some-foo-us-east-4/some/other/result";
+    String alluxioTestPrefix = "alluxio://some-alluxio-url:1234/";
+    String testOutputLocation = String.format("%ssome-foo-us-east-4/some/other/result", alluxioTestPrefix);
 
-    @Test
-    public void shouldProperlyApplyMoreComplexRegexExpression() {
-        String testInputLocation = "s3://some-foo-us-east-4/some/other/result";
-        String alluxioTestPrefix = "alluxio://some-alluxio-url:1234/";
-        String testOutputLocation = String.format("%ssome-foo-us-east-4/some/other/result", alluxioTestPrefix);
+    List<PathConversion> testConversions = ImmutableList.of(
+        new PathConversion(Pattern.compile("^(s3://)(?:.*us-east-4.*)"), alluxioTestPrefix, ImmutableList.of(1))
+    );
 
-        List<PathConversion> testConversions = ImmutableList.of(
-            new PathConversion(Pattern.compile("^(s3://)(?:.*us-east-4.*)"), alluxioTestPrefix, ImmutableList.of(1))
-        );
+    when(config.getPathConversions()).thenReturn(testConversions);
 
-        when(config.getPathConversions()).thenReturn(testConversions);
+    StorageDescriptor testSD = sdSetup(testInputLocation);
+    boolean result = converter.convertPath(testSD);
+    assertTrue(result);
+    assertEquals(testOutputLocation, testSD.getLocation());
+  }
 
-        StorageDescriptor testSD = sdSetup(testInputLocation);
-        boolean result = converter.convertPath(testSD);
-        assertTrue(result);
-        assertEquals(testOutputLocation, testSD.getLocation());
-    }
+  @Test
+  public void shouldProperlyApplyMultipleCaptureGropus() {
+    String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
+    String testOutputLocation = "s3://some-foo-us-west-4/some/other-us-west-4/result";
 
-    @Test
-    public void shouldProperlyApplyMultipleCaptureGropus() {
-        String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
-        String testOutputLocation = "s3://some-foo-us-west-4/some/other-us-west-4/result";
+    List<PathConversion> testConversions = ImmutableList.of(
+        new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"),
+            "us-west-4", ImmutableList.of(1, 2))
+    );
 
-        List<PathConversion> testConversions = ImmutableList.of(
-                new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"),
-                        "us-west-4", ImmutableList.of(1,2))
-        );
+    when(config.getPathConversions()).thenReturn(testConversions);
 
-        when(config.getPathConversions()).thenReturn(testConversions);
+    StorageDescriptor testSD = sdSetup(testInputLocation);
+    boolean result = converter.convertPath(testSD);
+    assertTrue(result);
+    assertEquals(testOutputLocation, testSD.getLocation());
+  }
 
-        StorageDescriptor testSD = sdSetup(testInputLocation);
-        boolean result = converter.convertPath(testSD);
-        assertTrue(result);
-        assertEquals(testOutputLocation, testSD.getLocation());
-    }
+  @Test
+  public void shouldProperlyConvertPathForTable() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "s3://some-foo";
 
-    @Test
-    public void shouldProperlyConvertPathForTable() {
-        String testInputLocation = "s3d://some-foo";
-        String testOutputLocation = "s3://some-foo";
+    List<PathConversion> testConversions = ImmutableList.of(
+        new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1))
+    );
 
-        List<PathConversion> testConversions = ImmutableList.of(
-                new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1))
-        );
+    when(config.getPathConversions()).thenReturn(testConversions);
+    when(config.isPathConversionEnabled()).thenReturn(true);
 
-        when(config.getPathConversions()).thenReturn(testConversions);
-        when(config.isPathConversionEnabled()).thenReturn(true);
+    Table srcTable = tableSetup(testInputLocation);
 
-        Table srcTable = tableSetup(testInputLocation);
+    boolean result = converter.convertPath(srcTable);
+    assertTrue(result);
+    assertEquals(testOutputLocation, srcTable.getSd().getLocation());
+  }
 
-        boolean result = converter.convertPath(srcTable);
-        assertTrue(result);
-        assertEquals(testOutputLocation, srcTable.getSd().getLocation());
-    }
+  @Test
+  public void shouldDisableConvertPathForTableIfFlagIsDisabled() {
+    String testInputLocation = "s3d://some-foo";
+    when(config.isPathConversionEnabled()).thenReturn(false);
 
-    @Test
-    public void shouldDisableConvertPathForTableIfFlagIsDisabled() {
-        String testInputLocation = "s3d://some-foo";
-        when(config.isPathConversionEnabled()).thenReturn(false);
+    Table srcTable = tableSetup(testInputLocation);
 
-        Table srcTable = tableSetup(testInputLocation);
+    boolean result = converter.convertPath(srcTable);
+    assertFalse(result);
+    assertEquals(testInputLocation, srcTable.getSd().getLocation());
+  }
 
-        boolean result = converter.convertPath(srcTable);
-        assertFalse(result);
-        assertEquals(testInputLocation, srcTable.getSd().getLocation());
-    }
+  @Test
+  public void shouldProperlyConvertPathForPartition() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "s3://some-foo";
 
-    @Test
-    public void shouldProperlyConvertPathForPartition() {
-        String testInputLocation = "s3d://some-foo";
-        String testOutputLocation = "s3://some-foo";
+    List<PathConversion> testConversions = ImmutableList.of(
+        new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1))
+    );
 
-        List<PathConversion> testConversions = ImmutableList.of(
-                new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1))
-        );
+    when(config.getPathConversions()).thenReturn(testConversions);
+    when(config.isPathConversionEnabled()).thenReturn(true);
 
-        when(config.getPathConversions()).thenReturn(testConversions);
-        when(config.isPathConversionEnabled()).thenReturn(true);
+    Partition srcPartition = partitionSetup(testInputLocation);
 
-        Partition srcPartition = partitionSetup(testInputLocation);
+    boolean result = converter.convertPath(srcPartition);
+    assertTrue(result);
+    assertEquals(testOutputLocation, srcPartition.getSd().getLocation());
+  }
 
-        boolean result = converter.convertPath(srcPartition);
-        assertTrue(result);
-        assertEquals(testOutputLocation, srcPartition.getSd().getLocation());
-    }
+  @Test
+  public void shouldProperlyConvertPathForPartitionIfFlagIsDisabled() {
+    String testInputLocation = "s3d://some-foo";
+    when(config.isPathConversionEnabled()).thenReturn(false);
 
-    @Test
-    public void shouldProperlyConvertPathForPartitionIfFlagIsDisabled() {
-        String testInputLocation = "s3d://some-foo";
-        when(config.isPathConversionEnabled()).thenReturn(false);
+    Partition srcPartition = partitionSetup(testInputLocation);
 
-        Partition srcPartition = partitionSetup(testInputLocation);
+    boolean result = converter.convertPath(srcPartition);
+    assertFalse(result);
+    assertEquals(testInputLocation, srcPartition.getSd().getLocation());
+  }
 
-        boolean result = converter.convertPath(srcPartition);
-        assertFalse(result);
-        assertEquals(testInputLocation, srcPartition.getSd().getLocation());
-    }
+  private Table tableSetup(String testInputLocation) {
+    StorageDescriptor testSD = sdSetup(testInputLocation);
+    Table table = new Table();
+    table.setSd(testSD);
+    return table;
+  }
 
+  private Partition partitionSetup(String testInputLocation) {
+    StorageDescriptor testSD = sdSetup(testInputLocation);
+    Partition partition = new Partition();
+    partition.setSd(testSD);
+    return partition;
+  }
 
-    private Table tableSetup(String testInputLocation) {
-        StorageDescriptor testSD = sdSetup(testInputLocation);
-        Table table = new Table();
-        table.setSd(testSD);
-        return table;
-    }
-
-    private Partition partitionSetup(String testInputLocation) {
-        StorageDescriptor testSD = sdSetup(testInputLocation);
-        Partition partition = new Partition();
-        partition.setSd(testSD);
-        return partition;
-    }
-
-
-    private StorageDescriptor sdSetup(String location) {
-        StorageDescriptor sd = new StorageDescriptor();
-        sd.setLocation(location);
-        return sd;
-    }
-
+  private StorageDescriptor sdSetup(String location) {
+    StorageDescriptor sd = new StorageDescriptor();
+    sd.setLocation(location);
+    return sd;
+  }
 }
