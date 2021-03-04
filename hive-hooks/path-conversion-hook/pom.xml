@@ -10,7 +10,6 @@
     <artifactId>path-conversion-hook</artifactId>
     <name>Path Conversion Hive Hook</name>
     <description>Hive Hook to convert matching path regex to another</description>
-    <packaging>jar</packaging>
 
     <properties>
         <lombok.version>1.18.16</lombok.version>
@@ -44,8 +43,9 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hive</groupId>
-            <artifactId>hive-exec </artifactId>
+            <artifactId>hive-exec</artifactId>
             <version>${hive.version}</version>
+            <classifier>core</classifier>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
