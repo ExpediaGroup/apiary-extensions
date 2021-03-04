@@ -1,12 +1,12 @@
 # Path Conversion Hook
-This jar implements a Hive client-side metastore filter in class `ApiaryMetastoreFilter`.
+This module implements a Hive client-side metastore filter in the class `ApiaryMetastoreFilter`.
 
-This path conversion hook allows us to arbitrarily alter partition and table paths via matching regex expressions
-for a given table without altering the underlying data. This is useful for cases such as using Alluxio as a caching 
-layer, where we can alter these location pointers on a client basis to improve read speeds. 
+This path conversion hook allows one to arbitrarily alter partition and table locations which match regular expressions
+for a given table without altering the underlying data. An example use would be introducing something like [Alluxio](https://www.alluxio.io/) as a caching 
+layer for data storage - in this case the filter would change the scheme in the file locations from `s3` to `alluxio`   so clients would read from the cache to improve read speeds. 
 
 Hive ignores any metastore filter hooks if the default authorizer scheme
-is in use, or if `hive.security.authorization.manager` is set to instance of `HiveAuthorizerFactory` 
+is in use, or if `hive.security.authorization.manager` is set to an instance of `HiveAuthorizerFactory` 
 (which it is by default). In order to work around this, the class `ApiaryNullAuthorizationProvider` implements 
 the Hive Authorization Provider interface `HiveAuthorizationProvider`. This 
 class just authorizes all access, so this would not be  appropriate in an environment 
@@ -27,7 +27,7 @@ required, Ranger authentication should be configured at the metastore level.
 ## Installation
 1. Copy the JAR `target/apiary-metastore-filter-<version>-all.jar` to
    the classpath of Hive. On AWS EMR, this is `/usr/lib/hive/lib`.
-2. Add the following section to the `hive-site.xml`. For EMR, this will
+2. Add the following section to the `hive-site.xml` configuration file. For EMR, this will
    take the form of adding `"Classification": "hive-site"` properties in
    the EMR cluster definition.
    
@@ -43,7 +43,7 @@ required, Ranger authentication should be configured at the metastore level.
       </property>
    ```
    
-3. By default, we leave the hook disabled unless otherwise specified. In order to use this hook you must explicitly 
+3. By default, the hook is disabled unless otherwise specified. In order to use this hook you must explicitly 
    set a `hive-site.xml` property named `apiary.path.replacement.enabled` to a truthy value ("true", "True", "yes", etc).
    ```
     <property>
