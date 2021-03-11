@@ -19,6 +19,7 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import com.expediagroup.apiary.extensions.hooks.config.Configuration;
@@ -26,57 +27,33 @@ import com.expediagroup.apiary.extensions.hooks.config.Configuration;
 @Slf4j
 public abstract class GenericConverter {
 
-  private final Configuration configuration;
+  @Getter private final Configuration configuration;
 
   protected GenericConverter(Configuration configuration) {
     this.configuration = configuration;
   }
 
   /**
-   * Converts a path for the given Table.
+   * Apply a conversion for a given table.
    *
-   * @param table Table location to potentially alter.
-   * @return true if table location is altered, false otherwise.
+   * @param table Table to potentially alter.
+   * @return true if table is altered, false otherwise.
    */
-  public boolean convertPath(Table table) {
-    if (!configuration.isPathConversionEnabled()) {
-      log.trace("[{}-Filter] pathConversion is disabled. Skipping path conversion for table.",
-          getClass().getSimpleName());
-      return false;
-    }
-
-    StorageDescriptor sd = table.getSd();
-    log.debug("[{}-Filter] Examining table location: {}", getClass().getSimpleName(), sd.getLocation());
-    return convertPath(sd);
-  }
+  public abstract boolean convertTable(Table table);
 
   /**
-   * Converts a path for the given Partition.
+   * Apply a conversion for the given Partition.
    *
-   * @param partition Partition location to potentially alter.
-   * @return true if partition location is altered, false otherwise.
+   * @param partition Partition to potentially alter.
+   * @return true if partition is altered, false otherwise.
    */
-  public boolean convertPath(Partition partition) {
-    if (!configuration.isPathConversionEnabled()) {
-      log.trace("[{}-Filter] pathConversion is disabled. Skipping path conversion for partition.",
-          getClass().getSimpleName());
-      return false;
-    }
-
-    StorageDescriptor sd = partition.getSd();
-    log.debug("[{}-Filter] Examining partition location: {}", getClass().getSimpleName(), sd.getLocation());
-    return convertPath(sd);
-  }
-
-  protected Configuration getConfiguration() {
-    return configuration;
-  }
+  public abstract boolean convertPartition(Partition partition);
 
   /**
-   * Converts a path for the given StorageDescriptor.
+   * Apply a conversion for the given StorageDescriptor.
    *
    * @param sd StorageDescriptor to potentially alter.
-   * @return true if location is altered, false otherwise.
+   * @return true if SD is altered, false otherwise.
    */
-  public abstract boolean convertPath(StorageDescriptor sd);
+  public abstract boolean convertStorageDescriptor(StorageDescriptor sd);
 }

@@ -120,7 +120,7 @@ public class ApiaryMetastoreFilterTest {
 
     List<Table> result = hook.filterTables(tableList);
     assertEquals(result.size(), tableList.size());
-    tableList.stream().forEach(table -> verify(converter).convertPath(table));
+    tableList.stream().forEach(table -> verify(converter).convertTable(table));
   }
 
   @Test
@@ -128,7 +128,7 @@ public class ApiaryMetastoreFilterTest {
     Table sourceTable = createMockTable("mockTable");
     Table result = hook.filterTable(sourceTable);
     assertEquals(result, sourceTable);
-    verify(converter).convertPath(sourceTable);
+    verify(converter).convertTable(sourceTable);
   }
 
   @Test
@@ -140,7 +140,7 @@ public class ApiaryMetastoreFilterTest {
 
     List<Partition> result = hook.filterPartitions(partitionList);
     assertEquals(result.size(), partitionList.size());
-    partitionList.stream().forEach(partition -> verify(converter).convertPath(partition));
+    partitionList.stream().forEach(partition -> verify(converter).convertPartition(partition));
   }
 
   @Test
@@ -148,7 +148,7 @@ public class ApiaryMetastoreFilterTest {
     Partition sourcePartition = createMockPartition("mockPartition");
     Partition result = hook.filterPartition(sourcePartition);
     assertEquals(sourcePartition, result);
-    verify(converter).convertPath(sourcePartition);
+    verify(converter).convertPartition(sourcePartition);
   }
 
   private Table createMockTable(String tableName) {

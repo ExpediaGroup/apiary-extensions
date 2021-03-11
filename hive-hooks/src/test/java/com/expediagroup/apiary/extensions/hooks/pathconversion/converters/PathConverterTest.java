@@ -34,13 +34,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import com.google.common.collect.ImmutableList;
 
-import com.expediagroup.apiary.extensions.hooks.config.Configuration;
+import com.expediagroup.apiary.extensions.hooks.pathconversion.config.PathConversionConfiguration;
 import com.expediagroup.apiary.extensions.hooks.pathconversion.models.PathConversion;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PathConverterTest {
 
-  @Mock private Configuration config;
+  @Mock private PathConversionConfiguration config;
   private PathConverter converter;
 
   @Before
@@ -60,7 +60,7 @@ public class PathConverterTest {
     when(config.getPathConversions()).thenReturn(testConversions);
 
     StorageDescriptor testSD = sdSetup(testInputLocation);
-    boolean result = converter.convertPath(testSD);
+    boolean result = converter.convertStorageDescriptor(testSD);
     assertTrue(result);
     assertEquals(testOutputLocation, testSD.getLocation());
   }
@@ -78,7 +78,7 @@ public class PathConverterTest {
     when(config.getPathConversions()).thenReturn(testConversions);
 
     StorageDescriptor testSD = sdSetup(testInputLocation);
-    boolean result = converter.convertPath(testSD);
+    boolean result = converter.convertStorageDescriptor(testSD);
     assertTrue(result);
     assertEquals(testOutputLocation, testSD.getLocation());
   }
@@ -96,7 +96,7 @@ public class PathConverterTest {
     when(config.getPathConversions()).thenReturn(testConversions);
 
     StorageDescriptor testSD = sdSetup(testInputLocation);
-    boolean result = converter.convertPath(testSD);
+    boolean result = converter.convertStorageDescriptor(testSD);
     assertTrue(result);
     assertEquals(testOutputLocation, testSD.getLocation());
   }
@@ -114,7 +114,7 @@ public class PathConverterTest {
     when(config.getPathConversions()).thenReturn(testConversions);
 
     StorageDescriptor testSD = sdSetup(testInputLocation);
-    boolean result = converter.convertPath(testSD);
+    boolean result = converter.convertStorageDescriptor(testSD);
     assertTrue(result);
     assertEquals(testOutputLocation, testSD.getLocation());
   }
@@ -133,7 +133,7 @@ public class PathConverterTest {
 
     Table srcTable = tableSetup(testInputLocation);
 
-    boolean result = converter.convertPath(srcTable);
+    boolean result = converter.convertTable(srcTable);
     assertTrue(result);
     assertEquals(testOutputLocation, srcTable.getSd().getLocation());
   }
@@ -145,7 +145,7 @@ public class PathConverterTest {
 
     Table srcTable = tableSetup(testInputLocation);
 
-    boolean result = converter.convertPath(srcTable);
+    boolean result = converter.convertTable(srcTable);
     assertFalse(result);
     assertEquals(testInputLocation, srcTable.getSd().getLocation());
   }
@@ -164,7 +164,7 @@ public class PathConverterTest {
 
     Partition srcPartition = partitionSetup(testInputLocation);
 
-    boolean result = converter.convertPath(srcPartition);
+    boolean result = converter.convertPartition(srcPartition);
     assertTrue(result);
     assertEquals(testOutputLocation, srcPartition.getSd().getLocation());
   }
@@ -176,7 +176,7 @@ public class PathConverterTest {
 
     Partition srcPartition = partitionSetup(testInputLocation);
 
-    boolean result = converter.convertPath(srcPartition);
+    boolean result = converter.convertPartition(srcPartition);
     assertFalse(result);
     assertEquals(testInputLocation, srcPartition.getSd().getLocation());
   }

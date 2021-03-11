@@ -17,12 +17,15 @@ package com.expediagroup.apiary.extensions.hooks.pathconversion.converters;
 
 import java.util.regex.Matcher;
 
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.api.Table;
 
 import lombok.extern.slf4j.Slf4j;
 
 import com.expediagroup.apiary.extensions.hooks.config.Configuration;
 import com.expediagroup.apiary.extensions.hooks.converters.GenericConverter;
+import com.expediagroup.apiary.extensions.hooks.pathconversion.config.PathConversionConfiguration;
 import com.expediagroup.apiary.extensions.hooks.pathconversion.models.PathConversion;
 
 @Slf4j
@@ -33,7 +36,50 @@ public class PathConverter extends GenericConverter {
   }
 
   @Override
-  public boolean convertPath(StorageDescriptor sd) {
+  public PathConversionConfiguration getConfiguration() {
+    return (PathConversionConfiguration) super.getConfiguration();
+  }
+
+  /**
+   * Converts a path for the given Table.
+   *
+   * @param table Table location to potentially alter.
+   * @return true if table location is altered, false otherwise.
+   */
+  @Override
+  public boolean convertTable(Table table) {
+    if (!getConfiguration().isPathConversionEnabled()) {
+      log.trace("[{}-Filter] pathConversion is disabled. Skipping path conversion for table.",
+          getClass().getSimpleName());
+      return false;
+    }
+
+    StorageDescriptor sd = table.getSd();
+    log.debug("[{}-Filter] Examining table location: {}", getClass().getSimpleName(), sd.getLocation());
+    return convertStorageDescriptor(sd);
+  }
+
+  /**
+   * Converts a path for the given Partition.
+   *
+   * @param partition Partition location to potentially alter.
+   * @return true if partition location is altered, false otherwise.
+   */
+  @Override
+  public boolean convertPartition(Partition partition) {
+    if (!getConfiguration().isPathConversionEnabled()) {
+      log.trace("[{}-Filter] pathConversion is disabled. Skipping path conversion for partition.",
+          getClass().getSimpleName());
+      return false;
+    }
+
+    StorageDescriptor sd = partition.getSd();
+    log.debug("[{}-Filter] Examining partition location: {}", getClass().getSimpleName(), sd.getLocation());
+    return convertStorageDescriptor(sd);
+  }
+
+  @Override
+  public boolean convertStorageDescriptor(StorageDescriptor sd) {
     boolean pathConverted = false;
     for (PathConversion pathConversion : getConfiguration().getPathConversions()) {
       Matcher matcher = pathConversion.pathPattern.matcher(sd.getLocation());

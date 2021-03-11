@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.expediagroup.apiary.extensions.hooks.config;
+package com.expediagroup.apiary.extensions.hooks.pathconversion.config;
 
 import static java.lang.String.format;
 
@@ -31,7 +31,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ConfigurationTest {
+public class PathConversionConfigurationTest {
 
   @Mock private HiveConf hiveConf;
 
@@ -40,42 +40,42 @@ public class ConfigurationTest {
   @Before
   public void init() {
     properties = new Properties();
-    properties.setProperty(Configuration.PATH_REPLACEMENT_ENABLED, "true");
+    properties.setProperty(PathConversionConfiguration.PATH_REPLACEMENT_ENABLED, "true");
   }
 
   @Test
   public void shouldCheckHiveSiteForPathReplacementEnablement() {
     when(hiveConf.getAllProperties()).thenReturn(properties);
-    Configuration conf = new Configuration(hiveConf);
+    PathConversionConfiguration conf = new PathConversionConfiguration(hiveConf);
     assertTrue(conf.isPathConversionEnabled());
   }
 
   @Test
   public void shouldProperlyInitializePathConversions() {
-    String regexKey = format("%s.test", Configuration.PATH_REPLACEMENT_REGEX);
-    String valueKey = format("%s.test", Configuration.PATH_REPLACEMENT_VALUES);
+    String regexKey = format("%s.test", PathConversionConfiguration.PATH_REPLACEMENT_REGEX);
+    String valueKey = format("%s.test", PathConversionConfiguration.PATH_REPLACEMENT_VALUES);
     properties.setProperty(regexKey, "s3a");
     properties.setProperty(valueKey, "s3");
     when(hiveConf.getAllProperties()).thenReturn(properties);
-    Configuration conf = new Configuration(hiveConf);
+    PathConversionConfiguration conf = new PathConversionConfiguration(hiveConf);
     assertEquals(conf.getPathConversions().size(), 1);
   }
 
   @Test
   public void shouldSkipIfRegexUnset() {
-    String valueKey = format("%s.test", Configuration.PATH_REPLACEMENT_VALUES);
+    String valueKey = format("%s.test", PathConversionConfiguration.PATH_REPLACEMENT_VALUES);
     properties.setProperty(valueKey, "s3");
     when(hiveConf.getAllProperties()).thenReturn(properties);
-    Configuration conf = new Configuration(hiveConf);
+    PathConversionConfiguration conf = new PathConversionConfiguration(hiveConf);
     assertEquals(conf.getPathConversions().size(), 0);
   }
 
   @Test
   public void shouldSkipIfValueUnset() {
-    String regexKey = format("%s.test", Configuration.PATH_REPLACEMENT_REGEX);
+    String regexKey = format("%s.test", PathConversionConfiguration.PATH_REPLACEMENT_REGEX);
     properties.setProperty(regexKey, "s3a");
     when(hiveConf.getAllProperties()).thenReturn(properties);
-    Configuration conf = new Configuration(hiveConf);
+    PathConversionConfiguration conf = new PathConversionConfiguration(hiveConf);
     assertEquals(conf.getPathConversions().size(), 0);
   }
 }

@@ -29,6 +29,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import com.expediagroup.apiary.extensions.hooks.config.Configuration;
 import com.expediagroup.apiary.extensions.hooks.converters.GenericConverter;
+import com.expediagroup.apiary.extensions.hooks.pathconversion.config.PathConversionConfiguration;
 import com.expediagroup.apiary.extensions.hooks.pathconversion.converters.PathConverter;
 
 public class ApiaryMetastoreFilter implements MetaStoreFilterHook {
@@ -37,13 +38,13 @@ public class ApiaryMetastoreFilter implements MetaStoreFilterHook {
   private final GenericConverter converter;
 
   public ApiaryMetastoreFilter(HiveConf conf) {
-    configuration = new Configuration(conf);
+    configuration = new PathConversionConfiguration(conf);
     converter = new PathConverter(configuration);
   }
 
   @VisibleForTesting
-  public ApiaryMetastoreFilter(HiveConf conf, GenericConverter schemeConverter) {
-    configuration = new Configuration(conf);
+  ApiaryMetastoreFilter(HiveConf conf, GenericConverter schemeConverter) {
+    configuration = new PathConversionConfiguration(conf);
     converter = schemeConverter;
   }
 
@@ -89,25 +90,25 @@ public class ApiaryMetastoreFilter implements MetaStoreFilterHook {
 
   @Override
   public List<Table> filterTables(List<Table> tableList) {
-    tableList.stream().forEach(converter::convertPath);
+    tableList.stream().forEach(converter::convertTable);
     return tableList;
   }
 
   @Override
   public Table filterTable(Table table) {
-    converter.convertPath(table);
+    converter.convertTable(table);
     return table;
   }
 
   @Override
   public List<Partition> filterPartitions(List<Partition> partitionList) {
-    partitionList.stream().forEach(converter::convertPath);
+    partitionList.stream().forEach(converter::convertPartition);
     return partitionList;
   }
 
   @Override
   public Partition filterPartition(Partition partition) {
-    converter.convertPath(partition);
+    converter.convertPartition(partition);
     return partition;
   }
 }
