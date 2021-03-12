@@ -6,7 +6,7 @@ This module implements a Hive client-side metastore filter in the class `ApiaryM
 
 This path conversion hook allows one to arbitrarily alter partition and table locations which match regular expressions
 for a given table without altering the underlying data. An example use would be introducing something like [Alluxio](https://www.alluxio.io/) as a caching 
-layer for data storage - in this case the filter would change the scheme in the file locations from `s3` to `alluxio`   so clients would read from the cache to improve read speeds. 
+layer for data storage - in this case the filter would change the scheme in the file locations from `s3` to `alluxio` so clients would read from the cache to improve read speeds. 
 
 Hive ignores any metastore filter hooks if the default authorizer scheme
 is in use, or if `hive.security.authorization.manager` is set to an instance of `HiveAuthorizerFactory` 
@@ -73,7 +73,7 @@ required, Ranger authentication should be configured at the metastore level.
    **NOTE**: Each defined key-value pair of these regex and value matchers must have a matching pair or else the hook will ignore it.
    
    For example if one wanted to convert any path starting with a s3 protocol and containing the `us-west-1` region
-   to instead point at an Alluxio cluster endpoint, they can configure the hook like so:
+   to instead point at an Alluxio cluster endpoint, the hook would be configured like so:
    ```
    <property>
        <name>apiary.path.replacement.regex.alluxio</name>
