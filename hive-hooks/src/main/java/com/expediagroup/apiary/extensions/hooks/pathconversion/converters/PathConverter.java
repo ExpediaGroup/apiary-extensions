@@ -49,13 +49,12 @@ public class PathConverter extends GenericConverter {
   @Override
   public boolean convertTable(Table table) {
     if (!getConfiguration().isPathConversionEnabled()) {
-      log.trace("[{}-Filter] pathConversion is disabled. Skipping path conversion for table.",
-          getClass().getSimpleName());
+      log.trace("PathConversion is disabled. Skipping path conversion for table.");
       return false;
     }
 
     StorageDescriptor sd = table.getSd();
-    log.debug("[{}-Filter] Examining table location: {}", getClass().getSimpleName(), sd.getLocation());
+    log.debug("Examining table location: {}", sd.getLocation());
     return convertStorageDescriptor(sd);
   }
 
