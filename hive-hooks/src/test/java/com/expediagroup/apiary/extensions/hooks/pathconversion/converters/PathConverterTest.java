@@ -120,6 +120,42 @@ public class PathConverterTest {
   }
 
   @Test
+  public void shouldProperlyHandleOffsetOfSmallerReplacement() {
+    String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
+    String testOutputLocation = "s3://some-foo-uw4/some/other-uw4/result";
+
+    List<PathConversion> testConversions = ImmutableList.of(
+        new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"),
+            "uw4", ImmutableList.of(1, 2))
+    );
+
+    when(config.getPathConversions()).thenReturn(testConversions);
+
+    StorageDescriptor testSD = sdSetup(testInputLocation);
+    boolean result = converter.convertStorageDescriptor(testSD);
+    assertTrue(result);
+    assertEquals(testOutputLocation, testSD.getLocation());
+  }
+
+  @Test
+  public void shouldProperlyHandleOffsetOfLargerReplacement() {
+    String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
+    String testOutputLocation = "s3://some-foo-us-west-oregon-two/some/other-us-west-oregon-two/result";
+
+    List<PathConversion> testConversions = ImmutableList.of(
+        new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"),
+            "us-west-oregon-two", ImmutableList.of(1, 2))
+    );
+
+    when(config.getPathConversions()).thenReturn(testConversions);
+
+    StorageDescriptor testSD = sdSetup(testInputLocation);
+    boolean result = converter.convertStorageDescriptor(testSD);
+    assertTrue(result);
+    assertEquals(testOutputLocation, testSD.getLocation());
+  }
+
+  @Test
   public void shouldProperlyApplySingleCaptureGroup() {
     String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
     String testOutputLocation = "s3://some-foo-us-east-4/some/other-us-west-4/result";
