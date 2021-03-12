@@ -68,13 +68,12 @@ public class PathConverter extends GenericConverter {
   @Override
   public boolean convertPartition(Partition partition) {
     if (!getConfiguration().isPathConversionEnabled()) {
-      log.trace("[{}-Filter] pathConversion is disabled. Skipping path conversion for partition.",
-          getClass().getSimpleName());
+      log.trace("PathConversion is disabled. Skipping path conversion for partition.");
       return false;
     }
 
     StorageDescriptor sd = partition.getSd();
-    log.debug("[{}-Filter] Examining partition location: {}", getClass().getSimpleName(), sd.getLocation());
+    log.debug("Examining partition location: {}", sd.getLocation());
     return convertStorageDescriptor(sd);
   }
 
