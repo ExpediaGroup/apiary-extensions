@@ -35,11 +35,10 @@ public class PathConversionConfigurationTest {
 
   @Mock private HiveConf hiveConf;
 
-  private Properties properties;
+  private final Properties properties = new Properties();
 
   @Before
   public void init() {
-    properties = new Properties();
     properties.setProperty(PathConversionConfiguration.PATH_REPLACEMENT_ENABLED, "true");
   }
 
