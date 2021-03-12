@@ -102,13 +102,31 @@ public class PathConverterTest {
   }
 
   @Test
-  public void shouldProperlyApplyMultipleCaptureGropus() {
+  public void shouldProperlyApplyMultipleCaptureGroups() {
     String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
     String testOutputLocation = "s3://some-foo-us-west-4/some/other-us-west-4/result";
 
     List<PathConversion> testConversions = ImmutableList.of(
         new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"),
             "us-west-4", ImmutableList.of(1, 2))
+    );
+
+    when(config.getPathConversions()).thenReturn(testConversions);
+
+    StorageDescriptor testSD = sdSetup(testInputLocation);
+    boolean result = converter.convertStorageDescriptor(testSD);
+    assertTrue(result);
+    assertEquals(testOutputLocation, testSD.getLocation());
+  }
+
+  @Test
+  public void shouldProperlyApplySingleCaptureGroup() {
+    String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
+    String testOutputLocation = "s3://some-foo-us-east-4/some/other-us-west-4/result";
+
+    List<PathConversion> testConversions = ImmutableList.of(
+        new PathConversion(Pattern.compile("s3://.*/.*/.*(us-east-4).*"),
+            "us-west-4", ImmutableList.of(1))
     );
 
     when(config.getPathConversions()).thenReturn(testConversions);

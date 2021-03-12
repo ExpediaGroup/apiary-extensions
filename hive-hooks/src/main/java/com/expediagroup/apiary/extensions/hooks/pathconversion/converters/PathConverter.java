@@ -82,13 +82,20 @@ public class PathConverter extends GenericConverter {
     for (PathConversion pathConversion : getConfiguration().getPathConversions()) {
       Matcher matcher = pathConversion.pathPattern.matcher(sd.getLocation());
       if (matcher.find()) {
+        StringBuffer newLocationBuffer = new StringBuffer(sd.getLocation());
+
         for (Integer captureGroup : pathConversion.captureGroups) {
           if (hasCaptureGroup(matcher, captureGroup, sd.getLocation())) {
-            String newLocation = sd.getLocation().replace(matcher.group(captureGroup), pathConversion.replacementValue);
-            log.info("Switching storage location {} to {}.", sd.getLocation(), newLocation);
-            sd.setLocation(newLocation);
+            newLocationBuffer.replace(matcher.start(captureGroup), matcher.end(captureGroup),
+                pathConversion.replacementValue);
             pathConverted = true;
           }
+        }
+
+        if (pathConverted) {
+          String newLocation = newLocationBuffer.toString();
+          log.info("Switching storage location {} to {}.", sd.getLocation(), newLocation);
+          sd.setLocation(newLocation);
         }
       }
     }
