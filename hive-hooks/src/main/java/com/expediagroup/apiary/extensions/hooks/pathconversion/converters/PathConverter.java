@@ -83,12 +83,12 @@ public class PathConverter extends GenericConverter {
       Matcher matcher = pathConversion.pathPattern.matcher(sd.getLocation());
       if (matcher.find()) {
         String currentLocation = sd.getLocation();
-        StringBuffer newLocationBuffer = new StringBuffer(sd.getLocation());
+        StringBuilder newLocationBuilder = new StringBuilder(sd.getLocation());
         int offset = 0;
 
         for (Integer captureGroup : pathConversion.captureGroups) {
           if (hasCaptureGroup(matcher, captureGroup, sd.getLocation())) {
-            newLocationBuffer.replace(matcher.start(captureGroup) + offset, matcher.end(captureGroup) + offset,
+            newLocationBuilder.replace(matcher.start(captureGroup) + offset, matcher.end(captureGroup) + offset,
                 pathConversion.replacementValue);
             offset += pathConversion.replacementValue.length() - matcher.group(captureGroup).length();
             pathConverted = true;
@@ -96,7 +96,7 @@ public class PathConverter extends GenericConverter {
         }
 
         if (pathConverted) {
-          String newLocation = newLocationBuffer.toString();
+          String newLocation = newLocationBuilder.toString();
           sd.setLocation(newLocation);
           log.info("Switching storage location {} to {}.", currentLocation, sd.getLocation());
         }
