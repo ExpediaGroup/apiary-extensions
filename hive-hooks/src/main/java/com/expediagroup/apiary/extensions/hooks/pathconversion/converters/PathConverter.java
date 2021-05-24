@@ -36,6 +36,7 @@ import com.expediagroup.apiary.extensions.hooks.pathconversion.models.PathConver
 public class PathConverter extends GenericConverter {
 
   static final String SD_PATH_PARAMETER = "path";
+  static final String TABLE_AVRO_SCHEMA_URL_PARAMETER = "avro.schema.url";
 
   public PathConverter(Configuration configuration) {
     super(configuration);
@@ -58,10 +59,22 @@ public class PathConverter extends GenericConverter {
       log.trace("PathConversion is disabled. Skipping path conversion for table.");
       return false;
     }
+    boolean tableConverted = false;
+    if (table.isSetParameters()) {
+      String parameterPath = table.getParameters().get(TABLE_AVRO_SCHEMA_URL_PARAMETER);
+      if (!Strings.isNullOrEmpty(parameterPath)) {
+        String newParameterPath = convert(parameterPath);
+        Map<String, String> parameters = new HashMap<>(table.getParameters());
+        parameters.put(TABLE_AVRO_SCHEMA_URL_PARAMETER, newParameterPath);
+        table.setParameters(parameters);
+        tableConverted |= !parameterPath.equals(newParameterPath);
+      }
+    }
 
     StorageDescriptor sd = table.getSd();
     log.debug("Examining table location: {}", sd.getLocation());
-    return convertStorageDescriptor(sd);
+    tableConverted |= convertStorageDescriptor(sd);
+    return tableConverted;
   }
 
   /**

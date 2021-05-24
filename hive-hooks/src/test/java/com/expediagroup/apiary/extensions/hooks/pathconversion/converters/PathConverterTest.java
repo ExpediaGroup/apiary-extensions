@@ -187,6 +187,52 @@ public class PathConverterTest {
   }
 
   @Test
+  public void shouldProperlyConvertPathForTableAvroUrl() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "s3://some-foo";
+    String testInputLocation2 = "s3d://some-foo2";
+    String testOutputLocation2 = "s3://some-foo2";
+
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
+
+    when(config.getPathConversions()).thenReturn(testConversions);
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Table srcTable = tableSetup(testInputLocation);
+    Map<String, String> params = new HashMap<>();
+    params.put(PathConverter.TABLE_AVRO_SCHEMA_URL_PARAMETER, testInputLocation2);
+    srcTable.setParameters(params);
+
+    boolean result = converter.convertTable(srcTable);
+    assertTrue(result);
+    assertEquals(testOutputLocation, srcTable.getSd().getLocation());
+    assertEquals(testOutputLocation2, srcTable.getParameters().get(PathConverter.TABLE_AVRO_SCHEMA_URL_PARAMETER));
+  }
+
+  @Test
+  public void shouldProperlyConvertPathForTableAvroUrlEmpty() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "s3://some-foo";
+
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
+
+    when(config.getPathConversions()).thenReturn(testConversions);
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Table srcTable = tableSetup(testInputLocation);
+    Map<String, String> params = new HashMap<>();
+    params.put(PathConverter.TABLE_AVRO_SCHEMA_URL_PARAMETER, "");
+    srcTable.setParameters(params);
+
+    boolean result = converter.convertTable(srcTable);
+    assertTrue(result);
+    assertEquals(testOutputLocation, srcTable.getSd().getLocation());
+    assertEquals("", srcTable.getParameters().get(PathConverter.TABLE_AVRO_SCHEMA_URL_PARAMETER));
+  }
+
+  @Test
   public void shouldDisableConvertPathForTableIfFlagIsDisabled() {
     String testInputLocation = "s3d://some-foo";
     when(config.isPathConversionEnabled()).thenReturn(false);
@@ -238,6 +284,28 @@ public class PathConverterTest {
     assertTrue(result);
     assertEquals(testOutputLocation, srcPartition.getSd().getLocation());
     assertEquals(testOutputParamLocation, srcPartition.getSd().getParameters().get(PathConverter.SD_PATH_PARAMETER));
+  }
+
+  @Test
+  public void shouldProperlyConvertPathForPartitionParameterEmpty() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "s3://some-foo";
+
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
+
+    when(config.getPathConversions()).thenReturn(testConversions);
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Partition srcPartition = partitionSetup(testInputLocation);
+    Map<String, String> params = new HashMap<>();
+    params.put(PathConverter.SD_PATH_PARAMETER, "");
+    srcPartition.getSd().setParameters(params);
+
+    boolean result = converter.convertPartition(srcPartition);
+    assertTrue(result);
+    assertEquals(testOutputLocation, srcPartition.getSd().getLocation());
+    assertEquals("", srcPartition.getSd().getParameters().get(PathConverter.SD_PATH_PARAMETER));
   }
 
   @Test
