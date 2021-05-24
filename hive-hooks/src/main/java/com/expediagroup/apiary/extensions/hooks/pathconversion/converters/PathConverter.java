@@ -15,6 +15,8 @@
  */
 package com.expediagroup.apiary.extensions.hooks.pathconversion.converters;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -23,6 +25,8 @@ import org.apache.hadoop.hive.metastore.api.Table;
 
 import lombok.extern.slf4j.Slf4j;
 
+import com.google.common.base.Strings;
+
 import com.expediagroup.apiary.extensions.hooks.config.Configuration;
 import com.expediagroup.apiary.extensions.hooks.converters.GenericConverter;
 import com.expediagroup.apiary.extensions.hooks.pathconversion.config.PathConversionConfiguration;
@@ -30,6 +34,9 @@ import com.expediagroup.apiary.extensions.hooks.pathconversion.models.PathConver
 
 @Slf4j
 public class PathConverter extends GenericConverter {
+
+  static final String SD_PATH_PARAMETER = "path";
+  static final String TABLE_AVRO_SCHEMA_URL_PARAMETER = "avro.schema.url";
 
   public PathConverter(Configuration configuration) {
     super(configuration);
@@ -52,10 +59,22 @@ public class PathConverter extends GenericConverter {
       log.trace("PathConversion is disabled. Skipping path conversion for table.");
       return false;
     }
+    boolean tableConverted = false;
+    if (table.isSetParameters()) {
+      String parameterPath = table.getParameters().get(TABLE_AVRO_SCHEMA_URL_PARAMETER);
+      if (!Strings.isNullOrEmpty(parameterPath)) {
+        String newParameterPath = convert(parameterPath);
+        Map<String, String> parameters = new HashMap<>(table.getParameters());
+        parameters.put(TABLE_AVRO_SCHEMA_URL_PARAMETER, newParameterPath);
+        table.setParameters(parameters);
+        tableConverted |= !parameterPath.equals(newParameterPath);
+      }
+    }
 
     StorageDescriptor sd = table.getSd();
     log.debug("Examining table location: {}", sd.getLocation());
-    return convertStorageDescriptor(sd);
+    tableConverted |= convertStorageDescriptor(sd);
+    return tableConverted;
   }
 
   /**
@@ -78,32 +97,48 @@ public class PathConverter extends GenericConverter {
 
   @Override
   public boolean convertStorageDescriptor(StorageDescriptor sd) {
+    String currentLocation = sd.getLocation();
+    sd.setLocation(convert(currentLocation));
+    log.info("Switching storage location {} to {}.", currentLocation, sd.getLocation());
+    boolean pathConverted = !currentLocation.equals(sd.getLocation());
+    if (sd.isSetParameters()) {
+      String parameterPath = sd.getParameters().get(SD_PATH_PARAMETER);
+      if (!Strings.isNullOrEmpty(parameterPath)) {
+        String newParameterPath = convert(parameterPath);
+        Map<String, String> parameters = new HashMap<>(sd.getParameters());
+        parameters.put(SD_PATH_PARAMETER, newParameterPath);
+        sd.setParameters(parameters);
+        pathConverted |= !parameterPath.equals(newParameterPath);
+      }
+    }
+    return pathConverted;
+  }
+
+  private String convert(String location) {
+    String newLocation = location;
     boolean pathConverted = false;
     for (PathConversion pathConversion : getConfiguration().getPathConversions()) {
-      Matcher matcher = pathConversion.pathPattern.matcher(sd.getLocation());
+      Matcher matcher = pathConversion.pathPattern.matcher(newLocation);
       if (matcher.find()) {
-        String currentLocation = sd.getLocation();
-        StringBuilder newLocationBuilder = new StringBuilder(sd.getLocation());
+        StringBuilder newLocationBuilder = new StringBuilder(newLocation);
         int offset = 0;
 
         for (Integer captureGroup : pathConversion.captureGroups) {
-          if (hasCaptureGroup(matcher, captureGroup, sd.getLocation())) {
-            newLocationBuilder.replace(matcher.start(captureGroup) + offset, matcher.end(captureGroup) + offset,
-                pathConversion.replacementValue);
+          if (hasCaptureGroup(matcher, captureGroup, newLocation)) {
+            newLocationBuilder
+                .replace(matcher.start(captureGroup) + offset, matcher.end(captureGroup) + offset,
+                    pathConversion.replacementValue);
             offset += pathConversion.replacementValue.length() - matcher.group(captureGroup).length();
             pathConverted = true;
           }
         }
 
         if (pathConverted) {
-          String newLocation = newLocationBuilder.toString();
-          sd.setLocation(newLocation);
-          log.info("Switching storage location {} to {}.", currentLocation, sd.getLocation());
+          newLocation = newLocationBuilder.toString();
         }
       }
     }
-
-    return pathConverted;
+    return newLocation;
   }
 
   private boolean hasCaptureGroup(Matcher matcher, int groupNumber, String location) {

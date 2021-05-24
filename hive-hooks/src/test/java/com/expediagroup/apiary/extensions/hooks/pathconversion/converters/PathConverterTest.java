@@ -20,7 +20,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -40,7 +42,8 @@ import com.expediagroup.apiary.extensions.hooks.pathconversion.models.PathConver
 @RunWith(MockitoJUnitRunner.class)
 public class PathConverterTest {
 
-  @Mock private PathConversionConfiguration config;
+  @Mock
+  private PathConversionConfiguration config;
   private PathConverter converter;
 
   @Before
@@ -53,9 +56,8 @@ public class PathConverterTest {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "s3://some-foo";
 
-    List<PathConversion> testConversions = ImmutableList.of(
-        new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1))
-    );
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
 
@@ -70,10 +72,9 @@ public class PathConverterTest {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "alluxio://some-foo";
 
-    List<PathConversion> testConversions = ImmutableList.of(
-        new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)),
-        new PathConversion(Pattern.compile("^(s3)(?:.*)"), "alluxio", ImmutableList.of(1))
-    );
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)),
+            new PathConversion(Pattern.compile("^(s3)(?:.*)"), "alluxio", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
 
@@ -89,9 +90,8 @@ public class PathConverterTest {
     String alluxioTestPrefix = "alluxio://some-alluxio-url:1234/";
     String testOutputLocation = String.format("%ssome-foo-us-east-4/some/other/result", alluxioTestPrefix);
 
-    List<PathConversion> testConversions = ImmutableList.of(
-        new PathConversion(Pattern.compile("^(s3://)(?:.*us-east-4.*)"), alluxioTestPrefix, ImmutableList.of(1))
-    );
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3://)(?:.*us-east-4.*)"), alluxioTestPrefix, ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
 
@@ -106,10 +106,9 @@ public class PathConverterTest {
     String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
     String testOutputLocation = "s3://some-foo-us-west-4/some/other-us-west-4/result";
 
-    List<PathConversion> testConversions = ImmutableList.of(
-        new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"),
-            "us-west-4", ImmutableList.of(1, 2))
-    );
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"), "us-west-4",
+            ImmutableList.of(1, 2)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
 
@@ -124,10 +123,9 @@ public class PathConverterTest {
     String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
     String testOutputLocation = "s3://some-foo-uw4/some/other-uw4/result";
 
-    List<PathConversion> testConversions = ImmutableList.of(
-        new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"),
-            "uw4", ImmutableList.of(1, 2))
-    );
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"), "uw4",
+            ImmutableList.of(1, 2)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
 
@@ -142,10 +140,9 @@ public class PathConverterTest {
     String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
     String testOutputLocation = "s3://some-foo-us-west-oregon-two/some/other-us-west-oregon-two/result";
 
-    List<PathConversion> testConversions = ImmutableList.of(
-        new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"),
-            "us-west-oregon-two", ImmutableList.of(1, 2))
-    );
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("s3://.*(us-east-4)/.*/.*(us-east-4).*"), "us-west-oregon-two",
+            ImmutableList.of(1, 2)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
 
@@ -160,10 +157,8 @@ public class PathConverterTest {
     String testInputLocation = "s3://some-foo-us-east-4/some/other-us-east-4/result";
     String testOutputLocation = "s3://some-foo-us-east-4/some/other-us-west-4/result";
 
-    List<PathConversion> testConversions = ImmutableList.of(
-        new PathConversion(Pattern.compile("s3://.*/.*/.*(us-east-4).*"),
-            "us-west-4", ImmutableList.of(1))
-    );
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("s3://.*/.*/.*(us-east-4).*"), "us-west-4", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
 
@@ -178,9 +173,8 @@ public class PathConverterTest {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "s3://some-foo";
 
-    List<PathConversion> testConversions = ImmutableList.of(
-        new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1))
-    );
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
     when(config.isPathConversionEnabled()).thenReturn(true);
@@ -190,6 +184,52 @@ public class PathConverterTest {
     boolean result = converter.convertTable(srcTable);
     assertTrue(result);
     assertEquals(testOutputLocation, srcTable.getSd().getLocation());
+  }
+
+  @Test
+  public void shouldProperlyConvertPathForTableAvroUrl() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "s3://some-foo";
+    String testInputLocation2 = "s3d://some-foo2";
+    String testOutputLocation2 = "s3://some-foo2";
+
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
+
+    when(config.getPathConversions()).thenReturn(testConversions);
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Table srcTable = tableSetup(testInputLocation);
+    Map<String, String> params = new HashMap<>();
+    params.put(PathConverter.TABLE_AVRO_SCHEMA_URL_PARAMETER, testInputLocation2);
+    srcTable.setParameters(params);
+
+    boolean result = converter.convertTable(srcTable);
+    assertTrue(result);
+    assertEquals(testOutputLocation, srcTable.getSd().getLocation());
+    assertEquals(testOutputLocation2, srcTable.getParameters().get(PathConverter.TABLE_AVRO_SCHEMA_URL_PARAMETER));
+  }
+
+  @Test
+  public void shouldProperlyConvertPathForTableAvroUrlEmpty() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "s3://some-foo";
+
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
+
+    when(config.getPathConversions()).thenReturn(testConversions);
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Table srcTable = tableSetup(testInputLocation);
+    Map<String, String> params = new HashMap<>();
+    params.put(PathConverter.TABLE_AVRO_SCHEMA_URL_PARAMETER, "");
+    srcTable.setParameters(params);
+
+    boolean result = converter.convertTable(srcTable);
+    assertTrue(result);
+    assertEquals(testOutputLocation, srcTable.getSd().getLocation());
+    assertEquals("", srcTable.getParameters().get(PathConverter.TABLE_AVRO_SCHEMA_URL_PARAMETER));
   }
 
   @Test
@@ -209,9 +249,8 @@ public class PathConverterTest {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "s3://some-foo";
 
-    List<PathConversion> testConversions = ImmutableList.of(
-        new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1))
-    );
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
     when(config.isPathConversionEnabled()).thenReturn(true);
@@ -221,6 +260,52 @@ public class PathConverterTest {
     boolean result = converter.convertPartition(srcPartition);
     assertTrue(result);
     assertEquals(testOutputLocation, srcPartition.getSd().getLocation());
+  }
+
+  @Test
+  public void shouldProperlyConvertPathForPartitionParameter() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "s3://some-foo";
+    String testInputParamLocation = "s3d://some-foo2";
+    String testOutputParamLocation = "s3://some-foo2";
+
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
+
+    when(config.getPathConversions()).thenReturn(testConversions);
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Partition srcPartition = partitionSetup(testInputLocation);
+    Map<String, String> params = new HashMap<>();
+    params.put(PathConverter.SD_PATH_PARAMETER, testInputParamLocation);
+    srcPartition.getSd().setParameters(params);
+
+    boolean result = converter.convertPartition(srcPartition);
+    assertTrue(result);
+    assertEquals(testOutputLocation, srcPartition.getSd().getLocation());
+    assertEquals(testOutputParamLocation, srcPartition.getSd().getParameters().get(PathConverter.SD_PATH_PARAMETER));
+  }
+
+  @Test
+  public void shouldProperlyConvertPathForPartitionParameterEmpty() {
+    String testInputLocation = "s3d://some-foo";
+    String testOutputLocation = "s3://some-foo";
+
+    List<PathConversion> testConversions = ImmutableList
+        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
+
+    when(config.getPathConversions()).thenReturn(testConversions);
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Partition srcPartition = partitionSetup(testInputLocation);
+    Map<String, String> params = new HashMap<>();
+    params.put(PathConverter.SD_PATH_PARAMETER, "");
+    srcPartition.getSd().setParameters(params);
+
+    boolean result = converter.convertPartition(srcPartition);
+    assertTrue(result);
+    assertEquals(testOutputLocation, srcPartition.getSd().getLocation());
+    assertEquals("", srcPartition.getSd().getParameters().get(PathConverter.SD_PATH_PARAMETER));
   }
 
   @Test
