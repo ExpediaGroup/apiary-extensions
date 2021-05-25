@@ -3,10 +3,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 7.2.1 - 2021-05-24
+## 7.2.1 - TBD
 ### Changed
 - `hive-hooks` component to convert Storage Description 'path' parameter.
 - `hive-hooks` component to convert table parameter 'avro.schema.url'.
+
+### Removed
+- Excluded `org.pentaho:pentaho-aggdesigner-algorithm` from `kafka-metastore-events`, `apiary-gluesync-listener`, `apiary-metastore-auth` and `apiary-ranger-metastore-plugin`.
 
 ## 7.2.0 - 2021-03-16
 ### Added
