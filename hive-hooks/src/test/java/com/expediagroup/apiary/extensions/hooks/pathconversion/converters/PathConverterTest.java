@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.Before;
@@ -263,7 +264,7 @@ public class PathConverterTest {
   }
 
   @Test
-  public void shouldProperlyConvertPathForPartitionParameter() {
+  public void shouldProperlyConvertPathForSdInfoParameter() {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "s3://some-foo";
     String testInputParamLocation = "s3d://some-foo2";
@@ -277,17 +278,18 @@ public class PathConverterTest {
 
     Partition srcPartition = partitionSetup(testInputLocation);
     Map<String, String> params = new HashMap<>();
-    params.put(PathConverter.SD_PATH_PARAMETER, testInputParamLocation);
-    srcPartition.getSd().setParameters(params);
+    params.put(PathConverter.SD_INFO_PATH_PARAMETER, testInputParamLocation);
+    srcPartition.getSd().getSerdeInfo().setParameters(params);
 
     boolean result = converter.convertPartition(srcPartition);
     assertTrue(result);
     assertEquals(testOutputLocation, srcPartition.getSd().getLocation());
-    assertEquals(testOutputParamLocation, srcPartition.getSd().getParameters().get(PathConverter.SD_PATH_PARAMETER));
+    assertEquals(testOutputParamLocation,
+        srcPartition.getSd().getSerdeInfo().getParameters().get(PathConverter.SD_INFO_PATH_PARAMETER));
   }
 
   @Test
-  public void shouldProperlyConvertPathForPartitionParameterEmpty() {
+  public void shouldProperlyConvertPathForSdInfoParameterEmpty() {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "s3://some-foo";
 
@@ -299,13 +301,13 @@ public class PathConverterTest {
 
     Partition srcPartition = partitionSetup(testInputLocation);
     Map<String, String> params = new HashMap<>();
-    params.put(PathConverter.SD_PATH_PARAMETER, "");
-    srcPartition.getSd().setParameters(params);
+    params.put(PathConverter.SD_INFO_PATH_PARAMETER, "");
+    srcPartition.getSd().getSerdeInfo().setParameters(params);
 
     boolean result = converter.convertPartition(srcPartition);
     assertTrue(result);
     assertEquals(testOutputLocation, srcPartition.getSd().getLocation());
-    assertEquals("", srcPartition.getSd().getParameters().get(PathConverter.SD_PATH_PARAMETER));
+    assertEquals("", srcPartition.getSd().getSerdeInfo().getParameters().get(PathConverter.SD_INFO_PATH_PARAMETER));
   }
 
   @Test
@@ -337,6 +339,7 @@ public class PathConverterTest {
   private StorageDescriptor sdSetup(String location) {
     StorageDescriptor sd = new StorageDescriptor();
     sd.setLocation(location);
+    sd.setSerdeInfo(new SerDeInfo());
     return sd;
   }
 }

@@ -35,7 +35,7 @@ import com.expediagroup.apiary.extensions.hooks.pathconversion.models.PathConver
 @Slf4j
 public class PathConverter extends GenericConverter {
 
-  static final String SD_PATH_PARAMETER = "path";
+  static final String SD_INFO_PATH_PARAMETER = "path";
   static final String TABLE_AVRO_SCHEMA_URL_PARAMETER = "avro.schema.url";
 
   public PathConverter(Configuration configuration) {
@@ -101,13 +101,13 @@ public class PathConverter extends GenericConverter {
     sd.setLocation(convert(currentLocation));
     log.info("Switching storage location {} to {}.", currentLocation, sd.getLocation());
     boolean pathConverted = !currentLocation.equals(sd.getLocation());
-    if (sd.isSetParameters()) {
-      String parameterPath = sd.getParameters().get(SD_PATH_PARAMETER);
+    if (sd.isSetSerdeInfo() && sd.getSerdeInfo().isSetParameters()) {
+      String parameterPath = sd.getSerdeInfo().getParameters().get(SD_INFO_PATH_PARAMETER);
       if (!Strings.isNullOrEmpty(parameterPath)) {
         String newParameterPath = convert(parameterPath);
-        Map<String, String> parameters = new HashMap<>(sd.getParameters());
-        parameters.put(SD_PATH_PARAMETER, newParameterPath);
-        sd.setParameters(parameters);
+        Map<String, String> parameters = new HashMap<>(sd.getSerdeInfo().getParameters());
+        parameters.put(SD_INFO_PATH_PARAMETER, newParameterPath);
+        sd.getSerdeInfo().setParameters(parameters);
         pathConverted |= !parameterPath.equals(newParameterPath);
       }
     }
