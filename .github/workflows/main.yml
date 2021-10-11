@@ -10,9 +10,6 @@ jobs:
   test:
     name: Package and run all tests
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        java-version: [ 8, 11 ]    
     steps:
     - uses: actions/checkout@v2
       with:
@@ -34,8 +31,10 @@ jobs:
       uses: actions/setup-java@v2
       with:
         distribution: 'adopt'
-        java-version: ${{ matrix.java-version }}
+        java-version: 8
         java-package: jdk
+        # this creates a settings.xml with the following server
+        settings-path: ${{ github.workspace }}
 
     - name: Run Maven Targets
       run: mvn package jacoco:report coveralls:report --batch-mode --show-version --no-transfer-progress --activate-profiles coveralls -Dcoveralls.skip=$COVERALLS_SKIP -DrepoToken=${{ secrets.COVERALLS_REPO_TOKEN }}
