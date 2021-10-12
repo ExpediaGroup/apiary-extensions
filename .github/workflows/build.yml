@@ -1,0 +1,32 @@
+name: Make a build
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "The branch to build a SNAPSHOT from."
+        required: true
+        default: "main"
+jobs:
+  deploy:
+    name: Build SNAPSHOT to Sonatype
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '8'
+          java-package: jdk
+          # this creates a settings.xml with the following server
+          settings-path: ${{ github.workspace }}
+
+      - name: Run Maven Targets
+        run: mvn install jacoco:report checkstyle:checkstyle javadoc:javadoc spotbugs:spotbugs --settings $GITHUB_WORKSPACE/settings.xml --batch-mode --show-version --no-transfer-progress
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
