@@ -1,4 +1,4 @@
-name: Make a build
+name: Build with parameters
 on:
   workflow_dispatch:
     inputs:
@@ -8,7 +8,7 @@ on:
         default: "main"
 jobs:
   deploy:
-    name: Build SNAPSHOT to Sonatype
+    name: Build SNAPSHOT
     runs-on: ubuntu-20.04
 
     steps:
