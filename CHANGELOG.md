@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## 7.2.5 - 2022-02-28
 ### Fixed
 - `hive-event-listeners/apiary-gluesync-listener` added fix for NullPointerException on unpartitioned tables.
+### Added
+- `log4j` managed dependencies to overwrite transitive dependencies with log4j security issues being pulled in. These dependencies come from Hive and are provided but they break our tests.
 
 ## 7.2.4 - 2021-10-12
 - Same as `7.2.2`. Released while configuring GitHub actions workflow.
