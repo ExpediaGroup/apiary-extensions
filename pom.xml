@@ -34,6 +34,7 @@
     <shade.prefix>${project.groupId}.shaded</shade.prefix>
     <slf4j.version>1.7.25</slf4j.version>
     <beeju.version>4.0.0</beeju.version>
+    <log4j2.version>2.17.1</log4j2.version>
     <expediagroup.shaded.prefix>com.expediagroup.apiary.extensions.shaded</expediagroup.shaded.prefix>
   </properties>
 
@@ -80,6 +81,16 @@
         <version>${beeju.version}</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>${log4j2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>${log4j2.version}</version>
+      </dependency>      
     </dependencies>
   </dependencyManagement>
 

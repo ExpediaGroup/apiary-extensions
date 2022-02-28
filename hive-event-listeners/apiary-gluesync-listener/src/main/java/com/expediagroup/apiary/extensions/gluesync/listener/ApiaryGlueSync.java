@@ -58,8 +58,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGlueSync.class);
 
-  private AWSGlue glueClient;
-  private String gluePrefix;
+  private final AWSGlue glueClient;
+  private final String gluePrefix;
 
   public ApiaryGlueSync(Configuration config) {
     super(config);
@@ -208,7 +208,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
 
     final Date date = convertTableDate(table.getLastAccessTime());
 
-    final List<Column> partitionKeys = extractColumns(table.getPartitionKeys());
+    List<Column> partitionKeys = extractColumns(table.getPartitionKeys());
 
     final org.apache.hadoop.hive.metastore.api.StorageDescriptor storageDescriptor = table.getSd();
     final List<Column> columns = extractColumns(storageDescriptor.getCols());
@@ -294,6 +294,9 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
 
   private List<Column> extractColumns(final List<FieldSchema> colList) {
     final List<Column> columns = new ArrayList<>();
+    if (colList == null) {
+      return columns;
+    }
 
     for (final FieldSchema fieldSchema : colList) {
       final Column col = new Column()
