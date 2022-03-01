@@ -3,11 +3,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 7.2.5 - 2022-03-01
+### Fixed
+- `hive-event-listeners/apiary-gluesync-listener` added fix for NullPointerException on unpartitioned tables.
+### Added
+- `log4j` managed dependencies to overwrite transitive dependencies with log4j security issues being pulled in. These dependencies come from Hive and are provided but they break our tests.
+
 ## 7.2.4 - 2021-10-12
 - Same as `7.2.2`. Released while configuring GitHub actions workflow.
 
 ## 7.2.3 - 2021-10-12
-- Same as `7.2.2`. Released while configuring GitHub actions workflow. 
+- Same as `7.2.2`. Released while configuring GitHub actions workflow.
 
 ## 7.2.2 - 2021-05-27
 ### Fixed
