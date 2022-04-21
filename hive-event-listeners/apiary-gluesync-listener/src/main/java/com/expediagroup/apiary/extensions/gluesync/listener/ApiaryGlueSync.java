@@ -109,7 +109,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     Database database = event.getDatabase();
     try {
       DeleteDatabaseRequest deleteDatabaseRequest = new DeleteDatabaseRequest()
-          .withName(database.getName());
+          .withName(glueDbName(database.getName()));
       glueClient.deleteDatabase(deleteDatabaseRequest);
       log.debug(database + " database deleted from glue catalog");
     } catch (EntityNotFoundException e) {
@@ -247,7 +247,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   }
 
   DatabaseInput transformDatabase(Database database) {
-    return new DatabaseInput().withName(database.getName())
+    return new DatabaseInput().withName(glueDbName(database.getName()))
         .withParameters(database.getParameters())
         .withDescription(database.getDescription())
         .withLocationUri(database.getLocationUri());
@@ -364,7 +364,11 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     return null;
   }
 
+  private String glueDbName(String dbName) {
+    return (gluePrefix == null) ? dbName : gluePrefix + dbName;
+  }
+
   private String glueDbName(Table table) {
-    return (gluePrefix == null) ? table.getDbName() : gluePrefix + table.getDbName();
+    return glueDbName(table.getDbName());
   }
 }

@@ -107,7 +107,7 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).createDatabase(createDatabaseRequestCaptor.capture());
     CreateDatabaseRequest createDatabaseRequest = createDatabaseRequestCaptor.getValue();
 
-    assertThat(createDatabaseRequest.getDatabaseInput().getName(), is(dbName));
+    assertThat(createDatabaseRequest.getDatabaseInput().getName(), is(gluePrefix + dbName));
     assertThat(createDatabaseRequest.getDatabaseInput().getLocationUri(), is(locationUri));
     assertThat(createDatabaseRequest.getDatabaseInput().getParameters(), is(params));
     assertThat(createDatabaseRequest.getDatabaseInput().getDescription(), is(description));
@@ -128,7 +128,7 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).updateDatabase(updateDatabaseRequestCaptor.capture());
     UpdateDatabaseRequest updateDatabaseRequest = updateDatabaseRequestCaptor.getValue();
 
-    assertThat(updateDatabaseRequest.getDatabaseInput().getName(), is(dbName));
+    assertThat(updateDatabaseRequest.getDatabaseInput().getName(), is(gluePrefix + dbName));
     assertThat(updateDatabaseRequest.getDatabaseInput().getLocationUri(), is(locationUri));
     assertThat(updateDatabaseRequest.getDatabaseInput().getParameters(), is(params));
     assertThat(updateDatabaseRequest.getDatabaseInput().getDescription(), is(description));
@@ -146,7 +146,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).deleteDatabase(deleteDatabaseRequestCaptor.capture());
     DeleteDatabaseRequest deleteDatabaseRequest = deleteDatabaseRequestCaptor.getValue();
-    assertThat(deleteDatabaseRequest.getName(), is(dbName));
+    assertThat(deleteDatabaseRequest.getName(), is(gluePrefix + dbName));
   }
 
   @Test
