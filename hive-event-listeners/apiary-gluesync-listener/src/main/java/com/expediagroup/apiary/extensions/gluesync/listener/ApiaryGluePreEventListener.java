@@ -46,10 +46,6 @@ public class ApiaryGluePreEventListener extends MetaStorePreEventListener {
   public void onEvent(PreEventContext context) throws MetaException, NoSuchObjectException, InvalidOperationException {
 
     switch (context.getEventType()) {
-    case CREATE_DATABASE:
-      throw new InvalidOperationException("Create Database is disabled when glue sync is enabled");
-    case DROP_DATABASE:
-      throw new InvalidOperationException("Drop Database is disabled when glue sync is enabled");
     case ALTER_TABLE:
       PreAlterTableEvent tableEvent = (PreAlterTableEvent) context;
       if (!(tableEvent.getOldTable().getTableName().equals(tableEvent.getNewTable().getTableName()))) {
@@ -67,7 +63,5 @@ public class ApiaryGluePreEventListener extends MetaStorePreEventListener {
     default:
       break;
     }
-
   }
-
 }

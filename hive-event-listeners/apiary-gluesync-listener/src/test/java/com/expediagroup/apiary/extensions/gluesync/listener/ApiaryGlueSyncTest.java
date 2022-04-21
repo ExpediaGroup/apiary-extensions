@@ -30,13 +30,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
+import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,9 +48,14 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.amazonaws.services.glue.AWSGlue;
+import com.amazonaws.services.glue.model.AlreadyExistsException;
 import com.amazonaws.services.glue.model.Column;
+import com.amazonaws.services.glue.model.CreateDatabaseRequest;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.CreateTableResult;
+import com.amazonaws.services.glue.model.DeleteDatabaseRequest;
+import com.amazonaws.services.glue.model.UpdateDatabaseRequest;
+import com.google.common.collect.ImmutableMap;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryGlueSyncTest {
@@ -63,12 +69,21 @@ public class ApiaryGlueSyncTest {
   private CreateTableResult createTableResult;
 
   @Captor
-  private ArgumentCaptor<CreateTableRequest> requestCaptor;
+  private ArgumentCaptor<CreateTableRequest> tableRequestCaptor;
+  @Captor
+  private ArgumentCaptor<CreateDatabaseRequest> createDatabaseRequestCaptor;
+  @Captor
+  private ArgumentCaptor<UpdateDatabaseRequest> updateDatabaseRequestCaptor;
+  @Captor
+  private ArgumentCaptor<DeleteDatabaseRequest> deleteDatabaseRequestCaptor;
 
   private final String tableName = "some_table";
   private final String dbName = "some_db";
   private final String[] colNames = { "col1", "col2", "col3" };
   private final String[] partNames = { "part1", "part2" };
+  private final String locationUri = "uri";
+  private final String description = "desc";
+  private final ImmutableMap<String, String> params = ImmutableMap.of("k", "v");
 
   private final String gluePrefix = "test_";
   private ApiaryGlueSync glueSync;
@@ -80,7 +95,62 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onCreateTable() throws MetaException {
+  public void onCreateDatabase() {
+    CreateDatabaseEvent event = mock(CreateDatabaseEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Database database = getDatabase(description, locationUri, params);
+    when(event.getDatabase()).thenReturn(database);
+
+    glueSync.onCreateDatabase(event);
+
+    verify(glueClient).createDatabase(createDatabaseRequestCaptor.capture());
+    CreateDatabaseRequest createDatabaseRequest = createDatabaseRequestCaptor.getValue();
+
+    assertThat(createDatabaseRequest.getDatabaseInput().getName(), is(dbName));
+    assertThat(createDatabaseRequest.getDatabaseInput().getLocationUri(), is(locationUri));
+    assertThat(createDatabaseRequest.getDatabaseInput().getParameters(), is(params));
+    assertThat(createDatabaseRequest.getDatabaseInput().getDescription(), is(description));
+  }
+
+  @Test
+  public void onCreateDatabaseThatAlreadyExists() {
+    CreateDatabaseEvent event = mock(CreateDatabaseEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Database database = getDatabase(description, locationUri, params);
+    when(event.getDatabase()).thenReturn(database);
+    when(glueClient.createDatabase(any())).thenThrow(new AlreadyExistsException(""));
+
+    glueSync.onCreateDatabase(event);
+
+    verify(glueClient).createDatabase(createDatabaseRequestCaptor.capture());
+    verify(glueClient).updateDatabase(updateDatabaseRequestCaptor.capture());
+    UpdateDatabaseRequest updateDatabaseRequest = updateDatabaseRequestCaptor.getValue();
+
+    assertThat(updateDatabaseRequest.getDatabaseInput().getName(), is(dbName));
+    assertThat(updateDatabaseRequest.getDatabaseInput().getLocationUri(), is(locationUri));
+    assertThat(updateDatabaseRequest.getDatabaseInput().getParameters(), is(params));
+    assertThat(updateDatabaseRequest.getDatabaseInput().getDescription(), is(description));
+  }
+
+  @Test
+  public void onDropDatabase() {
+    DropDatabaseEvent event = mock(DropDatabaseEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Database database = getDatabase(description, locationUri, params);
+    when(event.getDatabase()).thenReturn(database);
+
+    glueSync.onDropDatabase(event);
+
+    verify(glueClient).deleteDatabase(deleteDatabaseRequestCaptor.capture());
+    DeleteDatabaseRequest deleteDatabaseRequest = deleteDatabaseRequestCaptor.getValue();
+    assertThat(deleteDatabaseRequest.getName(), is(dbName));
+  }
+
+  @Test
+  public void onCreateTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -98,9 +168,9 @@ public class ApiaryGlueSyncTest {
     sd.setInputFormat("org.apache.hadoop.mapred.TextInputFormat");
     sd.setOutputFormat("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat");
     sd.setSerdeInfo(new SerDeInfo());
-    sd.getSerdeInfo().setParameters(new HashMap<String, String>());
+    sd.getSerdeInfo().setParameters(new HashMap<>());
     sd.getSerdeInfo().getParameters().put(serdeConstants.SERIALIZATION_FORMAT, "1");
-    sd.setSortCols(new ArrayList<Order>());
+    sd.setSortCols(new ArrayList<>());
     table.setSd(sd);
 
     List<FieldSchema> partitions = new ArrayList<>();
@@ -113,8 +183,8 @@ public class ApiaryGlueSyncTest {
 
     glueSync.onCreateTable(event);
 
-    verify(glueClient).createTable(requestCaptor.capture());
-    CreateTableRequest createTableRequest = requestCaptor.getValue();
+    verify(glueClient).createTable(tableRequestCaptor.capture());
+    CreateTableRequest createTableRequest = tableRequestCaptor.getValue();
 
     assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
     assertThat(createTableRequest.getTableInput().getName(), is(tableName));
@@ -122,12 +192,8 @@ public class ApiaryGlueSyncTest {
     assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
   }
 
-  private List<String> toList(List<Column> columns) {
-    return columns.stream().map(p -> p.getName()).collect(Collectors.toList());
-  }
-
   @Test
-  public void onCreateUnpartitionedTable() throws MetaException {
+  public void onCreateUnpartitionedTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -145,16 +211,16 @@ public class ApiaryGlueSyncTest {
     sd.setInputFormat("org.apache.hadoop.mapred.TextInputFormat");
     sd.setOutputFormat("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat");
     sd.setSerdeInfo(new SerDeInfo());
-    sd.getSerdeInfo().setParameters(new HashMap<String, String>());
+    sd.getSerdeInfo().setParameters(new HashMap<>());
     sd.getSerdeInfo().getParameters().put(serdeConstants.SERIALIZATION_FORMAT, "1");
-    sd.setSortCols(new ArrayList<Order>());
+    sd.setSortCols(new ArrayList<>());
     table.setSd(sd);
     when(event.getTable()).thenReturn(table);
 
     glueSync.onCreateTable(event);
 
-    verify(glueClient).createTable(requestCaptor.capture());
-    CreateTableRequest createTableRequest = requestCaptor.getValue();
+    verify(glueClient).createTable(tableRequestCaptor.capture());
+    CreateTableRequest createTableRequest = tableRequestCaptor.getValue();
 
     assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
     assertThat(createTableRequest.getTableInput().getName(), is(tableName));
@@ -162,4 +228,16 @@ public class ApiaryGlueSyncTest {
     assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
   }
 
+  private List<String> toList(List<Column> columns) {
+    return columns.stream().map(Column::getName).collect(Collectors.toList());
+  }
+
+  private Database getDatabase(String description, String locationUri, ImmutableMap<String, String> params) {
+    Database database = new Database();
+    database.setName(dbName);
+    database.setDescription(description);
+    database.setLocationUri(locationUri);
+    database.setParameters(params);
+    return database;
+  }
 }

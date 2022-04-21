@@ -24,14 +24,16 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
+import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
+import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.slf4j.Logger;
@@ -41,8 +43,11 @@ import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
 import com.amazonaws.services.glue.model.Column;
+import com.amazonaws.services.glue.model.CreateDatabaseRequest;
 import com.amazonaws.services.glue.model.CreatePartitionRequest;
 import com.amazonaws.services.glue.model.CreateTableRequest;
+import com.amazonaws.services.glue.model.DatabaseInput;
+import com.amazonaws.services.glue.model.DeleteDatabaseRequest;
 import com.amazonaws.services.glue.model.DeletePartitionRequest;
 import com.amazonaws.services.glue.model.DeleteTableRequest;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
@@ -51,6 +56,7 @@ import com.amazonaws.services.glue.model.PartitionInput;
 import com.amazonaws.services.glue.model.SerDeInfo;
 import com.amazonaws.services.glue.model.StorageDescriptor;
 import com.amazonaws.services.glue.model.TableInput;
+import com.amazonaws.services.glue.model.UpdateDatabaseRequest;
 import com.amazonaws.services.glue.model.UpdatePartitionRequest;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
 
@@ -76,8 +82,44 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   }
 
   @Override
-  public void onCreateTable(CreateTableEvent event) throws MetaException {
-    if (event.getStatus() == false) {
+  public void onCreateDatabase(CreateDatabaseEvent event) {
+    if (!event.getStatus()) {
+      return;
+    }
+    Database database = event.getDatabase();
+    try {
+      CreateDatabaseRequest createDatabaseRequest = new CreateDatabaseRequest()
+          .withDatabaseInput(transformDatabase(database));
+      glueClient.createDatabase(createDatabaseRequest);
+      log.debug(database + " database created in glue catalog");
+    } catch (AlreadyExistsException e) {
+      log.debug(database + " database already exists in glue, updating....");
+      UpdateDatabaseRequest updateDatabaseRequest = new UpdateDatabaseRequest()
+          .withDatabaseInput(transformDatabase(database));
+      glueClient.updateDatabase(updateDatabaseRequest);
+      log.debug(database + " database updated in glue catalog");
+    }
+  }
+
+  @Override
+  public void onDropDatabase(DropDatabaseEvent event) {
+    if (!event.getStatus()) {
+      return;
+    }
+    Database database = event.getDatabase();
+    try {
+      DeleteDatabaseRequest deleteDatabaseRequest = new DeleteDatabaseRequest()
+          .withName(database.getName());
+      glueClient.deleteDatabase(deleteDatabaseRequest);
+      log.debug(database + " database deleted from glue catalog");
+    } catch (EntityNotFoundException e) {
+      log.debug(database + " database doesn't exist in glue catalog");
+    }
+  }
+
+  @Override
+  public void onCreateTable(CreateTableEvent event) {
+    if (!event.getStatus()) {
       return;
     }
     Table table = event.getTable();
@@ -98,8 +140,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   }
 
   @Override
-  public void onDropTable(DropTableEvent event) throws MetaException {
-    if (event.getStatus() == false) {
+  public void onDropTable(DropTableEvent event) {
+    if (!event.getStatus()) {
       return;
     }
     Table table = event.getTable();
@@ -115,8 +157,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   }
 
   @Override
-  public void onAlterTable(AlterTableEvent event) throws MetaException {
-    if (event.getStatus() == false) {
+  public void onAlterTable(AlterTableEvent event) {
+    if (!event.getStatus()) {
       return;
     }
     Table table = event.getNewTable();
@@ -137,8 +179,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   }
 
   @Override
-  public void onAddPartition(AddPartitionEvent event) throws MetaException {
-    if (event.getStatus() == false) {
+  public void onAddPartition(AddPartitionEvent event) {
+    if (!event.getStatus()) {
       return;
     }
     Table table = event.getTable();
@@ -163,8 +205,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   }
 
   @Override
-  public void onDropPartition(DropPartitionEvent event) throws MetaException {
-    if (event.getStatus() == false) {
+  public void onDropPartition(DropPartitionEvent event) {
+    if (!event.getStatus()) {
       return;
     }
     Table table = event.getTable();
@@ -177,13 +219,13 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
             .withDatabaseName(glueDbName(table))
             .withTableName(table.getTableName());
         glueClient.deletePartition(deletePartitionRequest);
-      } catch (EntityNotFoundException e) {}
+      } catch (EntityNotFoundException ignored) {}
     }
   }
 
   @Override
-  public void onAlterPartition(AlterPartitionEvent event) throws MetaException {
-    if (event.getStatus() == false) {
+  public void onAlterPartition(AlterPartitionEvent event) {
+    if (!event.getStatus()) {
       return;
     }
     Table table = event.getTable();
@@ -204,8 +246,14 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     }
   }
 
-  TableInput transformTable(final Table table) {
+  DatabaseInput transformDatabase(Database database) {
+    return new DatabaseInput().withName(database.getName())
+        .withParameters(database.getParameters())
+        .withDescription(database.getDescription())
+        .withLocationUri(database.getLocationUri());
+  }
 
+  TableInput transformTable(final Table table) {
     final Date date = convertTableDate(table.getLastAccessTime());
 
     List<Column> partitionKeys = extractColumns(table.getPartitionKeys());
@@ -233,7 +281,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
         .withSortColumns(sortOrders)
         .withStoredAsSubDirectories(storageDescriptor.isStoredAsSubDirectories());
 
-    final TableInput tableInput = new TableInput()
+    return new TableInput()
         .withName(table.getTableName())
         .withLastAccessTime(date)
         .withOwner(table.getOwner())
@@ -242,13 +290,9 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
         .withRetention(table.getRetention())
         .withStorageDescriptor(sd)
         .withTableType(table.getTableType());
-
-    return tableInput;
-
   }
 
   PartitionInput transformPartition(final Partition partition) {
-
     final Date date = convertTableDate(partition.getLastAccessTime());
 
     final org.apache.hadoop.hive.metastore.api.StorageDescriptor storageDescriptor = partition.getSd();
@@ -274,13 +318,11 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
         .withSortColumns(sortOrders)
         .withStoredAsSubDirectories(storageDescriptor.isStoredAsSubDirectories());
 
-    final PartitionInput partitionInput = new PartitionInput()
+    return new PartitionInput()
         .withLastAccessTime(date)
         .withParameters(partition.getParameters())
         .withStorageDescriptor(sd)
         .withValues(partition.getValues());
-
-    return partitionInput;
   }
 
   private List<Order> extractSortOrders(final List<org.apache.hadoop.hive.metastore.api.Order> hiveOrders) {
@@ -317,13 +359,12 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
       return dateFormat.parse(lastAccessTime.toString());
     } catch (Exception e) {
-      log.debug("Error foramtting table date", e);
+      log.debug("Error formatting table date", e);
     }
     return null;
   }
 
   private String glueDbName(Table table) {
-    String glueDbName = (gluePrefix == null) ? table.getDbName() : gluePrefix + table.getDbName();
-    return glueDbName;
+    return (gluePrefix == null) ? table.getDbName() : gluePrefix + table.getDbName();
   }
 }
