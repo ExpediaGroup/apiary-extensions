@@ -95,6 +95,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     } catch (AlreadyExistsException e) {
       log.debug(database + " database already exists in glue, updating....");
       UpdateDatabaseRequest updateDatabaseRequest = new UpdateDatabaseRequest()
+          .withName(glueDbName(database.getName()))
           .withDatabaseInput(transformDatabase(database));
       glueClient.updateDatabase(updateDatabaseRequest);
       log.debug(database + " database updated in glue catalog");

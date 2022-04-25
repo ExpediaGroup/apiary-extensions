@@ -128,6 +128,7 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).updateDatabase(updateDatabaseRequestCaptor.capture());
     UpdateDatabaseRequest updateDatabaseRequest = updateDatabaseRequestCaptor.getValue();
 
+    assertThat(updateDatabaseRequest.getName(), is(gluePrefix + dbName));
     assertThat(updateDatabaseRequest.getDatabaseInput().getName(), is(gluePrefix + dbName));
     assertThat(updateDatabaseRequest.getDatabaseInput().getLocationUri(), is(locationUri));
     assertThat(updateDatabaseRequest.getDatabaseInput().getParameters(), is(params));
