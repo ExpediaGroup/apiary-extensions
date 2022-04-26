@@ -59,11 +59,14 @@ import com.amazonaws.services.glue.model.TableInput;
 import com.amazonaws.services.glue.model.UpdateDatabaseRequest;
 import com.amazonaws.services.glue.model.UpdatePartitionRequest;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
+import com.google.common.collect.ImmutableMap;
 
 public class ApiaryGlueSync extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGlueSync.class);
 
+  private static final String CREATED_BY_GLUESYNC_KEY = "created-by";
+  private static final String CREATED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
   private final AWSGlue glueClient;
   private final String gluePrefix;
 
@@ -108,13 +111,19 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       return;
     }
     Database database = event.getDatabase();
-    try {
-      DeleteDatabaseRequest deleteDatabaseRequest = new DeleteDatabaseRequest()
-          .withName(glueDbName(database.getName()));
-      glueClient.deleteDatabase(deleteDatabaseRequest);
-      log.debug(database + " database deleted from glue catalog");
-    } catch (EntityNotFoundException e) {
-      log.debug(database + " database doesn't exist in glue catalog");
+    String createdByProperty = database.getParameters().get(CREATED_BY_GLUESYNC_KEY);
+    if (createdByProperty != null && createdByProperty.equals(CREATED_BY_GLUESYNC_VALUE)) {
+      try {
+        DeleteDatabaseRequest deleteDatabaseRequest = new DeleteDatabaseRequest()
+            .withName(glueDbName(database.getName()));
+        glueClient.deleteDatabase(deleteDatabaseRequest);
+        log.info(database + " database deleted from glue catalog");
+      } catch (EntityNotFoundException e) {
+        log.info(database + " database doesn't exist in glue catalog");
+      }
+    } else {
+      log.info("{} database not created by {}, will not be deleted from glue catalog", database,
+          CREATED_BY_GLUESYNC_VALUE);
     }
   }
 
@@ -129,14 +138,14 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
           .withTableInput(transformTable(table))
           .withDatabaseName(glueDbName(table));
       glueClient.createTable(createTableRequest);
-      log.debug(table + " table created in glue catalog");
+      log.info(table + " table created in glue catalog");
     } catch (AlreadyExistsException e) {
-      log.debug(table + " table already exists in glue, updating....");
+      log.info(table + " table already exists in glue, updating....");
       UpdateTableRequest updateTableRequest = new UpdateTableRequest()
           .withTableInput(transformTable(table))
           .withDatabaseName(glueDbName(table));
       glueClient.updateTable(updateTableRequest);
-      log.debug(table + " table updated in glue catalog");
+      log.info(table + " table updated in glue catalog");
     }
   }
 
@@ -151,9 +160,9 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
           .withName(table.getTableName())
           .withDatabaseName(glueDbName(table));
       glueClient.deleteTable(deleteTableRequest);
-      log.debug(table + " table deleted from glue catalog");
+      log.info(table + " table deleted from glue catalog");
     } catch (EntityNotFoundException e) {
-      log.debug(table + " table doesn't exist in glue catalog");
+      log.info(table + " table doesn't exist in glue catalog");
     }
   }
 
@@ -168,14 +177,14 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
           .withTableInput(transformTable(table))
           .withDatabaseName(glueDbName(table));
       glueClient.updateTable(updateTableRequest);
-      log.debug(table + " table updated in glue catalog");
+      log.info(table + " table updated in glue catalog");
     } catch (EntityNotFoundException e) {
-      log.debug(table + " table doesn't exist in glue, creating....");
+      log.info(table + " table doesn't exist in glue, creating....");
       CreateTableRequest createTableRequest = new CreateTableRequest()
           .withTableInput(transformTable(table))
           .withDatabaseName(glueDbName(table));
       glueClient.createTable(createTableRequest);
-      log.debug(table + " table created in glue catalog");
+      log.info(table + " table created in glue catalog");
     }
   }
 
@@ -251,6 +260,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     return new DatabaseInput().withName(glueDbName(database.getName()))
         .withParameters(database.getParameters())
         .withDescription(database.getDescription())
+        .withParameters(ImmutableMap.of(CREATED_BY_GLUESYNC_KEY, CREATED_BY_GLUESYNC_VALUE))
         .withLocationUri(database.getLocationUri());
   }
 
@@ -360,7 +370,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
       return dateFormat.parse(lastAccessTime.toString());
     } catch (Exception e) {
-      log.debug("Error formatting table date", e);
+      log.error("Error formatting table date", e);
     }
     return null;
   }

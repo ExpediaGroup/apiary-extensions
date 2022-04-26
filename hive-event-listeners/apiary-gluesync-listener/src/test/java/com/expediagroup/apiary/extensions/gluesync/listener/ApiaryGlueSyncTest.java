@@ -22,11 +22,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
@@ -54,6 +58,7 @@ import com.amazonaws.services.glue.model.CreateDatabaseRequest;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.CreateTableResult;
 import com.amazonaws.services.glue.model.DeleteDatabaseRequest;
+import com.amazonaws.services.glue.model.EntityNotFoundException;
 import com.amazonaws.services.glue.model.UpdateDatabaseRequest;
 import com.google.common.collect.ImmutableMap;
 
@@ -83,7 +88,7 @@ public class ApiaryGlueSyncTest {
   private final String[] partNames = { "part1", "part2" };
   private final String locationUri = "uri";
   private final String description = "desc";
-  private final ImmutableMap<String, String> params = ImmutableMap.of("k", "v");
+  private final ImmutableMap<String, String> params = ImmutableMap.of("created-by", "apiary-glue-sync");
 
   private final String gluePrefix = "test_";
   private ApiaryGlueSync glueSync;
@@ -148,6 +153,34 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).deleteDatabase(deleteDatabaseRequestCaptor.capture());
     DeleteDatabaseRequest deleteDatabaseRequest = deleteDatabaseRequestCaptor.getValue();
     assertThat(deleteDatabaseRequest.getName(), is(gluePrefix + dbName));
+  }
+
+  @Test
+  public void onDropDatabaseThatDoesntExist() {
+    DropDatabaseEvent event = mock(DropDatabaseEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Database database = getDatabase(description, locationUri, params);
+    when(event.getDatabase()).thenReturn(database);
+    when(glueClient.deleteDatabase(any())).thenThrow(new EntityNotFoundException(""));
+
+    glueSync.onDropDatabase(event);
+
+    verify(glueClient).deleteDatabase(deleteDatabaseRequestCaptor.capture());
+    verifyNoMoreInteractions(glueClient);
+  }
+
+  @Test
+  public void onDropDatabaseNotCreatedByGlueSync() {
+    DropDatabaseEvent event = mock(DropDatabaseEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Database database = getDatabase(description, locationUri, Collections.emptyMap());
+    when(event.getDatabase()).thenReturn(database);
+
+    glueSync.onDropDatabase(event);
+
+    verifyZeroInteractions(glueClient);
   }
 
   @Test
@@ -233,7 +266,7 @@ public class ApiaryGlueSyncTest {
     return columns.stream().map(Column::getName).collect(Collectors.toList());
   }
 
-  private Database getDatabase(String description, String locationUri, ImmutableMap<String, String> params) {
+  private Database getDatabase(String description, String locationUri, Map<String, String> params) {
     Database database = new Database();
     database.setName(dbName);
     database.setDescription(description);
