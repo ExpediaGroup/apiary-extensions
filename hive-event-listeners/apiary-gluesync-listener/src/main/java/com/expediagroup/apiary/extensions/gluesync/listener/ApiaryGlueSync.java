@@ -111,19 +111,21 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       return;
     }
     Database database = event.getDatabase();
-    String createdByProperty = database.getParameters().get(CREATED_BY_GLUESYNC_KEY);
-    if (createdByProperty != null && createdByProperty.equals(CREATED_BY_GLUESYNC_VALUE)) {
-      try {
-        DeleteDatabaseRequest deleteDatabaseRequest = new DeleteDatabaseRequest()
-            .withName(glueDbName(database.getName()));
-        glueClient.deleteDatabase(deleteDatabaseRequest);
-        log.info(database + " database deleted from glue catalog");
-      } catch (EntityNotFoundException e) {
-        log.info(database + " database doesn't exist in glue catalog");
+    if (database.getParameters() != null) {
+      String createdByProperty = database.getParameters().get(CREATED_BY_GLUESYNC_KEY);
+      if (createdByProperty != null && createdByProperty.equals(CREATED_BY_GLUESYNC_VALUE)) {
+        try {
+          DeleteDatabaseRequest deleteDatabaseRequest = new DeleteDatabaseRequest()
+              .withName(glueDbName(database.getName()));
+          glueClient.deleteDatabase(deleteDatabaseRequest);
+          log.info(database + " database deleted from glue catalog");
+        } catch (EntityNotFoundException e) {
+          log.info(database + " database doesn't exist in glue catalog");
+        }
+      } else {
+        log.info("{} database not created by {}, will not be deleted from glue catalog", database,
+            CREATED_BY_GLUESYNC_VALUE);
       }
-    } else {
-      log.info("{} database not created by {}, will not be deleted from glue catalog", database,
-          CREATED_BY_GLUESYNC_VALUE);
     }
   }
 
