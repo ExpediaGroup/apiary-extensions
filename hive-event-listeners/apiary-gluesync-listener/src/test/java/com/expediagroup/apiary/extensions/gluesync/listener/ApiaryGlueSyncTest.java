@@ -88,7 +88,7 @@ public class ApiaryGlueSyncTest {
   private final String[] partNames = { "part1", "part2" };
   private final String locationUri = "uri";
   private final String description = "desc";
-  private final ImmutableMap<String, String> params = ImmutableMap.of("created-by", "apiary-glue-sync");
+  private final ImmutableMap<String, String> params = ImmutableMap.of("managed-by", "apiary-glue-sync");
 
   private final String gluePrefix = "test_";
   private ApiaryGlueSync glueSync;

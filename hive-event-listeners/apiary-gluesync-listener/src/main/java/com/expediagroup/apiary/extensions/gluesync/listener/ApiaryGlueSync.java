@@ -65,8 +65,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGlueSync.class);
 
-  private static final String CREATED_BY_GLUESYNC_KEY = "created-by";
-  private static final String CREATED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
+  private static final String MANAGED_BY_GLUESYNC_KEY = "managed-by";
+  private static final String MANAGED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
   private final AWSGlue glueClient;
   private final String gluePrefix;
 
@@ -112,8 +112,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     }
     Database database = event.getDatabase();
     if (database.getParameters() != null) {
-      String createdByProperty = database.getParameters().get(CREATED_BY_GLUESYNC_KEY);
-      if (createdByProperty != null && createdByProperty.equals(CREATED_BY_GLUESYNC_VALUE)) {
+      String createdByProperty = database.getParameters().get(MANAGED_BY_GLUESYNC_KEY);
+      if (createdByProperty != null && createdByProperty.equals(MANAGED_BY_GLUESYNC_VALUE)) {
         try {
           DeleteDatabaseRequest deleteDatabaseRequest = new DeleteDatabaseRequest()
               .withName(glueDbName(database.getName()));
@@ -124,7 +124,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
         }
       } else {
         log.info("{} database not created by {}, will not be deleted from glue catalog", database,
-            CREATED_BY_GLUESYNC_VALUE);
+            MANAGED_BY_GLUESYNC_VALUE);
       }
     }
   }
@@ -262,7 +262,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     return new DatabaseInput().withName(glueDbName(database.getName()))
         .withParameters(database.getParameters())
         .withDescription(database.getDescription())
-        .withParameters(ImmutableMap.of(CREATED_BY_GLUESYNC_KEY, CREATED_BY_GLUESYNC_VALUE))
+        .withParameters(ImmutableMap.of(MANAGED_BY_GLUESYNC_KEY, MANAGED_BY_GLUESYNC_VALUE))
         .withLocationUri(database.getLocationUri());
   }
 
