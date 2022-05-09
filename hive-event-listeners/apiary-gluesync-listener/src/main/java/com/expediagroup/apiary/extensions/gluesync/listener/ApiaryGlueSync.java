@@ -19,8 +19,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -51,6 +53,7 @@ import com.amazonaws.services.glue.model.DeleteDatabaseRequest;
 import com.amazonaws.services.glue.model.DeletePartitionRequest;
 import com.amazonaws.services.glue.model.DeleteTableRequest;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
+import com.amazonaws.services.glue.model.GetDatabaseRequest;
 import com.amazonaws.services.glue.model.Order;
 import com.amazonaws.services.glue.model.PartitionInput;
 import com.amazonaws.services.glue.model.SerDeInfo;
@@ -59,7 +62,6 @@ import com.amazonaws.services.glue.model.TableInput;
 import com.amazonaws.services.glue.model.UpdateDatabaseRequest;
 import com.amazonaws.services.glue.model.UpdatePartitionRequest;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
-import com.google.common.collect.ImmutableMap;
 
 public class ApiaryGlueSync extends MetaStoreEventListener {
 
@@ -94,14 +96,14 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       CreateDatabaseRequest createDatabaseRequest = new CreateDatabaseRequest()
           .withDatabaseInput(transformDatabase(database));
       glueClient.createDatabase(createDatabaseRequest);
-      log.debug(database + " database created in glue catalog");
+      log.info(database + " database created in glue catalog");
     } catch (AlreadyExistsException e) {
-      log.debug(database + " database already exists in glue, updating....");
+      log.info(database + " database already exists in glue, updating....");
       UpdateDatabaseRequest updateDatabaseRequest = new UpdateDatabaseRequest()
           .withName(glueDbName(database.getName()))
           .withDatabaseInput(transformDatabase(database));
       glueClient.updateDatabase(updateDatabaseRequest);
-      log.debug(database + " database updated in glue catalog");
+      log.info(database + " database updated in glue catalog");
     }
   }
 
@@ -111,22 +113,24 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       return;
     }
     Database database = event.getDatabase();
-    if (database.getParameters() != null) {
-      String createdByProperty = database.getParameters().get(MANAGED_BY_GLUESYNC_KEY);
+    com.amazonaws.services.glue.model.Database glueDb = glueClient.getDatabase(
+        new GetDatabaseRequest().withName(glueDbName(database.getName()))).getDatabase();
+    if (glueDb != null && glueDb.getParameters() != null) {
+      String createdByProperty = glueDb.getParameters().get(MANAGED_BY_GLUESYNC_KEY);
       if (createdByProperty != null && createdByProperty.equals(MANAGED_BY_GLUESYNC_VALUE)) {
         try {
           DeleteDatabaseRequest deleteDatabaseRequest = new DeleteDatabaseRequest()
               .withName(glueDbName(database.getName()));
           glueClient.deleteDatabase(deleteDatabaseRequest);
           log.info(database + " database deleted from glue catalog");
+          return;
         } catch (EntityNotFoundException e) {
           log.info(database + " database doesn't exist in glue catalog");
         }
-      } else {
-        log.info("{} database not created by {}, will not be deleted from glue catalog", database,
-            MANAGED_BY_GLUESYNC_VALUE);
       }
     }
+    log.info("{} database not created by {}, will not be deleted from glue catalog", database,
+        MANAGED_BY_GLUESYNC_VALUE);
   }
 
   @Override
@@ -259,10 +263,14 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   }
 
   DatabaseInput transformDatabase(Database database) {
+    Map<String, String> params = database.getParameters();
+    if (params == null) {
+      params = new HashMap<>();
+    }
+    params.put(MANAGED_BY_GLUESYNC_KEY, MANAGED_BY_GLUESYNC_VALUE);
     return new DatabaseInput().withName(glueDbName(database.getName()))
-        .withParameters(database.getParameters())
+        .withParameters(params)
         .withDescription(database.getDescription())
-        .withParameters(ImmutableMap.of(MANAGED_BY_GLUESYNC_KEY, MANAGED_BY_GLUESYNC_VALUE))
         .withLocationUri(database.getLocationUri());
   }
 

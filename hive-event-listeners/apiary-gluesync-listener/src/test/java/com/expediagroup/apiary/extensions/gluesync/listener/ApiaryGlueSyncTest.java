@@ -23,8 +23,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+
+import static com.google.common.collect.Maps.newHashMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,6 +60,8 @@ import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.CreateTableResult;
 import com.amazonaws.services.glue.model.DeleteDatabaseRequest;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
+import com.amazonaws.services.glue.model.GetDatabaseRequest;
+import com.amazonaws.services.glue.model.GetDatabaseResult;
 import com.amazonaws.services.glue.model.UpdateDatabaseRequest;
 import com.google.common.collect.ImmutableMap;
 
@@ -88,7 +91,7 @@ public class ApiaryGlueSyncTest {
   private final String[] partNames = { "part1", "part2" };
   private final String locationUri = "uri";
   private final String description = "desc";
-  private final ImmutableMap<String, String> params = ImmutableMap.of("managed-by", "apiary-glue-sync");
+  private final Map<String, String> params = newHashMap(ImmutableMap.of("managed-by", "apiary-glue-sync"));
 
   private final String gluePrefix = "test_";
   private ApiaryGlueSync glueSync;
@@ -103,9 +106,7 @@ public class ApiaryGlueSyncTest {
   public void onCreateDatabase() {
     CreateDatabaseEvent event = mock(CreateDatabaseEvent.class);
     when(event.getStatus()).thenReturn(true);
-
-    Database database = getDatabase(description, locationUri, params);
-    when(event.getDatabase()).thenReturn(database);
+    when(event.getDatabase()).thenReturn(getDatabase(description, locationUri, params));
 
     glueSync.onCreateDatabase(event);
 
@@ -122,9 +123,7 @@ public class ApiaryGlueSyncTest {
   public void onCreateDatabaseThatAlreadyExists() {
     CreateDatabaseEvent event = mock(CreateDatabaseEvent.class);
     when(event.getStatus()).thenReturn(true);
-
-    Database database = getDatabase(description, locationUri, params);
-    when(event.getDatabase()).thenReturn(database);
+    when(event.getDatabase()).thenReturn(getDatabase(description, locationUri, params));
     when(glueClient.createDatabase(any())).thenThrow(new AlreadyExistsException(""));
 
     glueSync.onCreateDatabase(event);
@@ -144,9 +143,8 @@ public class ApiaryGlueSyncTest {
   public void onDropDatabase() {
     DropDatabaseEvent event = mock(DropDatabaseEvent.class);
     when(event.getStatus()).thenReturn(true);
-
-    Database database = getDatabase(description, locationUri, params);
-    when(event.getDatabase()).thenReturn(database);
+    when(event.getDatabase()).thenReturn(getDatabase(description, locationUri, params));
+    when(glueClient.getDatabase(any(GetDatabaseRequest.class))).thenReturn(getGlueDatabaseResult(params));
 
     glueSync.onDropDatabase(event);
 
@@ -159,28 +157,29 @@ public class ApiaryGlueSyncTest {
   public void onDropDatabaseThatDoesntExist() {
     DropDatabaseEvent event = mock(DropDatabaseEvent.class);
     when(event.getStatus()).thenReturn(true);
-
-    Database database = getDatabase(description, locationUri, params);
-    when(event.getDatabase()).thenReturn(database);
+    when(event.getDatabase()).thenReturn(getDatabase(description, locationUri, params));
+    when(glueClient.getDatabase(any(GetDatabaseRequest.class))).thenReturn(
+        getGlueDatabaseResult(params));
     when(glueClient.deleteDatabase(any())).thenThrow(new EntityNotFoundException(""));
 
     glueSync.onDropDatabase(event);
 
+    verify(glueClient).getDatabase(any());
     verify(glueClient).deleteDatabase(deleteDatabaseRequestCaptor.capture());
-    verifyNoMoreInteractions(glueClient);
   }
 
   @Test
   public void onDropDatabaseNotCreatedByGlueSync() {
     DropDatabaseEvent event = mock(DropDatabaseEvent.class);
     when(event.getStatus()).thenReturn(true);
-
-    Database database = getDatabase(description, locationUri, Collections.emptyMap());
-    when(event.getDatabase()).thenReturn(database);
+    when(event.getDatabase()).thenReturn(getDatabase(description, locationUri, Collections.emptyMap()));
+    when(glueClient.getDatabase(any(GetDatabaseRequest.class))).thenReturn(
+        getGlueDatabaseResult(Collections.emptyMap()));
 
     glueSync.onDropDatabase(event);
 
-    verifyZeroInteractions(glueClient);
+    verify(glueClient).getDatabase(any());
+    verifyNoMoreInteractions(glueClient);
   }
 
   @Test
@@ -273,5 +272,10 @@ public class ApiaryGlueSyncTest {
     database.setLocationUri(locationUri);
     database.setParameters(params);
     return database;
+  }
+
+  private GetDatabaseResult getGlueDatabaseResult(Map<String, String> params) {
+    return new GetDatabaseResult().withDatabase(new com.amazonaws.services.glue.model.Database().withName(
+        dbName).withParameters(params));
   }
 }
