@@ -46,19 +46,19 @@ public class PathConverterTest {
   @Mock
   private PathConversionConfiguration config;
   private PathConverter converter;
+  private List<PathConversion> testConversions;
 
   @Before
   public void init() {
     converter = new PathConverter(config);
+    testConversions = ImmutableList.of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
+
   }
 
   @Test
   public void shouldProperlyConvertPath() {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "s3://some-foo";
-
-    List<PathConversion> testConversions = ImmutableList
-        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
 
@@ -174,9 +174,6 @@ public class PathConverterTest {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "s3://some-foo";
 
-    List<PathConversion> testConversions = ImmutableList
-        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
-
     when(config.getPathConversions()).thenReturn(testConversions);
     when(config.isPathConversionEnabled()).thenReturn(true);
 
@@ -193,9 +190,6 @@ public class PathConverterTest {
     String testOutputLocation = "s3://some-foo";
     String testInputLocation2 = "s3d://some-foo2";
     String testOutputLocation2 = "s3://some-foo2";
-
-    List<PathConversion> testConversions = ImmutableList
-        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
     when(config.isPathConversionEnabled()).thenReturn(true);
@@ -215,9 +209,6 @@ public class PathConverterTest {
   public void shouldProperlyConvertPathForTableAvroUrlEmpty() {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "s3://some-foo";
-
-    List<PathConversion> testConversions = ImmutableList
-        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
     when(config.isPathConversionEnabled()).thenReturn(true);
@@ -246,12 +237,33 @@ public class PathConverterTest {
   }
 
   @Test
+  public void returnTableIfLocationIsNull() {
+    String testInputLocation = null;
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Table srcTable = tableSetup(testInputLocation);
+
+    boolean result = converter.convertTable(srcTable);
+    assertFalse(result);
+    assertEquals(testInputLocation, srcTable.getSd().getLocation());
+  }
+
+  @Test
+  public void returnTableIfLocationIsEmpty() {
+    String testInputLocation = "";
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Table srcTable = tableSetup(testInputLocation);
+
+    boolean result = converter.convertTable(srcTable);
+    assertFalse(result);
+    assertEquals(testInputLocation, srcTable.getSd().getLocation());
+  }
+
+  @Test
   public void shouldProperlyConvertPathForPartition() {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "s3://some-foo";
-
-    List<PathConversion> testConversions = ImmutableList
-        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
     when(config.isPathConversionEnabled()).thenReturn(true);
@@ -269,9 +281,6 @@ public class PathConverterTest {
     String testOutputLocation = "s3://some-foo";
     String testInputParamLocation = "s3d://some-foo2";
     String testOutputParamLocation = "s3://some-foo2";
-
-    List<PathConversion> testConversions = ImmutableList
-        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
     when(config.isPathConversionEnabled()).thenReturn(true);
@@ -292,9 +301,6 @@ public class PathConverterTest {
   public void shouldProperlyConvertPathForSdInfoParameterEmpty() {
     String testInputLocation = "s3d://some-foo";
     String testOutputLocation = "s3://some-foo";
-
-    List<PathConversion> testConversions = ImmutableList
-        .of(new PathConversion(Pattern.compile("^(s3d)(?:.*)"), "s3", ImmutableList.of(1)));
 
     when(config.getPathConversions()).thenReturn(testConversions);
     when(config.isPathConversionEnabled()).thenReturn(true);

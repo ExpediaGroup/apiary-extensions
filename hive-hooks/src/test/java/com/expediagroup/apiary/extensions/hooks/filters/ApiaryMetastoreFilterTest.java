@@ -15,6 +15,8 @@
  */
 package com.expediagroup.apiary.extensions.hooks.filters;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,8 +46,10 @@ import com.expediagroup.apiary.extensions.hooks.converters.GenericConverter;
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryMetastoreFilterTest {
 
-  @Mock private HiveConf hiveConf;
-  @Mock private GenericConverter converter;
+  @Mock
+  private HiveConf hiveConf;
+  @Mock
+  private GenericConverter converter;
   private MetaStoreFilterHook hook;
 
   @Before
@@ -113,10 +117,7 @@ public class ApiaryMetastoreFilterTest {
 
   @Test
   public void shouldMutateTables() throws MetaException {
-    List<Table> tableList = ImmutableList.of(
-        createMockTable("tableOne"),
-        createMockTable("tableTwo")
-    );
+    List<Table> tableList = ImmutableList.of(createMockTable("tableOne"), createMockTable("tableTwo"));
 
     List<Table> result = hook.filterTables(tableList);
     assertEquals(result.size(), tableList.size());
@@ -132,11 +133,20 @@ public class ApiaryMetastoreFilterTest {
   }
 
   @Test
+  public void shouldMutateTablesThrowingExceptionsStillReturnsAll() throws MetaException, NoSuchObjectException {
+    Table t1 = createMockTable("tableOne");
+    Table t2 = createMockTable("tableTwo");
+    List<Table> tableList = ImmutableList.of(t1, t2);
+    when(converter.convertTable(t1)).thenThrow(new RuntimeException("anything can happen"));
+
+    List<Table> result = hook.filterTables(tableList);
+    assertThat(result.size(), is(2));
+    verify(converter).convertTable(t2);
+  }
+
+  @Test
   public void shouldMutatePartitions() throws MetaException, NoSuchObjectException {
-    List<Partition> partitionList = ImmutableList.of(
-        createMockPartition("tableOne"),
-        createMockPartition("tableTwo")
-    );
+    List<Partition> partitionList = ImmutableList.of(createMockPartition("tableOne"), createMockPartition("tableTwo"));
 
     List<Partition> result = hook.filterPartitions(partitionList);
     assertEquals(result.size(), partitionList.size());
@@ -149,6 +159,18 @@ public class ApiaryMetastoreFilterTest {
     Partition result = hook.filterPartition(sourcePartition);
     assertEquals(sourcePartition, result);
     verify(converter).convertPartition(sourcePartition);
+  }
+
+  @Test
+  public void shouldMutatePartitionsThrowingExceptionsStillReturnsAll() throws MetaException, NoSuchObjectException {
+    Partition p1 = createMockPartition("tableOne");
+    Partition p2 = createMockPartition("tableTwo");
+    List<Partition> partitionList = ImmutableList.of(p1, p2);
+    when(converter.convertPartition(p1)).thenThrow(new RuntimeException("anything can happen"));
+
+    List<Partition> result = hook.filterPartitions(partitionList);
+    assertThat(result.size(), is(2));
+    verify(converter).convertPartition(p2);
   }
 
   private Table createMockTable(String tableName) {

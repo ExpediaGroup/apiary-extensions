@@ -24,6 +24,8 @@ import org.apache.hadoop.hive.metastore.api.Index;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.PartitionSpec;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -33,6 +35,8 @@ import com.expediagroup.apiary.extensions.hooks.pathconversion.config.PathConver
 import com.expediagroup.apiary.extensions.hooks.pathconversion.converters.PathConverter;
 
 public class ApiaryMetastoreFilter implements MetaStoreFilterHook {
+
+  private final static Logger log = LoggerFactory.getLogger(ApiaryMetastoreFilter.class);
 
   private final Configuration configuration;
   private final GenericConverter converter;
@@ -90,25 +94,45 @@ public class ApiaryMetastoreFilter implements MetaStoreFilterHook {
 
   @Override
   public List<Table> filterTables(List<Table> tableList) {
-    tableList.stream().forEach(converter::convertTable);
+    for (Table table : tableList) {
+      filterTable(table);
+    }
     return tableList;
+  }
+
+  private String getQualifiedName(Table table) {
+    return table.getDbName() + "." + table.getTableName();
   }
 
   @Override
   public Table filterTable(Table table) {
-    converter.convertTable(table);
+    try {
+      converter.convertTable(table);
+    } catch (Exception e) {
+      log.error("Failed to convert table " + getQualifiedName(table), e);
+    }
     return table;
   }
 
   @Override
   public List<Partition> filterPartitions(List<Partition> partitionList) {
-    partitionList.stream().forEach(converter::convertPartition);
+    for (Partition partition : partitionList) {
+      filterPartition(partition);
+    }
     return partitionList;
   }
 
   @Override
   public Partition filterPartition(Partition partition) {
-    converter.convertPartition(partition);
+    try {
+      converter.convertPartition(partition);
+    } catch (Exception e) {
+      log.error("Failed to convert partition " + getQualifiedName(partition), e);
+    }
     return partition;
+  }
+
+  private String getQualifiedName(Partition partition) {
+    return partition.getDbName() + "." + partition.getTableName() + "." + partition.getValues();
   }
 }
