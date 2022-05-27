@@ -97,10 +97,15 @@ public class PathConverter extends GenericConverter {
 
   @Override
   public boolean convertStorageDescriptor(StorageDescriptor sd) {
+    boolean pathConverted = false;
     String currentLocation = sd.getLocation();
-    sd.setLocation(convert(currentLocation));
-    log.info("Switching storage location {} to {}.", currentLocation, sd.getLocation());
-    boolean pathConverted = !currentLocation.equals(sd.getLocation());
+    if (!Strings.isNullOrEmpty(currentLocation)) {
+      sd.setLocation(convert(currentLocation));
+      log.info("Switching storage location {} to {}.", currentLocation, sd.getLocation());
+      pathConverted = !currentLocation.equals(sd.getLocation());
+    } else {
+      log.info("Switching storage location not possible empty/null location, {}", sd.toString());
+    }
     if (sd.isSetSerdeInfo() && sd.getSerdeInfo().isSetParameters()) {
       String parameterPath = sd.getSerdeInfo().getParameters().get(SD_INFO_PATH_PARAMETER);
       if (!Strings.isNullOrEmpty(parameterPath)) {
