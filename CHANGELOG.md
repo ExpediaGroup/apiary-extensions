@@ -7,7 +7,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ### Changed
 - ` hive-hooks` - Logging table name when no conversion can take place.
 
-
 ## 7.3.1 - 2022-05-27
 ### Added
 - ` hive-hooks` - Fixing potential NullPointerException in `ApiaryMetastoreFilter` and `PathConverter`.
