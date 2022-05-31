@@ -36,6 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 import com.expediagroup.apiary.extensions.hooks.pathconversion.config.PathConversionConfiguration;
 import com.expediagroup.apiary.extensions.hooks.pathconversion.models.PathConversion;
@@ -237,7 +238,7 @@ public class PathConverterTest {
   }
 
   @Test
-  public void returnTableIfLocationIsNull() {
+  public void returnLoccationForTableIfLocationIsNull() {
     String testInputLocation = null;
     when(config.isPathConversionEnabled()).thenReturn(true);
 
@@ -249,7 +250,7 @@ public class PathConverterTest {
   }
 
   @Test
-  public void returnTableIfLocationIsEmpty() {
+  public void returnLocationForTableIfLocationIsEmpty() {
     String testInputLocation = "";
     when(config.isPathConversionEnabled()).thenReturn(true);
 
@@ -258,6 +259,30 @@ public class PathConverterTest {
     boolean result = converter.convertTable(srcTable);
     assertFalse(result);
     assertEquals(testInputLocation, srcTable.getSd().getLocation());
+  }
+
+  @Test
+  public void returnLocationForPartitionIfLocationIsNull() {
+    String testInputLocation = null;
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Partition srcPartition = partitionSetup(testInputLocation);
+
+    boolean result = converter.convertPartition(srcPartition);
+    assertFalse(result);
+    assertEquals(testInputLocation, srcPartition.getSd().getLocation());
+  }
+
+  @Test
+  public void returnLocationForPartitionIfLocationIsEmpty() {
+    String testInputLocation = "";
+    when(config.isPathConversionEnabled()).thenReturn(true);
+
+    Partition srcPartition = partitionSetup(testInputLocation);
+
+    boolean result = converter.convertPartition(srcPartition);
+    assertFalse(result);
+    assertEquals(testInputLocation, srcPartition.getSd().getLocation());
   }
 
   @Test
@@ -340,6 +365,9 @@ public class PathConverterTest {
   private Partition partitionSetup(String testInputLocation) {
     StorageDescriptor testSD = sdSetup(testInputLocation);
     Partition partition = new Partition();
+    partition.setDbName("db");
+    partition.setTableName("table");
+    partition.setValues(Lists.newArrayList("2022"));
     partition.setSd(testSD);
     return partition;
   }

@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 
+import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -73,7 +74,7 @@ public class PathConverter extends GenericConverter {
 
     StorageDescriptor sd = table.getSd();
     log.debug("Examining table location: {}", sd.getLocation());
-    tableConverted |= convertStorageDescriptor(sd, table.getDbName() + "." + table.getTableName());
+    tableConverted |= convertStorageDescriptor(sd, Warehouse.getQualifiedName(table));
     return tableConverted;
   }
 
@@ -92,7 +93,7 @@ public class PathConverter extends GenericConverter {
 
     StorageDescriptor sd = partition.getSd();
     log.debug("Examining partition location: {}", sd.getLocation());
-    return convertStorageDescriptor(sd, partition.getDbName() + "." + partition.getTableName());
+    return convertStorageDescriptor(sd, Warehouse.getQualifiedName(partition));
   }
 
   @Override
