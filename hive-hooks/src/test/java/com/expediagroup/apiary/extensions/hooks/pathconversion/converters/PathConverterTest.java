@@ -1,5 +1,9 @@
 /**
+<<<<<<< Updated upstream
  * Copyright (C) 2018-2021 Expedia, Inc.
+=======
+ * Copyright (C) 2018-2022 Expedia, Inc.
+>>>>>>> Stashed changes
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -331,6 +335,8 @@ public class PathConverterTest {
   private Table tableSetup(String testInputLocation) {
     StorageDescriptor testSD = sdSetup(testInputLocation);
     Table table = new Table();
+    table.setDbName("db");
+    table.setTableName("table");
     table.setSd(testSD);
     return table;
   }

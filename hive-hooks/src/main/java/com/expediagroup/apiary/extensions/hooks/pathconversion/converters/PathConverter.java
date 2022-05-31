@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2021 Expedia, Inc.
+ * Copyright (C) 2018-2022 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class PathConverter extends GenericConverter {
 
     StorageDescriptor sd = table.getSd();
     log.debug("Examining table location: {}", sd.getLocation());
-    tableConverted |= convertStorageDescriptor(sd);
+    tableConverted |= convertStorageDescriptor(sd, table.getDbName() + "." + table.getTableName());
     return tableConverted;
   }
 
@@ -92,11 +92,15 @@ public class PathConverter extends GenericConverter {
 
     StorageDescriptor sd = partition.getSd();
     log.debug("Examining partition location: {}", sd.getLocation());
-    return convertStorageDescriptor(sd);
+    return convertStorageDescriptor(sd, partition.getDbName() + "." + partition.getTableName());
   }
 
   @Override
   public boolean convertStorageDescriptor(StorageDescriptor sd) {
+    return convertStorageDescriptor(sd, "");
+  }
+
+  private boolean convertStorageDescriptor(StorageDescriptor sd, String qualifiedTableName) {
     boolean pathConverted = false;
     String currentLocation = sd.getLocation();
     if (!Strings.isNullOrEmpty(currentLocation)) {
@@ -104,7 +108,7 @@ public class PathConverter extends GenericConverter {
       log.info("Switching storage location {} to {}.", currentLocation, sd.getLocation());
       pathConverted = !currentLocation.equals(sd.getLocation());
     } else {
-      log.info("Switching storage location not possible empty/null location, {}", sd.toString());
+      log.info("Switching storage location not possible empty/null location, table: {}", qualifiedTableName);
     }
     if (sd.isSetSerdeInfo() && sd.getSerdeInfo().isSetParameters()) {
       String parameterPath = sd.getSerdeInfo().getParameters().get(SD_INFO_PATH_PARAMETER);
