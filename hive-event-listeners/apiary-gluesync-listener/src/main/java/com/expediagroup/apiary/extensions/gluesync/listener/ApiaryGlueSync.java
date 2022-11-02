@@ -41,6 +41,7 @@ import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.auth.WebIdentityTokenCredentialsProvider;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
@@ -74,7 +75,11 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
 
   public ApiaryGlueSync(Configuration config) {
     super(config);
-    glueClient = AWSGlueClientBuilder.standard().withRegion(System.getenv("AWS_REGION")).build();
+    AWSGlueClientBuilder glueBuilder = AWSGlueClientBuilder.standard().withRegion(System.getenv("AWS_REGION"));
+    if (System.getenv("AWS_WEB_IDENTITY_TOKEN_FILE") != null && !System.getenv("AWS_WEB_IDENTITY_TOKEN_FILE").isEmpty()) {
+      glueBuilder.withCredentials(WebIdentityTokenCredentialsProvider.create());
+    }
+    glueClient = glueBuilder.build();
     gluePrefix = System.getenv("GLUE_PREFIX");
     log.debug("ApiaryGlueSync created");
   }
