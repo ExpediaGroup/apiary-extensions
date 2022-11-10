@@ -377,8 +377,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       return null;
     }
     try {
-      final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-      return dateFormat.parse(lastAccessTime.toString());
+      return new Date(lastAccessTime);
     } catch (Exception e) {
       log.error("Error formatting table date", e);
     }

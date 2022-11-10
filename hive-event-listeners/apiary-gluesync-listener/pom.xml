@@ -81,7 +81,24 @@
       <artifactId>log4j-api</artifactId>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.apache.iceberg</groupId>
+      <artifactId>iceberg-hive-metastore</artifactId>
+      <scope>test</scope>
+      <version>${iceberg.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.expediagroup.egdl</groupId>
+      <artifactId>icelander-common-test</artifactId>
+      <scope>test</scope>
+      <version>0.18.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+      <version>2.7.3</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

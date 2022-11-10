@@ -26,6 +26,7 @@
     <aws-java-sdk.version>1.12.276</aws-java-sdk.version>
     <hadoop.version>2.7.1</hadoop.version>
     <hive.version>2.3.7</hive.version>
+    <iceberg.version>1.0.0</iceberg.version>
     <ranger.version>2.0.0</ranger.version>
     <solr.version>7.7.1</solr.version>
     <junit.version>4.13.1</junit.version>

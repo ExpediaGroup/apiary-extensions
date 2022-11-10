@@ -17,6 +17,8 @@ package com.expediagroup.apiary.extensions.gluesync.listener;
 
 import static java.util.Arrays.asList;
 
+import static org.apache.iceberg.PartitionSpec.builderFor;
+import static org.apache.iceberg.types.Types.NestedField.required;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,6 +28,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import static com.google.common.collect.Maps.newHashMap;
+
+import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.newIcebergTable;
+import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.newStorageDescriptor;
+import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.setHmsTableParameters;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +50,12 @@ import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
 import org.apache.hadoop.hive.serde.serdeConstants;
+import org.apache.iceberg.NullOrder;
+import org.apache.iceberg.PartitionSpec;
+import org.apache.iceberg.Schema;
+import org.apache.iceberg.SortOrder;
+import org.apache.iceberg.expressions.Term;
+import org.apache.iceberg.types.Types;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -183,7 +195,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onCreateTable() {
+  public void onCreateHiveTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
