@@ -29,10 +29,6 @@ import static org.mockito.Mockito.when;
 
 import static com.google.common.collect.Maps.newHashMap;
 
-import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.newIcebergTable;
-import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.newStorageDescriptor;
-import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.setHmsTableParameters;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,12 +46,6 @@ import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
 import org.apache.hadoop.hive.serde.serdeConstants;
-import org.apache.iceberg.NullOrder;
-import org.apache.iceberg.PartitionSpec;
-import org.apache.iceberg.Schema;
-import org.apache.iceberg.SortOrder;
-import org.apache.iceberg.expressions.Term;
-import org.apache.iceberg.types.Types;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

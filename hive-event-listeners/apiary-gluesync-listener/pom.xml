@@ -84,14 +84,14 @@
     <dependency>
       <groupId>org.apache.iceberg</groupId>
       <artifactId>iceberg-hive-metastore</artifactId>
-      <scope>test</scope>
       <version>${iceberg.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.expediagroup.egdl</groupId>
       <artifactId>icelander-common-test</artifactId>
-      <scope>test</scope>
       <version>0.18.2</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
