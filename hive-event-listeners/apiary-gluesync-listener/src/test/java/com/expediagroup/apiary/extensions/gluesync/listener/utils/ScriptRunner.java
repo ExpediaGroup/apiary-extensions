@@ -14,7 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Slightly modified version of the com.ibatis.common.jdbc.com.expediagroup.egdl.icelander.ScriptRunner class
+ *  Slightly modified version of the com.ibatis.common.jdbc.ScriptRunner class
  *  from the iBATIS Apache project. Only removed dependency on Resource class
  *  and a constructor.
  *
