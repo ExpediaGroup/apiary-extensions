@@ -1,4 +1,4 @@
-package com.expediagroup.apiary.extensions.gluesync.listener;
+package com.expediagroup.apiary.extensions.gluesync.listener.utils;
 
 import java.util.HashMap;
 
@@ -8,8 +8,6 @@ import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.iceberg.hive.HiveCatalog;
 import org.junit.After;
 import org.junit.Before;
-
-import com.expediagroup.egdl.icelander.test.LocalHiveMetastore;
 
 public class HiveMetastoreTestBase {
   protected static final String DB_NAME = "test";

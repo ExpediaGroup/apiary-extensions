@@ -29,6 +29,8 @@ import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.CreateTableResult;
 
+import com.expediagroup.apiary.extensions.gluesync.listener.utils.HiveMetastoreTestBase;
+
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryGlueIcebergSyncTest extends HiveMetastoreTestBase {
   private static final String TABLE_NAME = "table";

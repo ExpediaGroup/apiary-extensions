@@ -88,12 +88,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.expediagroup.egdl</groupId>
-      <artifactId>icelander-common-test</artifactId>
-      <version>0.18.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
       <version>2.7.3</version>
