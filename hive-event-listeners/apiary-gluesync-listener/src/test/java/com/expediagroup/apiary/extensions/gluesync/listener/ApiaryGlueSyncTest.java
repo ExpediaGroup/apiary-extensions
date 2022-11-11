@@ -29,6 +29,7 @@ import static com.google.common.collect.Maps.newHashMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,7 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
 import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
@@ -63,6 +65,7 @@ import com.amazonaws.services.glue.model.EntityNotFoundException;
 import com.amazonaws.services.glue.model.GetDatabaseRequest;
 import com.amazonaws.services.glue.model.GetDatabaseResult;
 import com.amazonaws.services.glue.model.UpdateDatabaseRequest;
+import com.amazonaws.services.glue.model.UpdateTableRequest;
 import com.google.common.collect.ImmutableMap;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -77,7 +80,9 @@ public class ApiaryGlueSyncTest {
   private CreateTableResult createTableResult;
 
   @Captor
-  private ArgumentCaptor<CreateTableRequest> tableRequestCaptor;
+  private ArgumentCaptor<CreateTableRequest> createTableRequestCaptor;
+  @Captor
+  private ArgumentCaptor<UpdateTableRequest> updateTableRequestCaptor;
   @Captor
   private ArgumentCaptor<CreateDatabaseRequest> createDatabaseRequestCaptor;
   @Captor
@@ -183,41 +188,17 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onCreateHiveTable() {
+  public void onCreateTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
-    Table table = new Table();
-    table.setTableName(tableName);
-    table.setDbName(dbName);
-
-    StorageDescriptor sd = new StorageDescriptor();
-
-    List<FieldSchema> fields = new ArrayList<>();
-    for (String colName : colNames) {
-      fields.add(new FieldSchema(colName, "string", ""));
-    }
-    sd.setCols(fields);
-    sd.setInputFormat("org.apache.hadoop.mapred.TextInputFormat");
-    sd.setOutputFormat("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat");
-    sd.setSerdeInfo(new SerDeInfo());
-    sd.getSerdeInfo().setParameters(new HashMap<>());
-    sd.getSerdeInfo().getParameters().put(serdeConstants.SERIALIZATION_FORMAT, "1");
-    sd.setSortCols(new ArrayList<>());
-    table.setSd(sd);
-
-    List<FieldSchema> partitions = new ArrayList<>();
-    for (String partName : partNames) {
-      partitions.add(new FieldSchema(partName, "string", ""));
-    }
-    table.setPartitionKeys(partitions);
-
+    Table table = simpleHiveTable(simpleSchema(), simplePartitioning());
     when(event.getTable()).thenReturn(table);
 
     glueSync.onCreateTable(event);
 
-    verify(glueClient).createTable(tableRequestCaptor.capture());
-    CreateTableRequest createTableRequest = tableRequestCaptor.getValue();
+    verify(glueClient).createTable(createTableRequestCaptor.capture());
+    CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
 
     assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
     assertThat(createTableRequest.getTableInput().getName(), is(tableName));
@@ -226,21 +207,54 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
+  public void onAlterTable() {
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table newTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    int lastAccessTime = 10000000;
+    newTable.setLastAccessTime(lastAccessTime);
+    newTable.setTableName("table2");
+    when(event.getNewTable()).thenReturn(newTable);
+
+    glueSync.onAlterTable(event);
+
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    UpdateTableRequest updateTableRequest = updateTableRequestCaptor.getValue();
+
+    assertThat(updateTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    assertThat(updateTableRequest.getTableInput().getName(), is("table2"));
+    assertThat(updateTableRequest.getTableInput().getLastAccessTime(), is(new Date(lastAccessTime)));
+    assertThat(toList(updateTableRequest.getTableInput().getPartitionKeys()), is(asList(partNames)));
+    assertThat(toList(updateTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+  }
+
+  @Test
   public void onCreateUnpartitionedTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
+    Table table = simpleHiveTable(simpleSchema(), new ArrayList<>());
+    when(event.getTable()).thenReturn(table);
+
+    glueSync.onCreateTable(event);
+
+    verify(glueClient).createTable(createTableRequestCaptor.capture());
+    CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
+
+    assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    assertThat(createTableRequest.getTableInput().getName(), is(tableName));
+    assertThat(createTableRequest.getTableInput().getPartitionKeys().size(), is(0));
+    assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+  }
+
+  private Table simpleHiveTable(List<FieldSchema> schema, List<FieldSchema> partitions) {
     Table table = new Table();
     table.setTableName(tableName);
     table.setDbName(dbName);
 
     StorageDescriptor sd = new StorageDescriptor();
-
-    List<FieldSchema> fields = new ArrayList<>();
-    for (String colName : colNames) {
-      fields.add(new FieldSchema(colName, "string", ""));
-    }
-    sd.setCols(fields);
+    sd.setCols(schema);
     sd.setInputFormat("org.apache.hadoop.mapred.TextInputFormat");
     sd.setOutputFormat("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat");
     sd.setSerdeInfo(new SerDeInfo());
@@ -248,17 +262,25 @@ public class ApiaryGlueSyncTest {
     sd.getSerdeInfo().getParameters().put(serdeConstants.SERIALIZATION_FORMAT, "1");
     sd.setSortCols(new ArrayList<>());
     table.setSd(sd);
-    when(event.getTable()).thenReturn(table);
+    table.setPartitionKeys(partitions);
 
-    glueSync.onCreateTable(event);
+    return table;
+  }
 
-    verify(glueClient).createTable(tableRequestCaptor.capture());
-    CreateTableRequest createTableRequest = tableRequestCaptor.getValue();
+  private List<FieldSchema> simpleSchema() {
+    List<FieldSchema> fields = new ArrayList<>();
+    for (String colName : colNames) {
+      fields.add(new FieldSchema(colName, "string", ""));
+    }
+    return fields;
+  }
 
-    assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
-    assertThat(createTableRequest.getTableInput().getName(), is(tableName));
-    assertThat(createTableRequest.getTableInput().getPartitionKeys().size(), is(0));
-    assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+  private List<FieldSchema> simplePartitioning() {
+    List<FieldSchema> partitions = new ArrayList<>();
+    for (String partName : partNames) {
+      partitions.add(new FieldSchema(partName, "string", ""));
+    }
+    return partitions;
   }
 
   private List<String> toList(List<Column> columns) {
