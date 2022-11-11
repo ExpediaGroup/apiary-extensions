@@ -348,6 +348,10 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
 
   private List<Order> extractSortOrders(final List<org.apache.hadoop.hive.metastore.api.Order> hiveOrders) {
     final List<Order> sortOrders = new ArrayList<>();
+    if (hiveOrders == null) {
+      return sortOrders;
+    }
+
     for (final org.apache.hadoop.hive.metastore.api.Order hiveOrder : hiveOrders) {
       final Order order = new Order().withSortOrder(hiveOrder.getOrder()).withColumn(hiveOrder.getCol());
       sortOrders.add(order);
