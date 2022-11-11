@@ -22,8 +22,6 @@
   </Appenders>
   <Loggers>
     <Logger name="com.expediagroup.apiary" level="debug"/>
-    <Logger name="hive.metastore" level="warn"/>
-    <Logger name="org.apache.hadoop.hive.metastore" level="warn"/>
     <Root level="info">
       <AppenderRef ref="STDOUT"/>
     </Root>
