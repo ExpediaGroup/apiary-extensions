@@ -22,7 +22,6 @@ import org.apache.iceberg.Schema;
 import org.apache.iceberg.SchemaParser;
 import org.apache.iceberg.SortOrder;
 import org.apache.iceberg.SortOrderParser;
-import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.TableProperties;
 import org.apache.iceberg.hive.HiveSchemaUtil;
 import org.apache.iceberg.types.Types;
@@ -112,8 +111,7 @@ public class IcebergTableOperations {
 
   private static void setSortOrder(SortOrder sortOrder, Map<String, String> parameters) {
     parameters.remove(TableProperties.DEFAULT_SORT_ORDER);
-    if (sortOrder != null
-        && sortOrder.isSorted()) {
+    if (sortOrder != null && sortOrder.isSorted()) {
       String sortOrderJSON = SortOrderParser.toJson(sortOrder);
       parameters.put(TableProperties.DEFAULT_SORT_ORDER, sortOrderJSON);
     }
