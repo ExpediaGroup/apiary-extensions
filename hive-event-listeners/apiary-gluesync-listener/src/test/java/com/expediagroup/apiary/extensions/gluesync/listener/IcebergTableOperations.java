@@ -59,7 +59,7 @@ public class IcebergTableOperations {
         required(2, "col2", Types.StringType.get()), required(3, "col3", Types.IntegerType.get()));
   }
 
-  protected static PartitionSpec simpleIcebergPartitioning() {
+  protected static PartitionSpec simpleIcebergPartitionSpec() {
     return builderFor(simpleIcebergSchema()).identity("col1").build();
   }
 
