@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 
 import static com.google.common.collect.Maps.newHashMap;
 
-import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergPartitioning;
+import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergPartitionSpec;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergSchema;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergTable;
 
@@ -215,7 +215,7 @@ public class ApiaryGlueSyncTest {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
-    Table table = simpleIcebergTable(dbName, tableName, simpleIcebergSchema(), simpleIcebergPartitioning(), null);
+    Table table = simpleIcebergTable(dbName, tableName, simpleIcebergSchema(), simpleIcebergPartitionSpec(), null);
     when(event.getTable()).thenReturn(table);
 
     glueSync.onCreateTable(event);
