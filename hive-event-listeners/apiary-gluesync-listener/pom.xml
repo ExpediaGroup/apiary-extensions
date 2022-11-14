@@ -81,6 +81,13 @@
       <artifactId>log4j-api</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.iceberg</groupId>
+      <artifactId>iceberg-hive-metastore</artifactId>
+      <version>1.0.0</version>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <build>

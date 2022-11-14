@@ -27,6 +27,10 @@ import static org.mockito.Mockito.when;
 
 import static com.google.common.collect.Maps.newHashMap;
 
+import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergPartitionSpec;
+import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergSchema;
+import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergTable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -188,7 +192,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onCreateTable() {
+  public void onCreateHiveTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -207,7 +211,28 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onAlterTable() {
+  public void onCreateIcebergTable() {
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table table = simpleIcebergTable(dbName, tableName, simpleIcebergSchema(), simpleIcebergPartitionSpec(), null);
+    when(event.getTable()).thenReturn(table);
+
+    glueSync.onCreateTable(event);
+
+    verify(glueClient).createTable(createTableRequestCaptor.capture());
+    CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
+
+    assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    assertThat(createTableRequest.getTableInput().getName(), is(tableName));
+    assertThat(createTableRequest.getTableInput().getStorageDescriptor().getInputFormat(), is("org.apache.iceberg.mr.hive.HiveIcebergInputFormat"));
+    assertThat(createTableRequest.getTableInput().getStorageDescriptor().getSerdeInfo().getSerializationLibrary(),
+        is("org.apache.iceberg.mr.hive.HiveIcebergSerDe"));
+    assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+  }
+
+  @Test
+  public void onAlterHiveTable() {
     AlterTableEvent event = mock(AlterTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -230,7 +255,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onCreateUnpartitionedTable() {
+  public void onCreateUnpartitionedHiveTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
