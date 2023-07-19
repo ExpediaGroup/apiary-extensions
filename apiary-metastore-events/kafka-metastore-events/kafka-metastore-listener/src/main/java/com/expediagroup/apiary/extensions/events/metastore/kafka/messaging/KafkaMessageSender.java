@@ -24,6 +24,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BOOTSTRAP_SERVERS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BUFFER_MEMORY;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.CLIENT_ID;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.COMPRESSION_TYPE;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.LINGER_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.RETRIES;
@@ -77,6 +78,7 @@ public class KafkaMessageSender {
     props.put(BATCH_SIZE.unprefixedKey(), intProperty(conf, BATCH_SIZE));
     props.put(LINGER_MS.unprefixedKey(), longProperty(conf, LINGER_MS));
     props.put(BUFFER_MEMORY.unprefixedKey(), longProperty(conf, BUFFER_MEMORY));
+    props.put(COMPRESSION_TYPE.unprefixedKey(), stringProperty(conf, COMPRESSION_TYPE));
     props.put("key.serializer", "org.apache.kafka.common.serialization.LongSerializer");
     props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
     return props;
