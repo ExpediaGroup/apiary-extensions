@@ -22,6 +22,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BOOTSTRAP_SERVERS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BUFFER_MEMORY;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.CLIENT_ID;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.COMPRESSION_TYPE;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.LINGER_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.RETRIES;
@@ -40,7 +41,7 @@ public class KafkaProducerPropertyTest {
 
   @Test
   public void numberOfProperties() {
-    assertThat(KafkaProducerProperty.values().length).isEqualTo(10);
+    assertThat(KafkaProducerProperty.values().length).isEqualTo(11);
   }
 
   @Test
@@ -113,6 +114,13 @@ public class KafkaProducerPropertyTest {
     assertThat(SERDE_CLASS.unprefixedKey()).isEqualTo("serde.class");
     assertThat(SERDE_CLASS.key()).isEqualTo(prefixedKey("serde.class"));
     assertThat(SERDE_CLASS.defaultValue()).isEqualTo(JsonMetaStoreEventSerDe.class.getName());
+  }
+
+  @Test
+  public void compressionType() {
+    assertThat(COMPRESSION_TYPE.unprefixedKey()).isEqualTo("compression.type");
+    assertThat(COMPRESSION_TYPE.key()).isEqualTo(prefixedKey("compression.type"));
+    assertThat(COMPRESSION_TYPE.defaultValue()).isEqualTo("producer");
   }
 
 }
