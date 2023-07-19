@@ -120,7 +120,7 @@ public class KafkaProducerPropertyTest {
   public void compressionType() {
     assertThat(COMPRESSION_TYPE.unprefixedKey()).isEqualTo("compression.type");
     assertThat(COMPRESSION_TYPE.key()).isEqualTo(prefixedKey("compression.type"));
-    assertThat(COMPRESSION_TYPE.defaultValue()).isEqualTo("producer");
+    assertThat(COMPRESSION_TYPE.defaultValue()).isEqualTo("none");
   }
 
 }

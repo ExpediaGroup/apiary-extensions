@@ -29,7 +29,7 @@ public enum KafkaProducerProperty implements Property {
   LINGER_MS("linger.ms", 1L),
   BUFFER_MEMORY("buffer.memory", 33554432L),
   SERDE_CLASS("serde.class", JsonMetaStoreEventSerDe.class.getName()),
-  COMPRESSION_TYPE("compression.type", "producer");
+  COMPRESSION_TYPE("compression.type", "none");
 
   private static final String HADOOP_CONF_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
 
