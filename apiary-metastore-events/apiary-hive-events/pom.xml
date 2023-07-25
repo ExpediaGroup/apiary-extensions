@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
     <artifactId>apiary-metastore-events-parent</artifactId>
-    <version>7.3.7</version>
+    <version>7.3.8-SNAPSHOT</version>
   </parent>
 
   <artifactId>apiary-hive-events</artifactId>
