@@ -25,6 +25,7 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.COMPRESSION_TYPE;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.LINGER_MS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
+import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.MAX_REQUEST_SIZE;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.RETRIES;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.SERDE_CLASS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC_NAME;
@@ -41,7 +42,7 @@ public class KafkaProducerPropertyTest {
 
   @Test
   public void numberOfProperties() {
-    assertThat(KafkaProducerProperty.values().length).isEqualTo(11);
+    assertThat(KafkaProducerProperty.values().length).isEqualTo(12);
   }
 
   @Test
@@ -121,6 +122,13 @@ public class KafkaProducerPropertyTest {
     assertThat(COMPRESSION_TYPE.unprefixedKey()).isEqualTo("compression.type");
     assertThat(COMPRESSION_TYPE.key()).isEqualTo(prefixedKey("compression.type"));
     assertThat(COMPRESSION_TYPE.defaultValue()).isEqualTo("none");
+  }
+
+  @Test
+  public void maxRequestSize() {
+    assertThat(MAX_REQUEST_SIZE.unprefixedKey()).isEqualTo("max.request.size");
+    assertThat(MAX_REQUEST_SIZE.key()).isEqualTo(prefixedKey("max.request.size"));
+    assertThat(MAX_REQUEST_SIZE.defaultValue()).isEqualTo(1048576);
   }
 
 }
