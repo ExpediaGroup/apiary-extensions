@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
     <artifactId>apiary-metastore-consumers-parent</artifactId>
-    <version>7.3.10-SNAPSHOT</version>
+    <version>7.3.10</version>
   </parent>
 
   <artifactId>apiary-privileges-grantor-parent</artifactId>
