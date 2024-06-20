@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
     <artifactId>apiary-privileges-grantor-parent</artifactId>
-    <version>7.3.11</version>
+    <version>7.3.12-SNAPSHOT</version>
   </parent>
 
   <artifactId>apiary-privileges-grantor-lambda</artifactId>
