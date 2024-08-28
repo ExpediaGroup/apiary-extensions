@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2022 Expedia, Inc.
+ * Copyright (C) 2018-2024 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import static com.google.common.collect.Maps.newHashMap;
 
+import static com.expediagroup.apiary.extensions.gluesync.listener.ApiaryGlueSync.APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergPartitionSpec;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergSchema;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergTable;
@@ -252,6 +253,32 @@ public class ApiaryGlueSyncTest {
     assertThat(updateTableRequest.getTableInput().getLastAccessTime(), is(new Date(lastAccessTime)));
     assertThat(toList(updateTableRequest.getTableInput().getPartitionKeys()), is(asList(partNames)));
     assertThat(toList(updateTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+    assertThat(updateTableRequest.getSkipArchive(), is(true));
+  }
+  
+  @Test
+  public void onAlterHiveTableSkipArchiveOverride() {
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table newTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    int lastAccessTime = 10000000;
+    newTable.setLastAccessTime(lastAccessTime);
+    newTable.setTableName("table2");
+    newTable.putToParameters(APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM, "false");
+    when(event.getNewTable()).thenReturn(newTable);
+
+    glueSync.onAlterTable(event);
+
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    UpdateTableRequest updateTableRequest = updateTableRequestCaptor.getValue();
+
+    assertThat(updateTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    assertThat(updateTableRequest.getTableInput().getName(), is("table2"));
+    assertThat(updateTableRequest.getTableInput().getLastAccessTime(), is(new Date(lastAccessTime)));
+    assertThat(toList(updateTableRequest.getTableInput().getPartitionKeys()), is(asList(partNames)));
+    assertThat(toList(updateTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+    assertThat(updateTableRequest.getSkipArchive(), is(false));
   }
 
   @Test
