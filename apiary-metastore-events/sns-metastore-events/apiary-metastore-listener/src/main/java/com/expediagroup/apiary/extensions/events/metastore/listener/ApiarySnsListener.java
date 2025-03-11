@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2020 Expedia, Inc.
+ * Copyright (C) 2018-2025 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,8 +134,20 @@ public class ApiarySnsListener extends MetaStoreEventListener {
     if (event.getStatus() == false) {
       return;
     }
-    publishInsertEvent(EventType.INSERT, event.getDb(), event.getTable(), event.getPartitionKeyValues(),
+    Table tableObj = event.getTableObj();
+    Map<String, String> partitionKeyValues = extractPartitionKeyValues(tableObj, event.getPartitionObj());
+    publishInsertEvent(EventType.INSERT, tableObj.getDbName(), tableObj.getTableName(), partitionKeyValues,
         event.getFiles(), event.getFileChecksums());
+  }
+
+  private Map<String, String> extractPartitionKeyValues(Table tableObj, Partition partitionObj) {
+    LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
+    if (partitionObj != null) {
+      for (int i = 0; i < partitionObj.getValuesSize(); i++) {
+        result.put(tableObj.getPartitionKeys().get(i).getName(), partitionObj.getValues().get(i));
+      }
+    }
+    return result;
   }
 
   @Override

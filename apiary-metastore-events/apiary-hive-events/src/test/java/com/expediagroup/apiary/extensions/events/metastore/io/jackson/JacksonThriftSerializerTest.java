@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2020 Expedia, Inc.
+ * Copyright (C) 2018-2025 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,11 @@ public class JacksonThriftSerializerTest {
         .appendln("      'serializationLib' : 'serialization_lib',")
         .appendln("      'parameters' : {")
         .appendln("        'serde_info_foo' : 'serde_info_bar'")
-        .appendln("      }")
+        .appendln("      },")
+        .appendln("      'description' : null,")
+        .appendln("      'serializerClass' : null,")
+        .appendln("      'deserializerClass' : null,")
+        .appendln("      'serdeType' : null")
         .appendln("    },")
         .appendln("    'bucketCols' : [ 'b1', 'b2', 'b3' ],")
         .appendln("    'sortCols' : [ {")
@@ -147,7 +151,10 @@ public class JacksonThriftSerializerTest {
         .appendln("    }")
         .appendln("  },")
         .appendln("  'temporary' : true,")
-        .appendln("  'rewriteEnabled' : true")
+        .appendln("  'rewriteEnabled' : true,")
+        .appendln("  'creationMetadata' : null,")
+        .appendln("  'catName' : null,")
+        .appendln("  'ownerType' : 'USER'")
         .append("}")
         .replaceAll("'", "\"")
         .build());
@@ -180,7 +187,11 @@ public class JacksonThriftSerializerTest {
         .appendln("      'serializationLib' : 'serialization_lib',")
         .appendln("      'parameters' : {")
         .appendln("        'serde_info_foo' : 'serde_info_bar'")
-        .appendln("      }")
+        .appendln("      },")
+        .appendln("      'description' : null,")
+        .appendln("      'serializerClass' : null,")
+        .appendln("      'deserializerClass' : null,")
+        .appendln("      'serdeType' : null")
         .appendln("    },")
         .appendln("    'bucketCols' : [ 'b1', 'b2', 'b3' ],")
         .appendln("    'sortCols' : [ {")
@@ -231,7 +242,8 @@ public class JacksonThriftSerializerTest {
         .appendln("        'grantOption' : true")
         .appendln("      } ]")
         .appendln("    }")
-        .appendln("  }")
+        .appendln("  },")
+        .appendln("  'catName' : null")
         .append("}")
         .replaceAll("'", "\"")
         .build());

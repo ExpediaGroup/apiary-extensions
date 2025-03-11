@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2025 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.event;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 
 public class ApiaryInsertEvent extends ApiaryListenerEvent {
@@ -34,11 +37,22 @@ public class ApiaryInsertEvent extends ApiaryListenerEvent {
 
   public ApiaryInsertEvent(InsertEvent event) {
     super(event);
-    databaseName = event.getDb();
-    tableName = event.getTable();
-    partitionKeyValues = event.getPartitionKeyValues();
+    Table tableObj = event.getTableObj();
+    databaseName = tableObj.getDbName();
+    tableName = tableObj.getTableName();
+    partitionKeyValues = extractPartitionKeyValues(tableObj, event.getPartitionObj());
     files = event.getFiles();
     fileChecksums = event.getFileChecksums();
+  }
+
+  private Map<String, String> extractPartitionKeyValues(Table tableObj, Partition partitionObj) {
+    LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
+    if (partitionObj != null) {
+      for (int i = 0; i < partitionObj.getValuesSize(); i++) {
+        result.put(tableObj.getPartitionKeys().get(i).getName(), partitionObj.getValues().get(i));
+      }
+    }
+    return result;
   }
 
   @Override

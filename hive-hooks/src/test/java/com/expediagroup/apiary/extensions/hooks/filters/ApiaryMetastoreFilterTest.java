@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2022 Expedia, Inc.
+ * Copyright (C) 2018-2025 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,14 @@ import java.util.Properties;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreFilterHook;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Database;
-import org.apache.hadoop.hive.metastore.api.Index;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.PartitionSpec;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.api.TableMeta;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -76,7 +77,7 @@ public class ApiaryMetastoreFilterTest {
   @Test
   public void shouldNotMutateTableNames() throws MetaException {
     List<String> tableNames = ImmutableList.of("test");
-    List<String> result = hook.filterTableNames("db", tableNames);
+    List<String> result = hook.filterTableNames("cat", "db", tableNames);
     assertEquals(tableNames, result);
   }
 
@@ -90,30 +91,17 @@ public class ApiaryMetastoreFilterTest {
   @Test
   public void shouldNotMutatePartitionNames() throws MetaException {
     List<String> partitionNames = ImmutableList.of("test");
-    List<String> result = hook.filterPartitionNames("db", "tbl", partitionNames);
+    List<String> result = hook.filterPartitionNames("cat", "db", "tbl", partitionNames);
     assertEquals(partitionNames, result);
   }
 
   @Test
   public void shouldNotMutateIndex() throws MetaException, NoSuchObjectException {
-    Index index = new Index();
-    Index result = hook.filterIndex(index);
-    assertEquals(index, result);
+    List<TableMeta> tableMetas = ImmutableList.of(new TableMeta("db", "tbl", TableType.EXTERNAL_TABLE.name()));
+    List<TableMeta> result = hook.filterTableMetas(tableMetas);
+    assertEquals(tableMetas, result);
   }
 
-  @Test
-  public void shouldNotMutateIndexNames() throws MetaException {
-    List<String> indexNames = ImmutableList.of("test");
-    List<String> result = hook.filterIndexNames("db", "tbl", indexNames);
-    assertEquals(indexNames, result);
-  }
-
-  @Test
-  public void shouldNotMutateIndexes() throws MetaException {
-    List<Index> indexList = ImmutableList.of(new Index());
-    List<Index> result = hook.filterIndexes(indexList);
-    assertEquals(indexList, result);
-  }
 
   @Test
   public void shouldMutateTables() throws MetaException {

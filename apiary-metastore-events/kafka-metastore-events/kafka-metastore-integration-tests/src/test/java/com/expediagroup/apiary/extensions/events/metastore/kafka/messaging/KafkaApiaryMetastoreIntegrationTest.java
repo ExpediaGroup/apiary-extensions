@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2020 Expedia, Inc.
+ * Copyright (C) 2018-2025 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,13 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildQualifiedTableName;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildTable;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaIntegrationTestUtils.buildTableParameters;
-import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageReader.KafkaMessageReaderBuilder;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.BOOTSTRAP_SERVERS;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.CLIENT_ID;
 import static com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaProducerProperty.TOPIC_NAME;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -38,6 +39,7 @@ import org.apache.hadoop.hive.metastore.api.InsertEventRequestData;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
@@ -65,6 +67,7 @@ import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryDropTable
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryInsertEvent;
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
 import com.expediagroup.apiary.extensions.events.metastore.kafka.listener.KafkaMetaStoreEventListener;
+import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageReader.KafkaMessageReaderBuilder;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KafkaApiaryMetastoreIntegrationTest {
@@ -88,13 +91,14 @@ public class KafkaApiaryMetastoreIntegrationTest {
 
     kafkaMetaStoreEventListener = new KafkaMetaStoreEventListener(CONF);
 
-    //this makes sure the consumer starts from the beginning on the first read
+    // this makes sure the consumer starts from the beginning on the first read
     Properties consumerProperties = new Properties();
     consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    kafkaMessageReader = KafkaMessageReaderBuilder.builder(KAFKA.getKafkaConnectString(), "topic", "app")
-      .withConsumerProperties(consumerProperties)
-      .build();
+    kafkaMessageReader = KafkaMessageReaderBuilder
+        .builder(KAFKA.getKafkaConnectString(), "topic", "app")
+        .withConsumerProperties(consumerProperties)
+        .build();
   }
 
   @Test(timeout = TEST_TIMEOUT_MS)
@@ -123,8 +127,10 @@ public class KafkaApiaryMetastoreIntegrationTest {
 
   @Test(timeout = TEST_TIMEOUT_MS)
   public void alterTableEvent() {
-    AlterTableEvent alterTableEvent = new AlterTableEvent(buildTable("old_table"), buildTable("new_table"), true,
-      hmsHandler);
+    boolean status = true;
+    boolean isTruncateOp = false;
+    AlterTableEvent alterTableEvent = new AlterTableEvent(buildTable("old_table"), buildTable("new_table"),
+        isTruncateOp, status, hmsHandler);
     kafkaMetaStoreEventListener.onAlterTable(alterTableEvent);
     ApiaryListenerEvent result = kafkaMessageReader.next();
     assertThat(result).isInstanceOf(ApiaryAlterTableEvent.class);
@@ -153,7 +159,7 @@ public class KafkaApiaryMetastoreIntegrationTest {
   @Test(timeout = TEST_TIMEOUT_MS)
   public void dropPartitionEvent() {
     DropPartitionEvent dropPartitionEvent = new DropPartitionEvent(buildTable(), buildPartition(), true, false,
-      hmsHandler);
+        hmsHandler);
     kafkaMetaStoreEventListener.onDropPartition(dropPartitionEvent);
     ApiaryListenerEvent result = kafkaMessageReader.next();
     assertThat(result).isInstanceOf(ApiaryDropPartitionEvent.class);
@@ -168,8 +174,10 @@ public class KafkaApiaryMetastoreIntegrationTest {
   public void alterPartitionEvent() {
     Partition oldPartition = buildPartition("old_partition");
     Partition newPartition = buildPartition("new_partition");
-    AlterPartitionEvent alterPartitionEvent = new AlterPartitionEvent(oldPartition, newPartition, buildTable(), true,
-      hmsHandler);
+    boolean status = true;
+    boolean isTruncateOp = false;
+    AlterPartitionEvent alterPartitionEvent = new AlterPartitionEvent(oldPartition, newPartition, buildTable(),
+        isTruncateOp, status, hmsHandler);
     kafkaMetaStoreEventListener.onAlterPartition(alterPartitionEvent);
     ApiaryListenerEvent result = kafkaMessageReader.next();
     assertThat(result).isInstanceOf(ApiaryAlterPartitionEvent.class);
@@ -183,21 +191,22 @@ public class KafkaApiaryMetastoreIntegrationTest {
 
   @Test(timeout = TEST_TIMEOUT_MS)
   public void insertPartitionEvent() throws MetaException, NoSuchObjectException {
-    when(hmsHandler.get_table_req(any())).thenReturn(new GetTableResult(buildTable()));
-    ArrayList<String> partitionValues = Lists.newArrayList("value1", "value2");
-    InsertEvent insertEvent = new InsertEvent(
-      "database",
-      "table",
-      partitionValues,
-      new InsertEventRequestData(Lists.newArrayList("file1", "file2")),
-      true,
-      hmsHandler
-    );
+    Table table = buildTable();
+    when(hmsHandler.get_table_req(any())).thenReturn(new GetTableResult(table));
+    Partition partition = buildPartition("value");
+    when(hmsHandler.get_partition(any(), any(), any())).thenReturn(partition);
+    List<String> partitionValues = partition.getValues();
+    InsertEvent insertEvent = new InsertEvent("cat", "database", "table", partitionValues,
+        new InsertEventRequestData(Lists.newArrayList("file1", "file2")), true, hmsHandler);
     kafkaMetaStoreEventListener.onInsert(insertEvent);
     ApiaryListenerEvent result = kafkaMessageReader.next();
     assertThat(result).isInstanceOf(ApiaryInsertEvent.class);
     ApiaryInsertEvent event = (ApiaryInsertEvent) result;
     assertThat(event.getQualifiedTableName()).isEqualTo(buildQualifiedTableName());
+    Map<String, String> expectedPartitionKeyValues = new LinkedHashMap<>();
+    expectedPartitionKeyValues.put("a", "value1");
+    expectedPartitionKeyValues.put("b", "value2");
+    assertThat(event.getPartitionKeyValues()).isEqualTo(expectedPartitionKeyValues);
     assertThat(event.getStatus()).isEqualTo(true);
   }
 }
