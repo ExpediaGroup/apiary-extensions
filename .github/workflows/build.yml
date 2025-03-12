@@ -33,7 +33,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
 
       - name: Run Maven Targets
-        run: mvn deploy javadoc:javadoc --settings $GITHUB_WORKSPACE/settings.xml --batch-mode --show-version --no-transfer-progress --activate-profiles sonatype-oss-release-github-actions
+        run: mvn deploy javadoc:javadoc --settings $GITHUB_WORKSPACE/settings.xml --batch-mode --show-version --activate-profiles sonatype-oss-release-github-actions
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
