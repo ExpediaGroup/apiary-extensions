@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2025 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ public class KafkaIntegrationTestUtils {
     List<FieldSchema> partitions = Lists.newArrayList();
     partitions.add(new FieldSchema("a", "string", "comment"));
     partitions.add(new FieldSchema("b", "string", "comment"));
-    partitions.add(new FieldSchema("c", "string", "comment"));
     return new Table(
       tableName == null ? TABLE : tableName,
       DATABASE,

@@ -3,6 +3,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 9.0.0 - TBD
+### Changed
+- Update Hive version to `3.1.3` (was `2.3.7`)
+- Update Hadoop version to `3.1.0` (was `3.1.0`)
+- Update BeeJu version to `5.0.1` (was `4.0.0`)
+### Removed
+- Removed `com.expediagroup.apiary.extensions.metastore.metrics.CodahaleMetrics` 
+  This class won't be needed with Hive 3.0.0 as it supports a new property   "hive.service.metrics.codahale.reporter.classes"  https://cwiki.apache.org/confluence/display/Hive/Configuration+Properties#ConfigurationProperties-Metrics
+- Removed `com.expediagroup.apiary.extensions.metastore.metrics.CloudwatchReporter`. Conflicting todo's chose to removed for now.  
+- Removed `apiary-metastore-metrics` module, no longer contains code.
+- Removed `apiary-metastore-consumers` module, no longer actively maintained.
+
 ## 8.0.2 - 2024-08-29
 ### Changed
 - `ApiaryGlueSync` override `skipArchive` to be `true` by default. Backward incompatible behavior that turns off table archiving by default. Allows for per table overrides if needed. If you don't rely on Glue table version it is safe to upgrade to this version of the glue listener without making changes.
