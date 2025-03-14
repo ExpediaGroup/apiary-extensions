@@ -42,7 +42,7 @@ public class KafkaProducerPropertyTest {
 
   @Test
   public void numberOfProperties() {
-    assertThat(KafkaProducerProperty.values().length).isEqualTo(16);
+    assertThat(KafkaProducerProperty.values().length).isEqualTo(12);
   }
 
   @Test
