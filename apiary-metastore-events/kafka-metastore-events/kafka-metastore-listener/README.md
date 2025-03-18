@@ -23,6 +23,19 @@ To configure the listener, the following Hadoop configuration can be used:
 
 All configuration parameters must be prefixed with `com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.`. For example, in your `hive-site.xml`:
 
+### MSK Kafka Metastore Listener Configuration
+For configuring the Kafka Metastore Listener to publish Hive Metastore events to MSK Kafka, the following Hadoop configuration can be used:
+
+| Parameter | Required | Default
+|:----|:--------:|:----:|
+| `security.protocol`   |   Yes    | SSL
+| `sasl.mechanism` |   Yes    | AWS_MSK_IAM
+| `sasl.jaas.config` |   Yes    | software.amazon.msk.auth.iam.IAMLoginModule required;
+| `sasl.client.callback.handler.class` |   Yes    | software.amazon.msk.auth.iam.IAMClientCallbackHandler
+
+These parameters also need to be prefixed with `com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.`. For example, in your `hive-site.xml`:
+Also consider that this configuration works with the default MSK cluster properties, if you have a custom MSK cluster, you may need to add more configurations.
+
 ```xml
 <property>
   <name>com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.bootstrap.servers</name>
