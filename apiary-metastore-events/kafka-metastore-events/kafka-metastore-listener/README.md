@@ -28,10 +28,10 @@ For configuring the Kafka Metastore Listener to publish Hive Metastore events to
 
 | Parameter | Required | Default
 |:----|:--------:|:----:|
-| `security.protocol`   |   Yes    | SSL
-| `sasl.mechanism` |   Yes    | AWS_MSK_IAM
-| `sasl.jaas.config` |   Yes    | software.amazon.msk.auth.iam.IAMLoginModule required;
-| `sasl.client.callback.handler.class` |   Yes    | software.amazon.msk.auth.iam.IAMClientCallbackHandler
+| `security.protocol`   |   Yes    | n/a
+| `sasl.mechanism` |   Yes    | n/a
+| `sasl.jaas.config` |   Yes    | n/a
+| `sasl.client.callback.handler.class` |   Yes    | n/a
 
 These parameters also need to be prefixed with `com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.`. For example, in your `hive-site.xml`:
 Also consider that this configuration works with the default MSK cluster properties, if you have a custom MSK cluster, you may need to add more configurations.

@@ -42,6 +42,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MskMessageSenderTest {
 
+  public static final String KAFKA_SECURITY_PROTOCOL = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.security.protocol";
+  public static final String KAFKA_SASL_MECHANISM = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.sasl.mechanism";
+  public static final String KAFKA_JAAS_CONFIG = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.sasl.jaas.config";
+  public static final String KAFKA_CALLBACK_HANDLER_CLASS = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.sasl.client.callback.handler.class";
   private @Captor ArgumentCaptor<ProducerRecord> producerRecordCaptor;
   private @Mock KafkaMessage kafkaMessage;
   private @Mock KafkaProducer<Long, byte[]> producer;
@@ -72,7 +76,13 @@ public class MskMessageSenderTest {
     conf.set(MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION.key(), "2");
     conf.set(BATCH_SIZE.key(), "3");
     conf.set(LINGER_MS.key(), "4");
-    conf.set(BUFFER_MEMORY.key(), "5"); Properties props = mskProperties(conf);
+    conf.set(BUFFER_MEMORY.key(), "5");
+    conf.set(KAFKA_SECURITY_PROTOCOL, "SSL");
+    conf.set(KAFKA_SASL_MECHANISM, "AWS_MSK_IAM");
+    conf.set(KAFKA_JAAS_CONFIG, "software.amazon.msk.auth.iam.IAMLoginModule required;");
+    conf.set(KAFKA_CALLBACK_HANDLER_CLASS, "software.amazon.msk.auth.iam.IAMClientCallbackHandler");
+
+    Properties props = mskProperties(conf);
     assertThat(props.get("compression.type")).isEqualTo("none");
     assertThat(props.get("batch.size")).isEqualTo("3");
     assertThat(props.get("acks")).isEqualTo("acknowledgements");
@@ -84,14 +94,10 @@ public class MskMessageSenderTest {
     assertThat(props.get("value.serializer")).isEqualTo(ByteArraySerializer.class.getName());
     assertThat(props.get("max.in.flight.requests.per.connection")).isEqualTo("2");
     assertThat(props.get("linger.ms")).isEqualTo("4");
-    //assertThat(props.get("client.id")).isEqualTo("client");
-
-
-    props.put("security.protocol", "SSL");
-    props.put("sasl.mechanism", "AWS_MSK_IAM");
-    props.put("sasl.jaas.config", "software.amazon.msk.auth.iam.IAMLoginModule required;");
-    props.put("sasl.client.callback.handler.class", "software.amazon.msk.auth.iam.IAMClientCallbackHandler");
-
+    assertThat(props.get("security.protocol")).isEqualTo("SSL");
+    assertThat(props.get("sasl.mechanism")).isEqualTo("AWS_MSK_IAM");
+    assertThat(props.get("sasl.jaas.config")).isEqualTo("software.amazon.msk.auth.iam.IAMLoginModule required;");
+    assertThat(props.get("sasl.client.callback.handler.class")).isEqualTo("software.amazon.msk.auth.iam.IAMClientCallbackHandler");
   }
 
   @Test
