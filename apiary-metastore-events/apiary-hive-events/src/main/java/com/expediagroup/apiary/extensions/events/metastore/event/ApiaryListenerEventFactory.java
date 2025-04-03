@@ -28,6 +28,8 @@ import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
 import org.apache.hive.common.util.HiveVersionInfo;
 
+import java.util.Map;
+
 public class ApiaryListenerEventFactory {
 
   public ApiaryCreateTableEvent create(CreateTableEvent event) {
@@ -59,6 +61,9 @@ public class ApiaryListenerEventFactory {
   }
 
   private <T extends ListenerEvent> T addParams(T event) {
+    Map<String, String> eventParams = event.getParameters();
+    if (eventParams != null && eventParams.containsKey(HIVE_VERSION.varname())) { return event; }
+
     event.putParameter(HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
     return event;
   }
