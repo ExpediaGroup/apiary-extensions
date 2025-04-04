@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2020 Expedia, Inc.
+ * Copyright (C) 2018-2025 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.expediagroup.apiary.extensions.events.metastore.event;
 
 import static com.expediagroup.apiary.extensions.events.metastore.event.CustomEventParameters.HIVE_VERSION;
 
+import java.util.Map;
+
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
@@ -27,8 +29,6 @@ import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
 import org.apache.hive.common.util.HiveVersionInfo;
-
-import java.util.Map;
 
 public class ApiaryListenerEventFactory {
 
@@ -62,9 +62,10 @@ public class ApiaryListenerEventFactory {
 
   private <T extends ListenerEvent> T addParams(T event) {
     Map<String, String> eventParams = event.getParameters();
-    if (eventParams != null && eventParams.containsKey(HIVE_VERSION.varname())) { return event; }
+    if (eventParams != null && !eventParams.containsKey(HIVE_VERSION.varname())) {
+      event.putParameter(HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
+    }
 
-    event.putParameter(HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
     return event;
   }
 
