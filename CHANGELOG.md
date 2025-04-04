@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 8.1.0 - 2025-03-28
+### Added
+- Support for MSK Kafka clusters.
+
 ## 8.0.2 - 2024-08-29
 ### Changed
 - `ApiaryGlueSync` override `skipArchive` to be `true` by default. Backward incompatible behavior that turns off table archiving by default. Allows for per table overrides if needed. If you don't rely on Glue table version it is safe to upgrade to this version of the glue listener without making changes.
