@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2020 Expedia, Inc.
+ * Copyright (C) 2018-2025 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.expediagroup.apiary.extensions.events.metastore.event;
 
 
 import static com.expediagroup.apiary.extensions.events.metastore.event.CustomEventParameters.HIVE_VERSION;
+
+import java.util.Map;
 
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
@@ -59,7 +61,11 @@ public class ApiaryListenerEventFactory {
   }
 
   private <T extends ListenerEvent> T addParams(T event) {
-    event.putParameter(HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
+    Map<String, String> eventParams = event.getParameters();
+    if (eventParams != null && !eventParams.containsKey(HIVE_VERSION.varname())) {
+      event.putParameter(HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
+    }
+
     return event;
   }
 
