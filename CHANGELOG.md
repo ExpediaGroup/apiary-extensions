@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## 7.3.8 - 2023-08-02
 ### Added
+
+## 7.3.8 - 2023-08-02
+### Added
 - `max.request.size` [Kafka property](https://kafka.apache.org/documentation/#producerconfigs_max.request.size) in `kafka-metastore-listener`.
 
 ## 7.3.7 - 2023-07-19

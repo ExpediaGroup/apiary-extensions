@@ -54,6 +54,7 @@ import com.amazonaws.services.glue.model.DeletePartitionRequest;
 import com.amazonaws.services.glue.model.DeleteTableRequest;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
 import com.amazonaws.services.glue.model.GetDatabaseRequest;
+import com.amazonaws.services.glue.model.GetPartitionsRequest;
 import com.amazonaws.services.glue.model.Order;
 import com.amazonaws.services.glue.model.PartitionInput;
 import com.amazonaws.services.glue.model.SerDeInfo;
@@ -177,21 +178,82 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     if (!event.getStatus()) {
       return;
     }
-    Table table = event.getNewTable();
+    Table oldTable = event.getOldTable();
+    Table newTable = event.getNewTable();
     try {
+      // Table rename are not supported by Glue, so we need to delete table and create again
+      if (isTableRename(oldTable, newTable)) {
+        log.info("{} glue table rename detected to {}", oldTable.getTableName(), newTable.getTableName());
+        createTable(newTable);
+        copyPartitions(newTable, getPartitions(oldTable));
+        deleteTable(oldTable);
+        log.info("{} glue table rename to {} finised", oldTable.getTableName(), newTable.getTableName());
+        return;
+      }
       UpdateTableRequest updateTableRequest = new UpdateTableRequest()
-          .withTableInput(transformTable(table))
-          .withDatabaseName(glueDbName(table));
+          .withTableInput(transformTable(newTable))
+          .withDatabaseName(glueDbName(newTable));
       glueClient.updateTable(updateTableRequest);
-      log.info(table + " table updated in glue catalog");
+      log.info(newTable + " table updated in glue catalog");
     } catch (EntityNotFoundException e) {
-      log.info(table + " table doesn't exist in glue, creating....");
-      CreateTableRequest createTableRequest = new CreateTableRequest()
-          .withTableInput(transformTable(table))
-          .withDatabaseName(glueDbName(table));
-      glueClient.createTable(createTableRequest);
-      log.info(table + " table created in glue catalog");
+      log.info(newTable + " table doesn't exist in glue, creating....");
+      createTable(newTable);
     }
+  }
+
+  private boolean isTableRename(Table oldTable, Table newTable) {
+    return !oldTable.getTableName().equals(newTable.getTableName());
+  }
+
+  private void createTable(Table table) {
+    CreateTableRequest createTableRequest = new CreateTableRequest()
+        .withTableInput(transformTable(table))
+        .withDatabaseName(glueDbName(table));
+    glueClient.createTable(createTableRequest);
+    log.info(table + " table created in glue catalog");
+  }
+
+  private void deleteTable(Table table) {
+    DeleteTableRequest deleteTableRequest = new DeleteTableRequest()
+        .withName(table.getTableName())
+        .withDatabaseName(glueDbName(table));
+    glueClient.deleteTable(deleteTableRequest);
+    log.info(table + " table deleted from glue catalog");
+  }
+
+  private void copyPartitions(Table table, List<com.amazonaws.services.glue.model.Partition> partitions) {
+    for (com.amazonaws.services.glue.model.Partition partition : partitions) {
+      CreatePartitionRequest createPartitionRequest = new CreatePartitionRequest()
+          .withPartitionInput(convertToPartitionInput(partition))
+          .withDatabaseName(glueDbName(table))
+          .withTableName(table.getTableName());
+      glueClient.createPartition(createPartitionRequest);
+    }
+  }
+
+  private PartitionInput convertToPartitionInput(com.amazonaws.services.glue.model.Partition partition) {
+    return new PartitionInput()
+        .withValues(partition.getValues())
+        .withStorageDescriptor(partition.getStorageDescriptor())
+        .withParameters(partition.getParameters());
+  }
+
+  // Function to return all partitions from a table, considering it could reach max results from request and then convert that into PartitionInput
+  private List<com.amazonaws.services.glue.model.Partition> getPartitions(Table table) {
+    List<com.amazonaws.services.glue.model.Partition> partitions = new ArrayList<>();
+    String nextToken = null;
+    do {
+      GetPartitionsRequest getPartitionsRequest = new GetPartitionsRequest()
+          .withDatabaseName(glueDbName(table))
+          .withTableName(table.getTableName())
+          .withNextToken(nextToken);
+      com.amazonaws.services.glue.model.GetPartitionsResult result = glueClient.getPartitions(getPartitionsRequest);
+      if (result != null) {
+        partitions.addAll(result.getPartitions());
+        nextToken = result.getNextToken();
+      }
+    } while (nextToken != null);
+    return partitions;
   }
 
   @Override
