@@ -249,6 +249,7 @@ public class ApiaryGlueSyncTest {
     int lastAccessTime = 10000000;
     newTable.setLastAccessTime(lastAccessTime);
     newTable.setTableName("table2");
+    when(event.getOldTable()).thenReturn(newTable); // needed to check if is table rename
     when(event.getNewTable()).thenReturn(newTable);
 
     glueSync.onAlterTable(event);
@@ -274,6 +275,7 @@ public class ApiaryGlueSyncTest {
     newTable.setLastAccessTime(lastAccessTime);
     newTable.setTableName("table2");
     newTable.putToParameters(APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM, "false");
+    when(event.getOldTable()).thenReturn(newTable); // needed to check if is table rename
     when(event.getNewTable()).thenReturn(newTable);
 
     glueSync.onAlterTable(event);

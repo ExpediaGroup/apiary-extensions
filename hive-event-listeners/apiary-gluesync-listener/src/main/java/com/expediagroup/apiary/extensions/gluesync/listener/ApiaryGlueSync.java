@@ -191,14 +191,11 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
         log.info("{} glue table rename to {} finised", oldTable.getTableName(), newTable.getTableName());
         return;
       }
-      UpdateTableRequest updateTableRequest = new UpdateTableRequest()
-          .withTableInput(transformTable(newTable))
-          .withDatabaseName(glueDbName(newTable));
-      boolean skipArchive = shouldSkipArchive(table);
+      boolean skipArchive = shouldSkipArchive(newTable);
       UpdateTableRequest updateTableRequest = new UpdateTableRequest()
           .withSkipArchive(skipArchive)
-          .withTableInput(transformTable(table))
-          .withDatabaseName(glueDbName(table));
+          .withTableInput(transformTable(newTable))
+          .withDatabaseName(glueDbName(newTable));
       glueClient.updateTable(updateTableRequest);
       log.info(newTable + " table updated in glue catalog");
     } catch (EntityNotFoundException e) {
@@ -260,6 +257,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       }
     } while (nextToken != null);
     return partitions;
+  }
 
   private boolean shouldSkipArchive(Table table) {
     boolean skipArchive = true;
