@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2022 Expedia, Inc.
+ * Copyright (C) 2018-2024 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -65,6 +64,8 @@ import com.amazonaws.services.glue.model.UpdatePartitionRequest;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
 
 public class ApiaryGlueSync extends MetaStoreEventListener {
+
+  static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGlueSync.class);
 
@@ -193,6 +194,11 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       UpdateTableRequest updateTableRequest = new UpdateTableRequest()
           .withTableInput(transformTable(newTable))
           .withDatabaseName(glueDbName(newTable));
+      boolean skipArchive = shouldSkipArchive(table);
+      UpdateTableRequest updateTableRequest = new UpdateTableRequest()
+          .withSkipArchive(skipArchive)
+          .withTableInput(transformTable(table))
+          .withDatabaseName(glueDbName(table));
       glueClient.updateTable(updateTableRequest);
       log.info(newTable + " table updated in glue catalog");
     } catch (EntityNotFoundException e) {
@@ -254,6 +260,17 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       }
     } while (nextToken != null);
     return partitions;
+
+  private boolean shouldSkipArchive(Table table) {
+    boolean skipArchive = true;
+    if (table.getParameters() != null) {
+      //Only if explicitly overridden to false do enable table archive. Normally we want to skip archiving. 
+      String skipArchiveParam = table.getParameters().get(APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM);
+      if ("false".equals(skipArchiveParam)) {
+        skipArchive = false;
+      }
+    }
+    return skipArchive;
   }
 
   @Override

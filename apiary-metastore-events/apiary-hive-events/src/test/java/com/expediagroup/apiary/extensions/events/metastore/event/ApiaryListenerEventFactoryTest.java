@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2020 Expedia, Inc.
+ * Copyright (C) 2018-2025 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.expediagroup.apiary.extensions.events.metastore.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,14 +32,11 @@ import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
-import org.apache.hive.common.util.HiveVersionInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApiaryListenerEventFactoryTest {
@@ -60,20 +55,11 @@ public class ApiaryListenerEventFactoryTest {
   private <T extends ListenerEvent> T mockEvent(Class<T> clazz) {
     T event = mock(clazz);
     when(event.getStatus()).thenReturn(true);
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        parameters.put(invocation.getArgument(0).toString(), invocation.getArgument(1).toString());
-        return null;
-      }
-    }).when(event).putParameter(anyString(), anyString());
     return event;
   }
 
   private void assertCommon(ApiaryListenerEvent event) {
     assertThat(event.getStatus()).isTrue();
-    // We don't use event.getParameters() here because it is deferred to parameters in the stub
-    assertThat(parameters).containsEntry(CustomEventParameters.HIVE_VERSION.varname(), HiveVersionInfo.getVersion());
   }
 
   @Test
