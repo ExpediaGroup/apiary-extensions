@@ -187,10 +187,12 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       // Table rename are not supported by Glue, so we need to delete table and create again
       if (isTableRename(oldTable, newTable)) {
         log.info("{} glue table rename detected to {}", oldTable.getTableName(), newTable.getTableName());
+        long startTime = System.currentTimeMillis();
         createTable(newTable);
         copyPartitions(newTable, getPartitions(oldTable));
         deleteTable(oldTable);
-        log.info("{} glue table rename to {} finised", oldTable.getTableName(), newTable.getTableName());
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("{} glue table rename to {} finised in {}ms", oldTable.getTableName(), newTable.getTableName(), duration);
         return;
       }
       boolean skipArchive = shouldSkipArchive(newTable);
