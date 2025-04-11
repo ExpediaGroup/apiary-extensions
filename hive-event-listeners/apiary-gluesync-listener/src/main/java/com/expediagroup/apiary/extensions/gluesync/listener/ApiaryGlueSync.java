@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
+import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
 import com.amazonaws.services.glue.model.Column;
 import com.amazonaws.services.glue.model.CreateDatabaseRequest;
 import com.amazonaws.services.glue.model.CreatePartitionRequest;
@@ -224,13 +226,21 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     log.info(table + " table deleted from glue catalog");
   }
 
+  // Function to copy partitions using BatchCreatePartitionRequest but knowing the partition input list limit is 100, however input parameter can have larger list
   private void copyPartitions(Table table, List<com.amazonaws.services.glue.model.Partition> partitions) {
-    for (com.amazonaws.services.glue.model.Partition partition : partitions) {
-      CreatePartitionRequest createPartitionRequest = new CreatePartitionRequest()
-          .withPartitionInput(convertToPartitionInput(partition))
+    List<PartitionInput> partitionInputs = partitions.stream()
+        .map(this::convertToPartitionInput)
+        .collect(Collectors.toList());
+    int partitionCount = partitionInputs.size();
+    int batchSize = 100;
+    for (int i = 0; i < partitionCount; i += batchSize) {
+      int end = Math.min(i + batchSize, partitionCount);
+      List<PartitionInput> batch = partitionInputs.subList(i, end);
+      BatchCreatePartitionRequest batchCreatePartitionRequest = new BatchCreatePartitionRequest()
           .withDatabaseName(glueDbName(table))
-          .withTableName(table.getTableName());
-      glueClient.createPartition(createPartitionRequest);
+          .withTableName(table.getTableName())
+          .withPartitionInputList(batch);
+      glueClient.batchCreatePartition(batchCreatePartitionRequest);
     }
   }
 
@@ -249,6 +259,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       GetPartitionsRequest getPartitionsRequest = new GetPartitionsRequest()
           .withDatabaseName(glueDbName(table))
           .withTableName(table.getTableName())
+          .withMaxResults(1000)
           .withNextToken(nextToken);
       com.amazonaws.services.glue.model.GetPartitionsResult result = glueClient.getPartitions(getPartitionsRequest);
       if (result != null) {

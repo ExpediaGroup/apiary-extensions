@@ -62,6 +62,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
+import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
 import com.amazonaws.services.glue.model.Column;
 import com.amazonaws.services.glue.model.CreateDatabaseRequest;
 import com.amazonaws.services.glue.model.CreatePartitionRequest;
@@ -94,6 +95,8 @@ public class ApiaryGlueSyncTest {
   private ArgumentCaptor<UpdateTableRequest> updateTableRequestCaptor;
   @Captor
   private ArgumentCaptor<DeleteTableRequest> deleteTableRequestCaptor;
+  @Captor
+  private ArgumentCaptor<BatchCreatePartitionRequest> batchCreatePartitionRequestCaptor;
   @Captor
   private ArgumentCaptor<CreatePartitionRequest> createPartitionRequestCaptor;
   @Captor
@@ -314,8 +317,8 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).createTable(createTableRequestCaptor.capture());
     CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
-    verify(glueClient).createPartition(createPartitionRequestCaptor.capture());
-    CreatePartitionRequest createPartitionRequest = createPartitionRequestCaptor.getValue();
+    verify(glueClient).batchCreatePartition(batchCreatePartitionRequestCaptor.capture());
+    BatchCreatePartitionRequest batchCreatePartitionRequest = batchCreatePartitionRequestCaptor.getValue();
     verify(glueClient).deleteTable(deleteTableRequestCaptor.capture());
     DeleteTableRequest deleteTableRequest = deleteTableRequestCaptor.getValue();
 
@@ -323,9 +326,9 @@ public class ApiaryGlueSyncTest {
     assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
     assertThat(createTableRequest.getTableInput().getName(), is("table2_new"));
     // test copied partitions
-    assertThat(createPartitionRequest.getTableName(), is("table2_new"));
+    assertThat(batchCreatePartitionRequest.getTableName(), is("table2_new"));
     List<String> partitionValues = Arrays.asList("part1Value", "part2Value");
-    assertThat(createPartitionRequest.getPartitionInput().getValues(), is(partitionValues));
+    assertThat(batchCreatePartitionRequest.getPartitionInputList().get(0).getValues(), is(partitionValues));
     // test old table is deleted
     assertThat(deleteTableRequest.getDatabaseName(), is(gluePrefix + dbName));
     assertThat(deleteTableRequest.getName(), is("table2"));
