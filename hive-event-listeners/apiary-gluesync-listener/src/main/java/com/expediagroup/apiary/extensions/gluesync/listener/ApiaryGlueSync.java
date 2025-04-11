@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
+import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
 import com.amazonaws.services.glue.model.Column;
 import com.amazonaws.services.glue.model.CreateDatabaseRequest;
 import com.amazonaws.services.glue.model.CreatePartitionRequest;
@@ -53,6 +55,7 @@ import com.amazonaws.services.glue.model.DeletePartitionRequest;
 import com.amazonaws.services.glue.model.DeleteTableRequest;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
 import com.amazonaws.services.glue.model.GetDatabaseRequest;
+import com.amazonaws.services.glue.model.GetPartitionsRequest;
 import com.amazonaws.services.glue.model.Order;
 import com.amazonaws.services.glue.model.PartitionInput;
 import com.amazonaws.services.glue.model.SerDeInfo;
@@ -178,23 +181,95 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     if (!event.getStatus()) {
       return;
     }
-    Table table = event.getNewTable();
+    Table oldTable = event.getOldTable();
+    Table newTable = event.getNewTable();
     try {
-      boolean skipArchive = shouldSkipArchive(table);
+      // Table rename are not supported by Glue, so we need to delete table and create again
+      if (isTableRename(oldTable, newTable)) {
+        log.info("{} glue table rename detected to {}", oldTable.getTableName(), newTable.getTableName());
+        long startTime = System.currentTimeMillis();
+        createTable(newTable);
+        copyPartitions(newTable, getPartitions(oldTable));
+        deleteTable(oldTable);
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("{} glue table rename to {} finised in {}ms", oldTable.getTableName(), newTable.getTableName(), duration);
+        return;
+      }
+      boolean skipArchive = shouldSkipArchive(newTable);
       UpdateTableRequest updateTableRequest = new UpdateTableRequest()
           .withSkipArchive(skipArchive)
-          .withTableInput(transformTable(table))
-          .withDatabaseName(glueDbName(table));
+          .withTableInput(transformTable(newTable))
+          .withDatabaseName(glueDbName(newTable));
       glueClient.updateTable(updateTableRequest);
-      log.info(table + " table updated in glue catalog");
+      log.info(newTable + " table updated in glue catalog");
     } catch (EntityNotFoundException e) {
-      log.info(table + " table doesn't exist in glue, creating....");
-      CreateTableRequest createTableRequest = new CreateTableRequest()
-          .withTableInput(transformTable(table))
-          .withDatabaseName(glueDbName(table));
-      glueClient.createTable(createTableRequest);
-      log.info(table + " table created in glue catalog");
+      log.info(newTable + " table doesn't exist in glue, creating....");
+      createTable(newTable);
     }
+  }
+
+  private boolean isTableRename(Table oldTable, Table newTable) {
+    return !oldTable.getTableName().equals(newTable.getTableName());
+  }
+
+  private void createTable(Table table) {
+    CreateTableRequest createTableRequest = new CreateTableRequest()
+        .withTableInput(transformTable(table))
+        .withDatabaseName(glueDbName(table));
+    glueClient.createTable(createTableRequest);
+    log.info(table + " table created in glue catalog");
+  }
+
+  private void deleteTable(Table table) {
+    DeleteTableRequest deleteTableRequest = new DeleteTableRequest()
+        .withName(table.getTableName())
+        .withDatabaseName(glueDbName(table));
+    glueClient.deleteTable(deleteTableRequest);
+    log.info(table + " table deleted from glue catalog");
+  }
+
+  // Function to copy partitions using BatchCreatePartitionRequest but knowing the partition input list limit is 100, however input parameter can have larger list
+  private void copyPartitions(Table table, List<com.amazonaws.services.glue.model.Partition> partitions) {
+    List<PartitionInput> partitionInputs = partitions.stream()
+        .map(this::convertToPartitionInput)
+        .collect(Collectors.toList());
+    int partitionCount = partitionInputs.size();
+    int batchSize = 100;
+    for (int i = 0; i < partitionCount; i += batchSize) {
+      int end = Math.min(i + batchSize, partitionCount);
+      List<PartitionInput> batch = partitionInputs.subList(i, end);
+      BatchCreatePartitionRequest batchCreatePartitionRequest = new BatchCreatePartitionRequest()
+          .withDatabaseName(glueDbName(table))
+          .withTableName(table.getTableName())
+          .withPartitionInputList(batch);
+      glueClient.batchCreatePartition(batchCreatePartitionRequest);
+    }
+  }
+
+  private PartitionInput convertToPartitionInput(com.amazonaws.services.glue.model.Partition partition) {
+    return new PartitionInput()
+        .withValues(partition.getValues())
+        .withStorageDescriptor(partition.getStorageDescriptor())
+        .withParameters(partition.getParameters());
+  }
+
+  // Function to return all partitions from a table, considering it could reach max results from request and then convert that into PartitionInput
+  private List<com.amazonaws.services.glue.model.Partition> getPartitions(Table table) {
+    List<com.amazonaws.services.glue.model.Partition> partitions = new ArrayList<>();
+    String nextToken = null;
+    do {
+      GetPartitionsRequest getPartitionsRequest = new GetPartitionsRequest()
+          .withDatabaseName(glueDbName(table))
+          .withTableName(table.getTableName())
+          .withMaxResults(1000)
+          .withNextToken(nextToken);
+      com.amazonaws.services.glue.model.GetPartitionsResult result = glueClient.getPartitions(getPartitionsRequest);
+      if (result != null) {
+        partitions.addAll(result.getPartitions());
+        nextToken = result.getNextToken();
+      }
+    } while (nextToken != null);
+    return partitions;
   }
 
   private boolean shouldSkipArchive(Table table) {
