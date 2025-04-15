@@ -16,6 +16,7 @@
 package com.expediagroup.apiary.extensions.gluesync.listener;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStorePreEventListener;
@@ -37,31 +38,20 @@ public class ApiaryGluePreEventListener extends MetaStorePreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGluePreEventListener.class);
 
-  public ApiaryGluePreEventListener(Configuration config) throws HiveException {
+  public ApiaryGluePreEventListener(Configuration config) {
     super(config);
     log.debug("ApiaryGluePreEventListener created");
   }
 
   @Override
-  public void onEvent(PreEventContext context) throws MetaException, NoSuchObjectException, InvalidOperationException {
-
-    switch (context.getEventType()) {
-    case ALTER_TABLE:
-      PreAlterTableEvent tableEvent = (PreAlterTableEvent) context;
-      if (!(tableEvent.getOldTable().getTableName().equals(tableEvent.getNewTable().getTableName()))) {
-        throw new InvalidOperationException("Rename Table is not allowed when glue sync is enabled");
-      }
-      break;
-    case ALTER_PARTITION:
+  public void onEvent(PreEventContext context) throws InvalidOperationException {
+    if (Objects.requireNonNull(context.getEventType()) == PreEventContext.PreEventType.ALTER_PARTITION) {
       PreAlterPartitionEvent partitionEvent = (PreAlterPartitionEvent) context;
       List<String> oldPartValues = partitionEvent.getOldPartVals();
       List<String> newPartValues = partitionEvent.getNewPartition().getValues();
       if (oldPartValues != null && !(newPartValues.equals(oldPartValues))) {
         throw new InvalidOperationException("Rename Partition is not allowed when glue sync is enabled");
       }
-      break;
-    default:
-      break;
     }
   }
 }
