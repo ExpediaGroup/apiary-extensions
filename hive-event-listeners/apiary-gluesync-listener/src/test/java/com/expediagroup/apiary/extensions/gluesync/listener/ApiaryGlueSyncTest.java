@@ -27,10 +27,10 @@ import static org.mockito.Mockito.when;
 
 import static com.google.common.collect.Maps.newHashMap;
 
-import static com.expediagroup.apiary.extensions.gluesync.listener.ApiaryGlueSync.APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergPartitionSpec;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergSchema;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergTable;
+import static com.expediagroup.apiary.extensions.gluesync.listener.service.GlueTableService.APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,7 +65,6 @@ import com.amazonaws.services.glue.model.AlreadyExistsException;
 import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
 import com.amazonaws.services.glue.model.Column;
 import com.amazonaws.services.glue.model.CreateDatabaseRequest;
-import com.amazonaws.services.glue.model.CreatePartitionRequest;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.CreateTableResult;
 import com.amazonaws.services.glue.model.DeleteDatabaseRequest;
@@ -97,8 +96,6 @@ public class ApiaryGlueSyncTest {
   private ArgumentCaptor<DeleteTableRequest> deleteTableRequestCaptor;
   @Captor
   private ArgumentCaptor<BatchCreatePartitionRequest> batchCreatePartitionRequestCaptor;
-  @Captor
-  private ArgumentCaptor<CreatePartitionRequest> createPartitionRequestCaptor;
   @Captor
   private ArgumentCaptor<CreateDatabaseRequest> createDatabaseRequestCaptor;
   @Captor

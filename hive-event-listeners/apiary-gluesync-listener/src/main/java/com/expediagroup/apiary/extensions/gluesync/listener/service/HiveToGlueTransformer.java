@@ -22,15 +22,13 @@ import com.amazonaws.services.glue.model.SerDeInfo;
 import com.amazonaws.services.glue.model.StorageDescriptor;
 import com.amazonaws.services.glue.model.TableInput;
 
-import com.expediagroup.apiary.extensions.gluesync.listener.ApiaryGlueSync;
-
 public class HiveToGlueTransformer {
   private static final Logger log = LoggerFactory.getLogger(HiveToGlueTransformer.class);
 
   private final String gluePrefix;
 
-  public HiveToGlueTransformer() {
-    gluePrefix = System.getenv("GLUE_PREFIX");
+  public HiveToGlueTransformer(String gluePrefix) {
+    this.gluePrefix = gluePrefix;
   }
 
   public static final String MANAGED_BY_GLUESYNC_KEY = "managed-by";

@@ -18,13 +18,11 @@ public class GlueDatabaseService {
   private static final Logger log = LoggerFactory.getLogger(GlueDatabaseService.class);
 
   private final AWSGlue glueClient;
-  private final String gluePrefix;
   private final HiveToGlueTransformer transformer;
 
   public GlueDatabaseService(AWSGlue glueClient, String gluePrefix) {
     this.glueClient = glueClient;
-    this.gluePrefix = gluePrefix;
-    this.transformer = new HiveToGlueTransformer();
+    this.transformer = new HiveToGlueTransformer(gluePrefix);
     log.debug("ApiaryGlueSync created");
   }
 
