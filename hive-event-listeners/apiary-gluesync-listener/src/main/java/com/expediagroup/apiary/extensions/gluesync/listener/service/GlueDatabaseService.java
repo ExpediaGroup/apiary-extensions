@@ -44,23 +44,21 @@ public class GlueDatabaseService {
   public void delete(Database database) {
     com.amazonaws.services.glue.model.Database glueDb = glueClient.getDatabase(
         new GetDatabaseRequest().withName(transformer.glueDbName(database.getName()))).getDatabase();
-    if (glueDb != null && glueDb.getParameters() != null) {
-      String createdByProperty = glueDb.getParameters().get(MANAGED_BY_GLUESYNC_KEY);
-      if (createdByProperty != null && createdByProperty.equals(MANAGED_BY_GLUESYNC_VALUE)) {
-        try {
-          DeleteDatabaseRequest deleteDatabaseRequest = new DeleteDatabaseRequest()
-              .withName(transformer.glueDbName(database.getName()));
-          glueClient.deleteDatabase(deleteDatabaseRequest);
-          log.info(database + " database deleted from glue catalog");
-          return;
-        } catch (EntityNotFoundException e) {
-          log.info(database + " database doesn't exist in glue catalog");
-        }
+    if (glueDb == null && glueDb.getParameters() == null) {
+      log.info("{} database not created by {}, will not be deleted from glue catalog", database,
+          MANAGED_BY_GLUESYNC_VALUE);
+      return;
+    }
+    String createdByProperty = glueDb.getParameters().get(MANAGED_BY_GLUESYNC_KEY);
+    if (createdByProperty != null && createdByProperty.equals(MANAGED_BY_GLUESYNC_VALUE)) {
+      try {
+        DeleteDatabaseRequest deleteDatabaseRequest = new DeleteDatabaseRequest()
+            .withName(transformer.glueDbName(database.getName()));
+        glueClient.deleteDatabase(deleteDatabaseRequest);
+        log.info(database + " database deleted from glue catalog");
+      } catch (EntityNotFoundException e) {
+        log.info(database + " database doesn't exist in glue catalog");
       }
     }
-    log.info("{} database not created by {}, will not be deleted from glue catalog", database,
-        MANAGED_BY_GLUESYNC_VALUE);
   }
-
-
 }

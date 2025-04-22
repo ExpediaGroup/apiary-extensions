@@ -20,7 +20,8 @@ import com.amazonaws.services.glue.model.UpdateTableRequest;
 public class GlueTableService {
   private static final Logger log = LoggerFactory.getLogger(GlueTableService.class);
   public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
-
+  private static final int DEFAULT_MAX_RESULTS_SIZE = 1000; // Current max supported by Glue
+  private static final int DEFAULT_COPY_PARTITION_BATCH_SIZE = 1000;
 
   private final AWSGlue glueClient;
   private final HiveToGlueTransformer transformer;
@@ -67,7 +68,7 @@ public class GlueTableService {
         .map(this::convertToPartitionInput)
         .collect(Collectors.toList());
     int partitionCount = partitionInputs.size();
-    int batchSize = 100;
+    int batchSize = DEFAULT_COPY_PARTITION_BATCH_SIZE;
     for (int i = 0; i < partitionCount; i += batchSize) {
       int end = Math.min(i + batchSize, partitionCount);
       List<PartitionInput> batch = partitionInputs.subList(i, end);
@@ -90,7 +91,7 @@ public class GlueTableService {
       GetPartitionsRequest getPartitionsRequest = new GetPartitionsRequest()
           .withDatabaseName(transformer.glueDbName(table))
           .withTableName(table.getTableName())
-          .withMaxResults(1000)
+          .withMaxResults(DEFAULT_MAX_RESULTS_SIZE)
           .withNextToken(nextToken);
       com.amazonaws.services.glue.model.GetPartitionsResult result = glueClient.getPartitions(getPartitionsRequest);
       if (result != null) {

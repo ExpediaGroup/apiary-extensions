@@ -5,8 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## 8.2.0 - 2025-04-22
 ### Added
-- Functionality to allow renames in glue event listener. Table will be created with new name, copied partitions 
-from old to new table, and dropped old table.
+- New functionality to allow renames in Glue Event Listener. The table will be crated with the new name, all existing partitions from the old table will be copied to the new table, and finally the old table will be dropped.
 
 ## 8.1.2 - 2025-04-08
 ### Fix

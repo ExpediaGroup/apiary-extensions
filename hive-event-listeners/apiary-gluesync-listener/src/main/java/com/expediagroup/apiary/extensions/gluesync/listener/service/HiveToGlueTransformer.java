@@ -24,15 +24,14 @@ import com.amazonaws.services.glue.model.TableInput;
 
 public class HiveToGlueTransformer {
   private static final Logger log = LoggerFactory.getLogger(HiveToGlueTransformer.class);
+  public static final String MANAGED_BY_GLUESYNC_KEY = "managed-by";
+  public static final String MANAGED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
 
   private final String gluePrefix;
 
   public HiveToGlueTransformer(String gluePrefix) {
     this.gluePrefix = gluePrefix;
   }
-
-  public static final String MANAGED_BY_GLUESYNC_KEY = "managed-by";
-  public static final String MANAGED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
 
   public DatabaseInput transformDatabase(Database database) {
     Map<String, String> params = database.getParameters();
@@ -47,7 +46,7 @@ public class HiveToGlueTransformer {
   }
 
   public TableInput transformTable(final Table table) {
-    final Date date = convertTableDate(table.getLastAccessTime());
+    final Date date = convertMillisToTableDate(table.getLastAccessTime());
 
     List<Column> partitionKeys = extractColumns(table.getPartitionKeys());
 
@@ -86,7 +85,7 @@ public class HiveToGlueTransformer {
   }
 
   public PartitionInput transformPartition(final Partition partition) {
-    final Date date = convertTableDate(partition.getLastAccessTime());
+    final Date date = convertMillisToTableDate(partition.getLastAccessTime());
 
     final org.apache.hadoop.hive.metastore.api.StorageDescriptor storageDescriptor = partition.getSd();
     final Collection<Column> columns = extractColumns(storageDescriptor.getCols());
@@ -156,7 +155,7 @@ public class HiveToGlueTransformer {
     return columns;
   }
 
-  private Date convertTableDate(final Integer lastAccessTime) {
+  private Date convertMillisToTableDate(final Integer lastAccessTime) {
     if (lastAccessTime == 0) {
       return null;
     }
