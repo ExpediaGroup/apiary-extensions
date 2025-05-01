@@ -13,6 +13,7 @@ The GlueSync listener can be configured by setting the following System Environm
 |Environment Variable|Required|Description|
 |----|----|----|
 GLUE_PREFIX|No|Prefix added to Glue databases to handle database name collisions when synchronizing multiple metastores to the Glue catalog.
+ENABLE_GLUE_RENAME_OPERATION|No|Set to true in case you would like to enable Glue table renames when syncing into Glue. Default values is false.
 
 ## Table update SkipArchive
 [AWS default](https://docs.aws.amazon.com/glue/latest/webapi/API_UpdateTable.html#Glue-UpdateTable-request-SkipArchive) is to archive the table on every update. With Iceberg tables this can lead to a lot of table versions. In Glue you can only have a certain limit of the number of versions and you'll get exceptions when trying to update a table once you hit that limit. Manual version removal through AWS api is then needed. To counter this we override this property and set skipArchive=true. So the listners does *not* make an archive of the table when updating. 

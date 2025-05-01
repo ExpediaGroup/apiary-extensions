@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStorePreEventListener;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.events.PreAlterPartitionEvent;
+import org.apache.hadoop.hive.metastore.events.PreAlterTableEvent;
 import org.apache.hadoop.hive.metastore.events.PreEventContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,23 +34,42 @@ import org.slf4j.LoggerFactory;
 public class ApiaryGluePreEventListener extends MetaStorePreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGluePreEventListener.class);
+  private final String enableGlueRenameOperation;
 
   public ApiaryGluePreEventListener(Configuration config) {
     super(config);
+    enableGlueRenameOperation = System.getenv("ENABLE_GLUE_RENAME_OPERATION");
     log.debug("ApiaryGluePreEventListener created");
   }
 
   @Override
   public void onEvent(PreEventContext context) throws InvalidOperationException {
-    if (Objects.requireNonNull(context.getEventType()) != PreEventContext.PreEventType.ALTER_PARTITION) {
+    if (Objects.requireNonNull(context.getEventType()) != PreEventContext.PreEventType.ALTER_PARTITION &&
+        Objects.requireNonNull(context.getEventType()) != PreEventContext.PreEventType.ALTER_TABLE) {
       return;
     }
-
-    PreAlterPartitionEvent partitionEvent = (PreAlterPartitionEvent) context;
-    List<String> oldPartValues = partitionEvent.getOldPartVals();
-    List<String> newPartValues = partitionEvent.getNewPartition().getValues();
-    if (oldPartValues != null && !(newPartValues.equals(oldPartValues))) {
-      throw new InvalidOperationException("Rename Partition is not allowed when glue sync is enabled");
+    switch (context.getEventType()) {
+    case ALTER_TABLE:
+      if (enableGlueRenameOperation != null &&
+          (enableGlueRenameOperation.equalsIgnoreCase("true") ||
+              enableGlueRenameOperation.equalsIgnoreCase("1"))) {
+        break;
+      }
+      PreAlterTableEvent tableEvent = (PreAlterTableEvent) context;
+      if (!(tableEvent.getOldTable().getTableName().equals(tableEvent.getNewTable().getTableName()))) {
+        throw new InvalidOperationException("Rename Table is not allowed when glue sync is enabled");
+      }
+      break;
+    case ALTER_PARTITION:
+      PreAlterPartitionEvent partitionEvent = (PreAlterPartitionEvent) context;
+      List<String> oldPartValues = partitionEvent.getOldPartVals();
+      List<String> newPartValues = partitionEvent.getNewPartition().getValues();
+      if (oldPartValues != null && !(newPartValues.equals(oldPartValues))) {
+        throw new InvalidOperationException("Rename Partition is not allowed when glue sync is enabled");
+      }
+      break;
+    default:
+      break;
     }
   }
 }

@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -26,6 +27,8 @@ public class HiveToGlueTransformer {
   private static final Logger log = LoggerFactory.getLogger(HiveToGlueTransformer.class);
   public static final String MANAGED_BY_GLUESYNC_KEY = "managed-by";
   public static final String MANAGED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
+
+  private final StringCleaner stringCleaner = new StringCleaner();
 
   private final String gluePrefix;
 
@@ -110,11 +113,13 @@ public class HiveToGlueTransformer {
         .withSortColumns(sortOrders)
         .withStoredAsSubDirectories(storageDescriptor.isStoredAsSubDirectories());
 
+    List<String> partitionValues = partition.getValues().stream().map(stringCleaner::clean).collect(Collectors.toList());
+
     return new PartitionInput()
         .withLastAccessTime(date)
         .withParameters(partition.getParameters())
         .withStorageDescriptor(sd)
-        .withValues(partition.getValues());
+        .withValues(partitionValues);
   }
 
   public String glueDbName(String dbName) {
@@ -146,9 +151,9 @@ public class HiveToGlueTransformer {
 
     for (final FieldSchema fieldSchema : colList) {
       final Column col = new Column()
-          .withName(fieldSchema.getName())
-          .withType(fieldSchema.getType())
-          .withComment(fieldSchema.getComment());
+          .withName(stringCleaner.clean(fieldSchema.getName()))
+          .withType(stringCleaner.clean(fieldSchema.getType()))
+          .withComment(stringCleaner.shortTo255Chars(stringCleaner.clean(fieldSchema.getComment())));
 
       columns.add(col);
     }
