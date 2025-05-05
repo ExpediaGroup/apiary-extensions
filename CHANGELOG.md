@@ -3,10 +3,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 8.2.1 - 2025-05-01
+## 8.2.1 - 2025-05-05
 ### Added
+- Since Glue support Iceberg renames, it has been excluded from the ApiaryGluePreEventListener (tested using Spark client).
+- Add env variable `ENABLE_GLUE_RENAME_OPERATION` to enable Hive rename workaround in Glue.
 - Remove non-unicode characters when syncing into Glue.
-- Add env variable to enable renames.
 
 ## 8.2.0 - 2025-04-22
 ### Added

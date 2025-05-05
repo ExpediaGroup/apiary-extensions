@@ -92,7 +92,7 @@ public class HiveToGlueTransformer {
         .withStoredAsSubDirectories(storageDescriptor.isStoredAsSubDirectories());
 
     return new TableInput()
-        .withName(table.getTableName())
+        .withName(stringCleaner.clean(table.getTableName()))
         .withLastAccessTime(date)
         .withOwner(table.getOwner())
         .withParameters(table.getParameters())
@@ -109,7 +109,7 @@ public class HiveToGlueTransformer {
     final Collection<Column> columns = extractColumns(storageDescriptor.getCols());
 
     final SerDeInfo glueSerde = new SerDeInfo()
-        .withName(storageDescriptor.getSerdeInfo().getName())
+        .withName(stringCleaner.clean(storageDescriptor.getSerdeInfo().getName()))
         .withParameters(storageDescriptor.getSerdeInfo().getParameters())
         .withSerializationLibrary(storageDescriptor.getSerdeInfo().getSerializationLib());
 
