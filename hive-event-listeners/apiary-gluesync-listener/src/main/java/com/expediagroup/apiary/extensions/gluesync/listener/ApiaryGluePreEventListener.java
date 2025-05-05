@@ -27,6 +27,8 @@ import org.apache.hadoop.hive.metastore.events.PreEventContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.expediagroup.apiary.extensions.gluesync.listener.service.IsIcebergTablePredicate;
+
 /**
  * A MetaStorePreEventListener that prevents actions not compatible with glue catalog.
  */
@@ -34,11 +36,12 @@ import org.slf4j.LoggerFactory;
 public class ApiaryGluePreEventListener extends MetaStorePreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGluePreEventListener.class);
-  private final String enableGlueRenameOperation;
+  private final IsIcebergTablePredicate isIcebergPredicate = new IsIcebergTablePredicate();
+  private final String enableHiveToGlueRenameOperation;
 
   public ApiaryGluePreEventListener(Configuration config) {
     super(config);
-    enableGlueRenameOperation = System.getenv("ENABLE_GLUE_RENAME_OPERATION");
+    enableHiveToGlueRenameOperation = System.getenv("ENABLE_HIVE_TO_GLUE_RENAME_OPERATION");
     log.debug("ApiaryGluePreEventListener created");
   }
 
@@ -50,13 +53,12 @@ public class ApiaryGluePreEventListener extends MetaStorePreEventListener {
     }
     switch (context.getEventType()) {
     case ALTER_TABLE:
-      if (enableGlueRenameOperation != null &&
-          (enableGlueRenameOperation.equalsIgnoreCase("true") ||
-              enableGlueRenameOperation.equalsIgnoreCase("1"))) {
+      PreAlterTableEvent tableEvent = (PreAlterTableEvent) context;
+      // Glue support iceberg renames, if Hive, check if rename workaround is enabled
+      if (enableHiveToGlueRenameOperation() || isIceberg(tableEvent)) {
         break;
       }
-      PreAlterTableEvent tableEvent = (PreAlterTableEvent) context;
-      if (!(tableEvent.getOldTable().getTableName().equals(tableEvent.getNewTable().getTableName()))) {
+      if (isRenameOperation(tableEvent)) {
         throw new InvalidOperationException("Rename Table is not allowed when glue sync is enabled");
       }
       break;
@@ -71,5 +73,19 @@ public class ApiaryGluePreEventListener extends MetaStorePreEventListener {
     default:
       break;
     }
+  }
+
+  private boolean isRenameOperation(PreAlterTableEvent tableEvent) {
+    return !(tableEvent.getOldTable().getTableName().equals(tableEvent.getNewTable().getTableName()));
+  }
+
+  private boolean isIceberg(PreAlterTableEvent tableEvent) {
+    return isIcebergPredicate.test(tableEvent.getOldTable().getParameters());
+  }
+
+  private boolean enableHiveToGlueRenameOperation() {
+    return enableHiveToGlueRenameOperation != null &&
+        (enableHiveToGlueRenameOperation.equalsIgnoreCase("true") ||
+            enableHiveToGlueRenameOperation.equalsIgnoreCase("1"));
   }
 }

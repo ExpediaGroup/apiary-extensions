@@ -41,12 +41,12 @@ import com.amazonaws.services.glue.model.EntityNotFoundException;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueDatabaseService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GluePartitionService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueTableService;
+import com.expediagroup.apiary.extensions.gluesync.listener.service.IsIcebergTablePredicate;
 
 public class ApiaryGlueSync extends MetaStoreEventListener {
 
-
   private static final Logger log = LoggerFactory.getLogger(ApiaryGlueSync.class);
-
+  private final IsIcebergTablePredicate isIcebergPredicate = new IsIcebergTablePredicate();
 
   private final AWSGlue glueClient;
   private final GlueDatabaseService glueDatabaseService;
@@ -130,8 +130,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     Table oldTable = event.getOldTable();
     Table newTable = event.getNewTable();
     try {
-      // Table rename are not supported by Glue, so we need to delete table and create again
-      if (isTableRename(oldTable, newTable)) {
+      // Only Iceberg rename is supported by Glue, for Hive tables we need to delete table and create again
+      if (isTableRename(oldTable, newTable) && !isIcebergPredicate.test(oldTable.getParameters())) {
         doRenameOperation(oldTable, newTable);
         return;
       }
