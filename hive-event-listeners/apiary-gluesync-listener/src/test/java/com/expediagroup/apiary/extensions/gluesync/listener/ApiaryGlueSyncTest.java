@@ -220,6 +220,26 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
+  public void onCreateHiveTable_withIncorrectFormat() {
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table table = simpleHiveTable(simpleSchema(), simplePartitioning());
+    table.setTableName("àtable€_with€_incorrect€_µformat€");
+    when(event.getTable()).thenReturn(table);
+
+    glueSync.onCreateTable(event);
+
+    verify(glueClient).createTable(createTableRequestCaptor.capture());
+    CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
+
+    assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    assertThat(createTableRequest.getTableInput().getName(), is("table_with_incorrect_format"));
+    assertThat(toList(createTableRequest.getTableInput().getPartitionKeys()), is(asList(partNames)));
+    assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+  }
+
+  @Test
   public void onCreateIcebergTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
