@@ -43,7 +43,7 @@ public class HiveToGlueTransformer {
   public static final String MANAGED_BY_GLUESYNC_KEY = "managed-by";
   public static final String MANAGED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
 
-  private final StringCleaner stringCleaner = new StringCleaner();
+  private final GlueMetadataStringCleaner stringCleaner = new GlueMetadataStringCleaner();
 
   private final String gluePrefix;
 

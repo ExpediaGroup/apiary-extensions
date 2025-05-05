@@ -15,7 +15,7 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener.service;
 
-public class StringCleaner {
+public class GlueMetadataStringCleaner {
 
   public String shortTo254Chars(String input) {
     if (input == null) {

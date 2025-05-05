@@ -55,7 +55,7 @@ public class ApiaryGluePreEventListener extends MetaStorePreEventListener {
     case ALTER_TABLE:
       PreAlterTableEvent tableEvent = (PreAlterTableEvent) context;
       // Glue support iceberg renames, if Hive, check if rename workaround is enabled
-      if (enableHiveToGlueRenameOperation() || isIceberg(tableEvent)) {
+      if (hiveToGlueRenameOperationEnabled() || isIceberg(tableEvent)) {
         break;
       }
       if (isRenameOperation(tableEvent)) {
@@ -83,9 +83,9 @@ public class ApiaryGluePreEventListener extends MetaStorePreEventListener {
     return isIcebergPredicate.test(tableEvent.getOldTable().getParameters());
   }
 
-  private boolean enableHiveToGlueRenameOperation() {
+  private boolean hiveToGlueRenameOperationEnabled() {
     return enableHiveToGlueRenameOperation != null &&
-        (enableHiveToGlueRenameOperation.equalsIgnoreCase("true") ||
+        (Boolean.parseBoolean(enableHiveToGlueRenameOperation) ||
             enableHiveToGlueRenameOperation.equalsIgnoreCase("1"));
   }
 }
