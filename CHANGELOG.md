@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## 8.2.1 - 2025-05-05
 ### Added
 - Since Glue support Iceberg renames, it has been excluded from the ApiaryGluePreEventListener (tested using Spark client).
-- Add env variable `ENABLE_GLUE_RENAME_OPERATION` to enable Hive rename workaround in Glue.
+- Add env variable `ENABLE_HIVE_TO_GLUE_RENAME_OPERATION` to enable Hive rename workaround in Glue.
 - Remove non-unicode characters when syncing into Glue.
 
 ## 8.2.0 - 2025-04-22
