@@ -15,6 +15,10 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener.service;
 
+/**
+ * Following https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-catalog-tables.html#aws-glue-api-catalog-tables-Table
+ * validations
+ */
 public class GlueMetadataStringCleaner {
 
   public String shortTo254Chars(String input) {
