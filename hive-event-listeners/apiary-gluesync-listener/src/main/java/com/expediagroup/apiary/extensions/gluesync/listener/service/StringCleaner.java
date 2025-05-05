@@ -17,12 +17,12 @@ package com.expediagroup.apiary.extensions.gluesync.listener.service;
 
 public class StringCleaner {
 
-  public String shortTo255Chars(String input) {
+  public String shortTo254Chars(String input) {
     if (input == null) {
       return null;
     }
-    if (input.length() > 255) {
-      return input.substring(0, 255);
+    if (input.length() > 254) {
+      return input.substring(0, 254);
     }
     return input;
   }

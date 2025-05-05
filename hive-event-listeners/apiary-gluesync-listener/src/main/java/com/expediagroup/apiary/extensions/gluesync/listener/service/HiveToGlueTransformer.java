@@ -168,7 +168,7 @@ public class HiveToGlueTransformer {
       final Column col = new Column()
           .withName(stringCleaner.clean(fieldSchema.getName()))
           .withType(stringCleaner.clean(fieldSchema.getType()))
-          .withComment(stringCleaner.shortTo255Chars(stringCleaner.clean(fieldSchema.getComment())));
+          .withComment(stringCleaner.shortTo254Chars(stringCleaner.clean(fieldSchema.getComment())));
 
       columns.add(col);
     }
