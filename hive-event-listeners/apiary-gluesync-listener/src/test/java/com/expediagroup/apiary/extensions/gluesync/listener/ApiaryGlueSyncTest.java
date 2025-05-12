@@ -27,12 +27,13 @@ import static org.mockito.Mockito.when;
 
 import static com.google.common.collect.Maps.newHashMap;
 
-import static com.expediagroup.apiary.extensions.gluesync.listener.ApiaryGlueSync.APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergPartitionSpec;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergSchema;
 import static com.expediagroup.apiary.extensions.gluesync.listener.IcebergTableOperations.simpleIcebergTable;
+import static com.expediagroup.apiary.extensions.gluesync.listener.service.GlueTableService.APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -61,14 +62,17 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
+import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
 import com.amazonaws.services.glue.model.Column;
 import com.amazonaws.services.glue.model.CreateDatabaseRequest;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.CreateTableResult;
 import com.amazonaws.services.glue.model.DeleteDatabaseRequest;
+import com.amazonaws.services.glue.model.DeleteTableRequest;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
 import com.amazonaws.services.glue.model.GetDatabaseRequest;
 import com.amazonaws.services.glue.model.GetDatabaseResult;
+import com.amazonaws.services.glue.model.GetPartitionsResult;
 import com.amazonaws.services.glue.model.UpdateDatabaseRequest;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
 import com.google.common.collect.ImmutableMap;
@@ -88,6 +92,10 @@ public class ApiaryGlueSyncTest {
   private ArgumentCaptor<CreateTableRequest> createTableRequestCaptor;
   @Captor
   private ArgumentCaptor<UpdateTableRequest> updateTableRequestCaptor;
+  @Captor
+  private ArgumentCaptor<DeleteTableRequest> deleteTableRequestCaptor;
+  @Captor
+  private ArgumentCaptor<BatchCreatePartitionRequest> batchCreatePartitionRequestCaptor;
   @Captor
   private ArgumentCaptor<CreateDatabaseRequest> createDatabaseRequestCaptor;
   @Captor
@@ -212,6 +220,26 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
+  public void onCreateHiveTable_withIncorrectFormat() {
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table table = simpleHiveTable(simpleSchema(), simplePartitioning());
+    table.setTableName("àtable€_with€_incorrect€_µformat€");
+    when(event.getTable()).thenReturn(table);
+
+    glueSync.onCreateTable(event);
+
+    verify(glueClient).createTable(createTableRequestCaptor.capture());
+    CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
+
+    assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    assertThat(createTableRequest.getTableInput().getName(), is("table_with_incorrect_format"));
+    assertThat(toList(createTableRequest.getTableInput().getPartitionKeys()), is(asList(partNames)));
+    assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+  }
+
+  @Test
   public void onCreateIcebergTable() {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
@@ -241,6 +269,7 @@ public class ApiaryGlueSyncTest {
     int lastAccessTime = 10000000;
     newTable.setLastAccessTime(lastAccessTime);
     newTable.setTableName("table2");
+    when(event.getOldTable()).thenReturn(newTable); // needed to check if is table rename
     when(event.getNewTable()).thenReturn(newTable);
 
     glueSync.onAlterTable(event);
@@ -266,6 +295,7 @@ public class ApiaryGlueSyncTest {
     newTable.setLastAccessTime(lastAccessTime);
     newTable.setTableName("table2");
     newTable.putToParameters(APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM, "false");
+    when(event.getOldTable()).thenReturn(newTable); // needed to check if is table rename
     when(event.getNewTable()).thenReturn(newTable);
 
     glueSync.onAlterTable(event);
@@ -279,6 +309,50 @@ public class ApiaryGlueSyncTest {
     assertThat(toList(updateTableRequest.getTableInput().getPartitionKeys()), is(asList(partNames)));
     assertThat(toList(updateTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
     assertThat(updateTableRequest.getSkipArchive(), is(false));
+  }
+
+  @Test
+  public void onAlterHiveTable_RenameTable() {
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table oldTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    int lastAccessTime = 10000000;
+    oldTable.setLastAccessTime(lastAccessTime);
+    oldTable.setTableName("table2");
+    when(event.getOldTable()).thenReturn(oldTable);
+
+    Table newTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    newTable.setLastAccessTime(lastAccessTime);
+    newTable.setTableName("table2_new");
+    when(event.getNewTable()).thenReturn(newTable);
+
+    when(glueClient.getPartitions(any())).thenReturn(new GetPartitionsResult().withPartitions(
+        new com.amazonaws.services.glue.model.Partition().withValues("part1Value", "part2Value")));
+
+    glueSync.onAlterTable(event);
+
+    verify(glueClient).createTable(createTableRequestCaptor.capture());
+    CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
+    verify(glueClient).batchCreatePartition(batchCreatePartitionRequestCaptor.capture());
+    BatchCreatePartitionRequest batchCreatePartitionRequest = batchCreatePartitionRequestCaptor.getValue();
+    verify(glueClient).deleteTable(deleteTableRequestCaptor.capture());
+    DeleteTableRequest deleteTableRequest = deleteTableRequestCaptor.getValue();
+
+    // test create new table
+    assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    assertThat(createTableRequest.getTableInput().getName(), is("table2_new"));
+    // test copied partitions
+    assertThat(batchCreatePartitionRequest.getTableName(), is("table2_new"));
+    List<String> partitionValues = Arrays.asList("part1Value", "part2Value");
+    assertThat(batchCreatePartitionRequest.getPartitionInputList().get(0).getValues(), is(partitionValues));
+    // test old table is deleted
+    assertThat(deleteTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    assertThat(deleteTableRequest.getName(), is("table2"));
+
+    assertThat(createTableRequest.getTableInput().getLastAccessTime(), is(new Date(lastAccessTime)));
+    assertThat(toList(createTableRequest.getTableInput().getPartitionKeys()), is(asList(partNames)));
+    assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
   }
 
   @Test

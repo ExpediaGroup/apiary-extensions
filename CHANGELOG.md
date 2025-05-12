@@ -15,6 +15,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - Removed `apiary-metastore-metrics` module, no longer contains code.
 - Removed `apiary-metastore-consumers` module, no longer actively maintained.
 
+## 8.2.1 - 2025-05-05
+### Added
+- Since Glue support Iceberg renames, it has been excluded from the ApiaryGluePreEventListener (tested using Spark client).
+- Add env variable `ENABLE_HIVE_TO_GLUE_RENAME_OPERATION` to enable Hive rename workaround in Glue.
+- Remove non-unicode characters when syncing into Glue.
+
+## 8.2.0 - 2025-04-22
+### Added
+- New functionality to allow renames in Glue Event Listener. The table will be crated with the new name, all existing partitions from the old table will be copied to the new table, and finally the old table will be dropped.
+
+## 8.1.2 - 2025-04-08
+### Fix
+- Hive version validation when multiple listeners are used.
+
+## 8.1.1 - Release Action Failed, no release made.
+
+## 8.1.0 - 2025-03-28
+### Added
+- Support for MSK Kafka clusters.
+
 ## 8.0.2 - 2024-08-29
 ### Changed
 - `ApiaryGlueSync` override `skipArchive` to be `true` by default. Backward incompatible behavior that turns off table archiving by default. Allows for per table overrides if needed. If you don't rely on Glue table version it is safe to upgrade to this version of the glue listener without making changes.

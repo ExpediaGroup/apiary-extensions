@@ -32,7 +32,7 @@ public enum KafkaProducerProperty implements Property {
   COMPRESSION_TYPE("compression.type", "none"),
   MAX_REQUEST_SIZE("max.request.size", 1048576);
 
-  private static final String HADOOP_CONF_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
+  static final String HADOOP_CONF_PREFIX = "com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.";
 
   private final String unprefixedKey;
   private final Object defaultValue;
