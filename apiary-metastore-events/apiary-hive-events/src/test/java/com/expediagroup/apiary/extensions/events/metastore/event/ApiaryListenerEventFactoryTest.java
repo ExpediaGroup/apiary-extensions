@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
@@ -115,6 +116,11 @@ public class ApiaryListenerEventFactoryTest {
   @Test
   public void createSerializableInsertEvent() {
     InsertEvent event = mockEvent(InsertEvent.class);
+    Table table = new Table();
+    table.setTableName("table");
+    table.setDbName("db");
+    when(event.getTableObj()).thenReturn(table);
+
     ApiaryListenerEvent serializableEvent = factory.create(event);
     assertCommon(serializableEvent);
     assertThat(serializableEvent.getEventType()).isSameAs(EventType.ON_INSERT);

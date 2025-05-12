@@ -157,27 +157,6 @@ public class MskMetaStoreEventListenerTest {
   }
 
   @Test
-  public void onAddIndex() {
-    listener.onAddIndex(mock(AddIndexEvent.class));
-    verify(mskMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
-  }
-
-  @Test
-  public void onDropIndex() {
-    listener.onDropIndex(mock(DropIndexEvent.class));
-    verify(mskMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
-  }
-
-  @Test
-  public void onAlterIndex() {
-    listener.onAlterIndex(mock(AlterIndexEvent.class));
-    verify(mskMessageSender, never()).send(any(KafkaMessage.class));
-    verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
-  }
-
-  @Test
   public void onCreateFunction() {
     listener.onCreateFunction(mock(CreateFunctionEvent.class));
     verify(mskMessageSender, never()).send(any(KafkaMessage.class));

@@ -150,15 +150,6 @@ public class MskMetaStoreEventListener extends MetaStoreEventListener {
   public void onLoadPartitionDone(LoadPartitionDoneEvent partSetDoneEvent) {}
 
   @Override
-  public void onAddIndex(AddIndexEvent indexEvent) {}
-
-  @Override
-  public void onDropIndex(DropIndexEvent indexEvent) {}
-
-  @Override
-  public void onAlterIndex(AlterIndexEvent indexEvent) {}
-
-  @Override
   public void onCreateFunction(CreateFunctionEvent fnEvent) {}
 
   @Override
