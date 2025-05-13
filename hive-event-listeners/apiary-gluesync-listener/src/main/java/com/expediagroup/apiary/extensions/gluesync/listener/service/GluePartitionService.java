@@ -26,6 +26,7 @@ import com.amazonaws.services.glue.model.DeletePartitionRequest;
 import com.amazonaws.services.glue.model.InvalidInputException;
 import com.amazonaws.services.glue.model.PartitionInput;
 import com.amazonaws.services.glue.model.UpdatePartitionRequest;
+import com.amazonaws.services.glue.model.ValidationException;
 
 public class GluePartitionService {
   private static final Logger log = LoggerFactory.getLogger(GluePartitionService.class);
@@ -49,7 +50,7 @@ public class GluePartitionService {
       glueClient.createPartition(createPartitionRequest);
       log.debug("{} partition created in glue catalog", partition);
 
-    } catch (InvalidInputException e) {
+    } catch (ValidationException | InvalidInputException e) {
       log.debug("Cleaning up partition manually {} to resolve validation", partition);
       PartitionInput partitionInput = createPartitionRequest.getPartitionInput();
       createPartitionRequest.setPartitionInput(cleaner.cleanPartition(partitionInput));
@@ -68,7 +69,7 @@ public class GluePartitionService {
     try {
       glueClient.updatePartition(updatePartitionRequest);
       log.debug("{} partition updated in glue catalog", partition);
-    } catch (InvalidInputException e) {
+    } catch (ValidationException | InvalidInputException e) {
       log.debug("Cleaning up partition manually {} to resolve validation", partition);
       PartitionInput partitionInput = updatePartitionRequest.getPartitionInput();
       updatePartitionRequest.setPartitionInput(cleaner.cleanPartition(partitionInput));

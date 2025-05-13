@@ -33,6 +33,7 @@ import com.amazonaws.services.glue.model.Partition;
 import com.amazonaws.services.glue.model.PartitionInput;
 import com.amazonaws.services.glue.model.TableInput;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
+import com.amazonaws.services.glue.model.ValidationException;
 
 public class GlueTableService {
   private static final Logger log = LoggerFactory.getLogger(GlueTableService.class);
@@ -58,7 +59,7 @@ public class GlueTableService {
     try {
       glueClient.createTable(createTableRequest);
       log.debug(table + " table created in glue catalog");
-    } catch (InvalidInputException e) {
+    } catch (ValidationException | InvalidInputException e) {
       log.debug("Cleaning up table manually {} to resolve validation", table);
       TableInput tableInput = createTableRequest.getTableInput();
       createTableRequest.setTableInput(cleaner.cleanTable(tableInput));
@@ -77,7 +78,7 @@ public class GlueTableService {
     try {
       glueClient.updateTable(updateTableRequest);
       log.debug(table + " table updated in glue catalog");
-    } catch (InvalidInputException e) {
+    } catch (ValidationException | InvalidInputException e) {
       log.debug("Cleaning up table manually {} to resolve validation", table);
       TableInput tableInput = updateTableRequest.getTableInput();
       updateTableRequest.setTableInput(cleaner.cleanTable(tableInput));
