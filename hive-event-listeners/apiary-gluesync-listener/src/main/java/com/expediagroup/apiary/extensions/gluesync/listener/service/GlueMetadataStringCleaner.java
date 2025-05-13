@@ -15,11 +15,42 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.amazonaws.services.glue.model.Column;
+import com.amazonaws.services.glue.model.PartitionInput;
+import com.amazonaws.services.glue.model.TableInput;
+
 /**
  * Following https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-catalog-tables.html#aws-glue-api-catalog-tables-Table
  * validations
  */
 public class GlueMetadataStringCleaner {
+
+  public TableInput cleanTable(TableInput input) {
+    // Clean SerDes
+    cleanColumns(input.getStorageDescriptor().getColumns());
+    // Clean Partition Keys
+    cleanColumns(input.getPartitionKeys());
+    return input;
+  }
+
+  public PartitionInput cleanPartition(PartitionInput input) {
+    // Clean SerDes
+    cleanColumns(input.getStorageDescriptor().getColumns());
+    // Clean Partition Keys
+    List<String> cleanedKeys = input.getValues().stream().map(this::clean).collect(Collectors.toList());
+    input.setValues(cleanedKeys);
+    return input;
+  }
+
+  private void cleanColumns(List<Column> columns) {
+    for (Column column : columns) {
+      column.setName(clean(column.getName()));
+      column.setComment(shortTo254Chars(clean(column.getComment())));
+    }
+  }
 
   public String shortTo254Chars(String input) {
     if (input == null) {

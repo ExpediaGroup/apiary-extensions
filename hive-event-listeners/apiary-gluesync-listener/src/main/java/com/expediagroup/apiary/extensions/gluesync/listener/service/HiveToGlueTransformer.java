@@ -21,7 +21,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -42,8 +41,6 @@ public class HiveToGlueTransformer {
   private static final Logger log = LoggerFactory.getLogger(HiveToGlueTransformer.class);
   public static final String MANAGED_BY_GLUESYNC_KEY = "managed-by";
   public static final String MANAGED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
-
-  private final GlueMetadataStringCleaner stringCleaner = new GlueMetadataStringCleaner();
 
   private final String gluePrefix;
 
@@ -92,7 +89,7 @@ public class HiveToGlueTransformer {
         .withStoredAsSubDirectories(storageDescriptor.isStoredAsSubDirectories());
 
     return new TableInput()
-        .withName(stringCleaner.clean(table.getTableName()))
+        .withName(table.getTableName())
         .withLastAccessTime(date)
         .withOwner(table.getOwner())
         .withParameters(table.getParameters())
@@ -109,7 +106,7 @@ public class HiveToGlueTransformer {
     final Collection<Column> columns = extractColumns(storageDescriptor.getCols());
 
     final SerDeInfo glueSerde = new SerDeInfo()
-        .withName(stringCleaner.clean(storageDescriptor.getSerdeInfo().getName()))
+        .withName(storageDescriptor.getSerdeInfo().getName())
         .withParameters(storageDescriptor.getSerdeInfo().getParameters())
         .withSerializationLibrary(storageDescriptor.getSerdeInfo().getSerializationLib());
 
@@ -128,13 +125,11 @@ public class HiveToGlueTransformer {
         .withSortColumns(sortOrders)
         .withStoredAsSubDirectories(storageDescriptor.isStoredAsSubDirectories());
 
-    List<String> partitionValues = partition.getValues().stream().map(stringCleaner::clean).collect(Collectors.toList());
-
     return new PartitionInput()
         .withLastAccessTime(date)
         .withParameters(partition.getParameters())
         .withStorageDescriptor(sd)
-        .withValues(partitionValues);
+        .withValues(partition.getValues());
   }
 
   public String glueDbName(String dbName) {
@@ -166,9 +161,9 @@ public class HiveToGlueTransformer {
 
     for (final FieldSchema fieldSchema : colList) {
       final Column col = new Column()
-          .withName(stringCleaner.clean(fieldSchema.getName()))
-          .withType(stringCleaner.clean(fieldSchema.getType()))
-          .withComment(stringCleaner.shortTo254Chars(stringCleaner.clean(fieldSchema.getComment())));
+          .withName(fieldSchema.getName())
+          .withType(fieldSchema.getType())
+          .withComment(fieldSchema.getComment());
 
       columns.add(col);
     }

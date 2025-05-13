@@ -28,8 +28,10 @@ import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.DeleteTableRequest;
 import com.amazonaws.services.glue.model.GetPartitionsRequest;
+import com.amazonaws.services.glue.model.InvalidInputException;
 import com.amazonaws.services.glue.model.Partition;
 import com.amazonaws.services.glue.model.PartitionInput;
+import com.amazonaws.services.glue.model.TableInput;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
 
 public class GlueTableService {
@@ -40,6 +42,7 @@ public class GlueTableService {
 
   private final AWSGlue glueClient;
   private final HiveToGlueTransformer transformer;
+  private final GlueMetadataStringCleaner cleaner = new GlueMetadataStringCleaner();
 
   public GlueTableService(AWSGlue glueClient, String gluePrefix) {
     this.glueClient = glueClient;
@@ -48,11 +51,20 @@ public class GlueTableService {
   }
 
   public void create(Table table) {
+    boolean retry = false;
     CreateTableRequest createTableRequest = new CreateTableRequest()
         .withTableInput(transformer.transformTable(table))
         .withDatabaseName(transformer.glueDbName(table));
-    glueClient.createTable(createTableRequest);
-    log.info(table + " table created in glue catalog");
+    try {
+      glueClient.createTable(createTableRequest);
+      log.debug(table + " table created in glue catalog");
+    } catch (InvalidInputException e) {
+      log.debug("Cleaning up table manually {} to resolve validation", table);
+      TableInput tableInput = createTableRequest.getTableInput();
+      createTableRequest.setTableInput(cleaner.cleanTable(tableInput));
+      glueClient.createTable(createTableRequest);
+      log.debug(table + " table updated in glue catalog");
+    }
   }
 
   public void update(Table table) {
@@ -62,8 +74,16 @@ public class GlueTableService {
         .withSkipArchive(skipArchive)
         .withTableInput(transformer.transformTable(table))
         .withDatabaseName(transformer.glueDbName(table));
-    glueClient.updateTable(updateTableRequest);
-    log.info(table + " table updated in glue catalog");
+    try {
+      glueClient.updateTable(updateTableRequest);
+      log.debug(table + " table updated in glue catalog");
+    } catch (InvalidInputException e) {
+      log.debug("Cleaning up table manually {} to resolve validation", table);
+      TableInput tableInput = updateTableRequest.getTableInput();
+      updateTableRequest.setTableInput(cleaner.cleanTable(tableInput));
+      glueClient.updateTable(updateTableRequest);
+      log.debug(table + " table updated in glue catalog");
+    }
   }
 
   public void delete(Table table) {
@@ -71,7 +91,7 @@ public class GlueTableService {
         .withName(table.getTableName())
         .withDatabaseName(transformer.glueDbName(table));
     glueClient.deleteTable(deleteTableRequest);
-    log.info(table + " table deleted from glue catalog");
+    log.debug(table + " table deleted from glue catalog");
   }
 
   /**
