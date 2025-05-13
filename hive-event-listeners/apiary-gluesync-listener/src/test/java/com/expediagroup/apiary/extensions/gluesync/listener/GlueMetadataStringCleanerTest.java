@@ -26,11 +26,15 @@ public class GlueMetadataStringCleanerTest {
     assertTrue(glueMetadataStringCleaner.shortTo254Chars(sb.toString()).length() == 254);
   }
 
+  //[\u0020-\uD7FF\uE000-\uFFFD\uD800\uDC00-\uDBFF\uDFFF\t]*
   @Test
   public void testCleanNonUnicode() {
-    String input = "Hello, World! €€€€€€";
-    String expected = "Hello, World! ";
+    String input = "Hello, World!\uD999";
+    String expected = "Hello, World!";
     String result = glueMetadataStringCleaner.clean(input);
+    System.out.println(input);
+    System.out.println(result);
+    System.out.println(input.contentEquals(result));
     assertTrue(result.equals(expected));
   }
 }

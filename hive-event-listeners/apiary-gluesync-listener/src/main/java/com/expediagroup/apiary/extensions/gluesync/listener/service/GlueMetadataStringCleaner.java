@@ -35,14 +35,7 @@ public class GlueMetadataStringCleaner {
     if (input == null) {
       return null;
     }
-    String result;
-    result = removeNonUnicodeChars(input);
-    result = removeSpecialChars(result);
-    return result;
-  }
-
-  private String removeSpecialChars(String comment) {
-    return comment.replaceAll("[^a-zA-Z0-9 \\-_,.!?()@#$%^&*+=]", "");
+    return removeNonUnicodeChars(input);
   }
 
   private String removeNonUnicodeChars(String input) {
