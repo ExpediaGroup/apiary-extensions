@@ -47,7 +47,6 @@ public class GlueMetadataStringCleaner {
 
   private void cleanColumns(List<Column> columns) {
     for (Column column : columns) {
-      column.setName(removeNonUnicodeChars(column.getName()));
       column.setComment(truncateToMaxAllowedChars(removeNonUnicodeChars(column.getComment())));
     }
   }

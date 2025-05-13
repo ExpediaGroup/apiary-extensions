@@ -20,7 +20,7 @@ public class GlueMetadataStringCleanerTest {
   private GlueMetadataStringCleaner glueMetadataStringCleaner;
 
   private final List<Column> incorrectColumn = Collections.singletonList(
-      new Column().withName("name_incorrect\uD999").withComment("\uD999" + generateCharString(300))
+      new Column().withComment("\uD999" + generateCharString(300))
   );
 
   @Before
@@ -36,17 +36,15 @@ public class GlueMetadataStringCleanerTest {
     tableInput.setStorageDescriptor(new StorageDescriptor().withColumns(incorrectColumn));
     tableInput.setPartitionKeys(incorrectColumn);
     // verify input is incorrect
-    assertTrue(tableInput.getStorageDescriptor().getColumns().get(0).getName().contentEquals("name_incorrect\uD999"));
+    assertTrue(tableInput.getStorageDescriptor().getColumns().get(0).getComment().startsWith("\uD999"));
 
     TableInput result = glueMetadataStringCleaner.cleanTable(tableInput);
 
     Column schemaColumn = result.getStorageDescriptor().getColumns().get(0);
-    assertTrue(schemaColumn.getName().contentEquals("name_incorrect"));
     assertTrue(schemaColumn.getComment().length() == 254);
     assertTrue(schemaColumn.getComment().startsWith("A"));
 
     Column partitionColumn = result.getPartitionKeys().get(0);
-    assertTrue(partitionColumn.getName().contentEquals("name_incorrect"));
     assertTrue(partitionColumn.getComment().length() == 254);
     assertTrue(partitionColumn.getComment().startsWith("A"));
   }
@@ -57,19 +55,18 @@ public class GlueMetadataStringCleanerTest {
     partitionInput.setStorageDescriptor(new StorageDescriptor().withColumns(incorrectColumn));
     partitionInput.setValues(Collections.singletonList("\uD999" + generateCharString(300)));
     // verify input is incorrect
-    assertTrue(partitionInput.getStorageDescriptor().getColumns().get(0).getName().contentEquals("name_incorrect\uD999"));
+    assertTrue(partitionInput.getStorageDescriptor().getColumns().get(0).getComment().startsWith("\uD999"));
 
     PartitionInput result = glueMetadataStringCleaner.cleanPartition(partitionInput);
 
     Column schemaColumn = result.getStorageDescriptor().getColumns().get(0);
-    assertTrue(schemaColumn.getName().contentEquals("name_incorrect"));
     assertTrue(schemaColumn.getComment().length() == 254);
-    assertTrue(schemaColumn.getComment().startsWith("A"));
+    assertTrue(schemaColumn.getComment().startsWith("A")); // non-unicode char removed
 
     String partitionValue = result.getValues().get(0);
     assertTrue(partitionValue.contentEquals(generateCharString(300)));
     assertTrue(partitionValue.length() == 300);
-    assertTrue(partitionValue.startsWith("A"));
+    assertTrue(partitionValue.startsWith("A")); // non-unicode char removed
   }
 
   private String generateCharString(int length) {
