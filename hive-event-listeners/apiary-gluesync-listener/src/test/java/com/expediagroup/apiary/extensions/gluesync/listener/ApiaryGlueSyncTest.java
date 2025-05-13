@@ -20,7 +20,9 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -44,9 +46,11 @@ import java.util.stream.Collectors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
 import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
@@ -65,6 +69,7 @@ import com.amazonaws.services.glue.model.AlreadyExistsException;
 import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
 import com.amazonaws.services.glue.model.Column;
 import com.amazonaws.services.glue.model.CreateDatabaseRequest;
+import com.amazonaws.services.glue.model.CreatePartitionRequest;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.CreateTableResult;
 import com.amazonaws.services.glue.model.DeleteDatabaseRequest;
@@ -73,6 +78,9 @@ import com.amazonaws.services.glue.model.EntityNotFoundException;
 import com.amazonaws.services.glue.model.GetDatabaseRequest;
 import com.amazonaws.services.glue.model.GetDatabaseResult;
 import com.amazonaws.services.glue.model.GetPartitionsResult;
+import com.amazonaws.services.glue.model.InvalidInputException;
+import com.amazonaws.services.glue.model.PartitionInput;
+import com.amazonaws.services.glue.model.TableInput;
 import com.amazonaws.services.glue.model.UpdateDatabaseRequest;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
 import com.google.common.collect.ImmutableMap;
@@ -102,6 +110,8 @@ public class ApiaryGlueSyncTest {
   private ArgumentCaptor<UpdateDatabaseRequest> updateDatabaseRequestCaptor;
   @Captor
   private ArgumentCaptor<DeleteDatabaseRequest> deleteDatabaseRequestCaptor;
+  @Captor
+  private ArgumentCaptor<CreatePartitionRequest> createPartitionRequestCaptor;
 
   private final String tableName = "some_table";
   private final String dbName = "some_db";
@@ -217,6 +227,31 @@ public class ApiaryGlueSyncTest {
     assertThat(createTableRequest.getTableInput().getName(), is(tableName));
     assertThat(toList(createTableRequest.getTableInput().getPartitionKeys()), is(asList(partNames)));
     assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+  }
+
+  @Test
+  public void onCreateHiveTable_withIncorrectFormat() {
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    // Setting incorrect schema for one column
+    List<FieldSchema> incorrectSchema = simpleSchema();
+    incorrectSchema.get(0).setComment("incorrect_comment\uD999");
+    Table table = simpleHiveTable(incorrectSchema, simplePartitioning());
+    when(event.getTable()).thenReturn(table);
+    when(glueClient.createTable(argThat(
+        req -> "incorrect_comment\uD999".contentEquals(
+            req.getTableInput().getStorageDescriptor().getColumns().get(0).getComment()))))
+        .thenThrow(new InvalidInputException("Invalid input"));
+
+    glueSync.onCreateTable(event);
+
+    verify(glueClient, times(2)).createTable(createTableRequestCaptor.capture());
+    CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
+
+    assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    TableInput tableInput = createTableRequest.getTableInput();
+    assertThat(tableInput.getStorageDescriptor().getColumns().get(0).getComment(), is("incorrect_comment"));
   }
 
   @Test
@@ -352,6 +387,38 @@ public class ApiaryGlueSyncTest {
     assertThat(createTableRequest.getTableInput().getName(), is(tableName));
     assertThat(createTableRequest.getTableInput().getPartitionKeys().size(), is(0));
     assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+  }
+
+  @Test
+  public void onAddPartition_withIncorrectFormat() {
+    AddPartitionEvent event = mock(AddPartitionEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    // Input table
+    List<FieldSchema> incorrectSchema = simpleSchema();
+    incorrectSchema.get(0).setComment("incorrect_comment\uD999");
+    Table table = simpleHiveTable(incorrectSchema, simplePartitioning());
+
+    // Input Partition
+    Partition partition = new Partition();
+    partition.setValues(Arrays.asList("part1Value", "part2Value"));
+    partition.setSd(table.getSd());
+
+    when(event.getTable()).thenReturn(table);
+    when(event.getPartitionIterator()).thenReturn(Arrays.asList(partition).iterator());
+    when(glueClient.createPartition(argThat(
+        req -> "incorrect_comment\uD999".contentEquals(
+            req.getPartitionInput().getStorageDescriptor().getColumns().get(0).getComment()))))
+        .thenThrow(new InvalidInputException("Invalid input"));
+
+    glueSync.onAddPartition(event);
+
+    verify(glueClient, times(2)).createPartition(createPartitionRequestCaptor.capture());
+    CreatePartitionRequest createTableRequest = createPartitionRequestCaptor.getValue();
+
+    assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    PartitionInput tableInput = createTableRequest.getPartitionInput();
+    assertThat(tableInput.getStorageDescriptor().getColumns().get(0).getComment(), is("incorrect_comment"));
   }
 
   private Table simpleHiveTable(List<FieldSchema> schema, List<FieldSchema> partitions) {

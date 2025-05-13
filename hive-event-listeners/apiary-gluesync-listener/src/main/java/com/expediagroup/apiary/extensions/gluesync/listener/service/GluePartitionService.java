@@ -57,7 +57,6 @@ public class GluePartitionService {
       glueClient.createPartition(createPartitionRequest);
       log.debug("{} partition created in glue catalog", partition);
     }
-    glueClient.createPartition(createPartitionRequest);
   }
 
   public void update(Table table,Partition partition) {

@@ -52,7 +52,6 @@ public class GlueTableService {
   }
 
   public void create(Table table) {
-    boolean retry = false;
     CreateTableRequest createTableRequest = new CreateTableRequest()
         .withTableInput(transformer.transformTable(table))
         .withDatabaseName(transformer.glueDbName(table));
