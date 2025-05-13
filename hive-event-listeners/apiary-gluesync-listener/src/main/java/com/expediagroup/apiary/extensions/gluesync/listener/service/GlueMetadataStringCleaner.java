@@ -48,11 +48,11 @@ public class GlueMetadataStringCleaner {
   private void cleanColumns(List<Column> columns) {
     for (Column column : columns) {
       column.setName(removeNonUnicodeChars(column.getName()));
-      column.setComment(shortTo254Chars(removeNonUnicodeChars(column.getComment())));
+      column.setComment(truncateToMaxAllowedChars(removeNonUnicodeChars(column.getComment())));
     }
   }
 
-  private String shortTo254Chars(String input) {
+  private String truncateToMaxAllowedChars(String input) {
     if (input == null) {
       return null;
     }

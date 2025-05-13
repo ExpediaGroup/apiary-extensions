@@ -50,7 +50,7 @@ public class GluePartitionService {
       log.debug("{} partition created in glue catalog", partition);
 
     } catch (InvalidInputException e) {
-      log.debug("Cleaning up partition manually {} to resolve validation", table);
+      log.debug("Cleaning up partition manually {} to resolve validation", partition);
       PartitionInput partitionInput = createPartitionRequest.getPartitionInput();
       createPartitionRequest.setPartitionInput(cleaner.cleanPartition(partitionInput));
       glueClient.createPartition(createPartitionRequest);
@@ -69,7 +69,7 @@ public class GluePartitionService {
       glueClient.updatePartition(updatePartitionRequest);
       log.debug("{} partition updated in glue catalog", partition);
     } catch (InvalidInputException e) {
-      log.debug("Cleaning up partition manually {} to resolve validation", table);
+      log.debug("Cleaning up partition manually {} to resolve validation", partition);
       PartitionInput partitionInput = updatePartitionRequest.getPartitionInput();
       updatePartitionRequest.setPartitionInput(cleaner.cleanPartition(partitionInput));
       glueClient.updatePartition(updatePartitionRequest);
