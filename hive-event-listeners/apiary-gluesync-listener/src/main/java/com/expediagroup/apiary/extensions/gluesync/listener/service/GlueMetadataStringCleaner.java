@@ -40,19 +40,19 @@ public class GlueMetadataStringCleaner {
     // Clean SerDes
     cleanColumns(input.getStorageDescriptor().getColumns());
     // Clean Partition Keys
-    List<String> cleanedKeys = input.getValues().stream().map(this::clean).collect(Collectors.toList());
+    List<String> cleanedKeys = input.getValues().stream().map(this::removeNonUnicodeChars).collect(Collectors.toList());
     input.setValues(cleanedKeys);
     return input;
   }
 
   private void cleanColumns(List<Column> columns) {
     for (Column column : columns) {
-      column.setName(clean(column.getName()));
-      column.setComment(shortTo254Chars(clean(column.getComment())));
+      column.setName(removeNonUnicodeChars(column.getName()));
+      column.setComment(shortTo254Chars(removeNonUnicodeChars(column.getComment())));
     }
   }
 
-  public String shortTo254Chars(String input) {
+  private String shortTo254Chars(String input) {
     if (input == null) {
       return null;
     }
@@ -62,14 +62,10 @@ public class GlueMetadataStringCleaner {
     return input;
   }
 
-  public String clean(String input) {
+  private String removeNonUnicodeChars(String input) {
     if (input == null) {
       return null;
     }
-    return removeNonUnicodeChars(input);
-  }
-
-  private String removeNonUnicodeChars(String input) {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < input.length(); i++) {
       int cp = input.codePointAt(i);
