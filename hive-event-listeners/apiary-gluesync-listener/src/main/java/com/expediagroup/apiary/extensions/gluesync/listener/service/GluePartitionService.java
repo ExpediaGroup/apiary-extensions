@@ -23,13 +23,17 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.CreatePartitionRequest;
 import com.amazonaws.services.glue.model.DeletePartitionRequest;
+import com.amazonaws.services.glue.model.InvalidInputException;
+import com.amazonaws.services.glue.model.PartitionInput;
 import com.amazonaws.services.glue.model.UpdatePartitionRequest;
+import com.amazonaws.services.glue.model.ValidationException;
 
 public class GluePartitionService {
   private static final Logger log = LoggerFactory.getLogger(GluePartitionService.class);
 
   private final AWSGlue glueClient;
   private final HiveToGlueTransformer transformer;
+  private final GlueMetadataStringCleaner cleaner = new GlueMetadataStringCleaner();
 
   public GluePartitionService(AWSGlue glueClient, String gluePrefix) {
     this.glueClient = glueClient;
@@ -42,18 +46,33 @@ public class GluePartitionService {
         .withPartitionInput(transformer.transformPartition(partition))
         .withDatabaseName(transformer.glueDbName(table))
         .withTableName(table.getTableName());
-    glueClient.createPartition(createPartitionRequest);
-    log.debug("{} partition created in glue catalog", partition);
+    try {
+      glueClient.createPartition(createPartitionRequest);
+      log.debug("{} partition created in glue catalog", partition);
+
+    } catch (ValidationException | InvalidInputException e) {
+      PartitionInput partitionInput = createPartitionRequest.getPartitionInput();
+      createPartitionRequest.setPartitionInput(cleanUpPartition(partitionInput));
+      glueClient.createPartition(createPartitionRequest);
+      log.debug("{} partition created in glue catalog", partition);
+    }
   }
 
-  public void update(Table table,Partition partition) {
+  public void update(Table table, Partition partition) {
     UpdatePartitionRequest updatePartitionRequest = new UpdatePartitionRequest()
         .withPartitionValueList(transformer.transformPartition(partition).getValues())
         .withPartitionInput(transformer.transformPartition(partition))
         .withDatabaseName(transformer.glueDbName(table))
         .withTableName(table.getTableName());
-    glueClient.updatePartition(updatePartitionRequest);
-    log.debug("{} partition updated in glue catalog", partition);
+    try {
+      glueClient.updatePartition(updatePartitionRequest);
+      log.debug("{} partition updated in glue catalog", partition);
+    } catch (ValidationException | InvalidInputException e) {
+      PartitionInput partitionInput = updatePartitionRequest.getPartitionInput();
+      updatePartitionRequest.setPartitionInput(cleanUpPartition(partitionInput));
+      glueClient.updatePartition(updatePartitionRequest);
+      log.debug("{} partition updated in glue catalog", partition);
+    }
   }
 
   public void delete(Table table, Partition partition) {
@@ -65,5 +84,12 @@ public class GluePartitionService {
     log.debug("{} partition deleted from glue catalog", partition);
   }
 
-
+  private PartitionInput cleanUpPartition(PartitionInput partition) {
+    log.debug("Cleaning up partition comments manually on {} to resolve validation", partition);
+    long startTime = System.currentTimeMillis();
+    PartitionInput result = cleaner.cleanPartition(partition);
+    long duration = System.currentTimeMillis() - startTime;
+    log.debug("Clean up partition comments operation on {} finished in {}ms", partition, duration);
+    return result;
+  }
 }
