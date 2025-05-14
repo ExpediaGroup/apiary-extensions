@@ -56,6 +56,7 @@ public class GlueTableService {
         .withTableInput(transformer.transformTable(table))
         .withDatabaseName(transformer.glueDbName(table));
     try {
+      log.debug(table + " table created in glue catalog. make sure this is the version");
       glueClient.createTable(createTableRequest);
       log.debug(table + " table created in glue catalog");
     } catch (ValidationException | InvalidInputException e) {
