@@ -59,9 +59,8 @@ public class GlueTableService {
       glueClient.createTable(createTableRequest);
       log.debug(table + " table created in glue catalog");
     } catch (ValidationException | InvalidInputException e) {
-      log.debug("Cleaning up table manually {} to resolve validation", table);
       TableInput tableInput = createTableRequest.getTableInput();
-      createTableRequest.setTableInput(cleaner.cleanTable(tableInput));
+      createTableRequest.setTableInput(cleanUpTable(tableInput));
       glueClient.createTable(createTableRequest);
       log.debug(table + " table updated in glue catalog");
     }
@@ -78,12 +77,20 @@ public class GlueTableService {
       glueClient.updateTable(updateTableRequest);
       log.debug(table + " table updated in glue catalog");
     } catch (ValidationException | InvalidInputException e) {
-      log.debug("Cleaning up table manually {} to resolve validation", table);
       TableInput tableInput = updateTableRequest.getTableInput();
-      updateTableRequest.setTableInput(cleaner.cleanTable(tableInput));
+      updateTableRequest.setTableInput(cleanUpTable(tableInput));
       glueClient.updateTable(updateTableRequest);
       log.debug(table + " table updated in glue catalog");
     }
+  }
+
+  private TableInput cleanUpTable(TableInput table) {
+    log.debug("Cleaning up table comments manually on {} to resolve validation", table);
+    long startTime = System.currentTimeMillis();
+    TableInput result = cleaner.cleanTable(table);
+    long duration = System.currentTimeMillis() - startTime;
+    log.debug("Clean up table comments operation on {} finished in {}ms", table, duration);
+    return result;
   }
 
   public void delete(Table table) {

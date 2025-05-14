@@ -51,15 +51,14 @@ public class GluePartitionService {
       log.debug("{} partition created in glue catalog", partition);
 
     } catch (ValidationException | InvalidInputException e) {
-      log.debug("Cleaning up partition manually {} to resolve validation", partition);
       PartitionInput partitionInput = createPartitionRequest.getPartitionInput();
-      createPartitionRequest.setPartitionInput(cleaner.cleanPartition(partitionInput));
+      createPartitionRequest.setPartitionInput(cleanUpPartition(partitionInput));
       glueClient.createPartition(createPartitionRequest);
       log.debug("{} partition created in glue catalog", partition);
     }
   }
 
-  public void update(Table table,Partition partition) {
+  public void update(Table table, Partition partition) {
     UpdatePartitionRequest updatePartitionRequest = new UpdatePartitionRequest()
         .withPartitionValueList(transformer.transformPartition(partition).getValues())
         .withPartitionInput(transformer.transformPartition(partition))
@@ -69,9 +68,8 @@ public class GluePartitionService {
       glueClient.updatePartition(updatePartitionRequest);
       log.debug("{} partition updated in glue catalog", partition);
     } catch (ValidationException | InvalidInputException e) {
-      log.debug("Cleaning up partition manually {} to resolve validation", partition);
       PartitionInput partitionInput = updatePartitionRequest.getPartitionInput();
-      updatePartitionRequest.setPartitionInput(cleaner.cleanPartition(partitionInput));
+      updatePartitionRequest.setPartitionInput(cleanUpPartition(partitionInput));
       glueClient.updatePartition(updatePartitionRequest);
       log.debug("{} partition updated in glue catalog", partition);
     }
@@ -84,5 +82,14 @@ public class GluePartitionService {
         .withTableName(table.getTableName());
     glueClient.deletePartition(deletePartitionRequest);
     log.debug("{} partition deleted from glue catalog", partition);
+  }
+
+  private PartitionInput cleanUpPartition(PartitionInput partition) {
+    log.debug("Cleaning up partition comments manually on {} to resolve validation", partition);
+    long startTime = System.currentTimeMillis();
+    PartitionInput result = cleaner.cleanPartition(partition);
+    long duration = System.currentTimeMillis() - startTime;
+    log.debug("Clean up partition comments operation on {} finished in {}ms", partition, duration);
+    return result;
   }
 }
