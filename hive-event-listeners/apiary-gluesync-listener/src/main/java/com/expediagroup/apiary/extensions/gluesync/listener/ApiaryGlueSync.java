@@ -38,6 +38,8 @@ import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
 
+import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants;
+import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueDatabaseService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GluePartitionService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueTableService;
@@ -46,12 +48,13 @@ import com.expediagroup.apiary.extensions.gluesync.listener.service.IsIcebergTab
 public class ApiaryGlueSync extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGlueSync.class);
-  private final IsIcebergTablePredicate isIcebergPredicate = new IsIcebergTablePredicate();
 
   private final AWSGlue glueClient;
   private final GlueDatabaseService glueDatabaseService;
   private final GlueTableService glueTableService;
   private final GluePartitionService gluePartitionService;
+  private final IsIcebergTablePredicate isIcebergPredicate;
+  private final MetricService metricService;
 
   public ApiaryGlueSync(Configuration config) {
     super(config);
@@ -60,6 +63,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
     glueTableService = new GlueTableService(glueClient, gluePrefix);
     gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
+    isIcebergPredicate = new IsIcebergTablePredicate();
+    metricService = new MetricService();
     log.debug("ApiaryGlueSync created");
   }
 
@@ -69,6 +74,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
     glueTableService = new GlueTableService(glueClient, gluePrefix);
     gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
+    isIcebergPredicate = new IsIcebergTablePredicate();
+    metricService = new MetricService();
     log.debug("ApiaryGlueSync created");
   }
 
@@ -83,6 +90,10 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     } catch (AlreadyExistsException e) {
       log.info(database + " database already exists in glue, updating....");
       glueDatabaseService.update(database);
+      metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_SUCCESS);
+    } catch (Exception e) {
+      log.error("Failed create database {} in glue", database.getName(), e);
+      metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_FAILURE);
     }
   }
 
@@ -92,7 +103,13 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       return;
     }
     Database database = event.getDatabase();
-    glueDatabaseService.delete(database);
+    try {
+      glueDatabaseService.delete(database);
+      metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_SUCCESS);
+    } catch (Exception e) {
+      log.error("Failed drop database {} in glue", database.getName(), e);
+      metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_FAILURE);
+    }
   }
 
   @Override
@@ -103,9 +120,14 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     Table table = event.getTable();
     try {
       glueTableService.create(table);
+      metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
     } catch (AlreadyExistsException e) {
       log.info(table + " table already exists in glue, updating....");
       glueTableService.update(table);
+      metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    } catch (Exception e) {
+      log.error("Failed create table {}.{} in glue", table.getDbName(), table.getTableName(), e);
+      metricService.incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
     }
   }
 
@@ -117,8 +139,12 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     Table table = event.getTable();
     try {
       glueTableService.delete(table);
+      metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
     } catch (EntityNotFoundException e) {
       log.info(table + " table doesn't exist in glue catalog");
+    } catch (Exception e) {
+      log.error("Failed drop table {}.{} in glue", table.getDbName(), table.getTableName(), e);
+      metricService.incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
     }
   }
 
@@ -136,9 +162,14 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
         return;
       }
       glueTableService.update(newTable);
+      metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
     } catch (EntityNotFoundException e) {
       log.info(newTable + " table doesn't exist in glue, creating....");
       glueTableService.create(newTable);
+      metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    } catch (Exception e) {
+      log.error("Failed alter table {}.{} in glue", oldTable.getDbName(), oldTable.getTableName(), e);
+      metricService.incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
     }
   }
 
@@ -167,8 +198,13 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       Partition partition = partitions.next();
       try {
         gluePartitionService.create(table, partition);
+        metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
       } catch (AlreadyExistsException e) {
         gluePartitionService.update(table, partition);
+        metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
+      } catch (Exception e) {
+        log.error("Failed add partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
+        metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);
       }
     }
   }
@@ -184,7 +220,11 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       Partition partition = partitions.next();
       try {
         gluePartitionService.delete(table, partition);
-      } catch (EntityNotFoundException ignored) {}
+        metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
+      } catch (Exception e) {
+        log.error("Failed drop partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
+        metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);
+      }
     }
   }
 
@@ -197,8 +237,13 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     Partition partition = event.getNewPartition();
     try {
       gluePartitionService.update(table, partition);
+      metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
     } catch (EntityNotFoundException e) {
       gluePartitionService.create(table, partition);
+      metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
+    } catch (Exception e) {
+      log.error("Failed alter partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
+      metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);
     }
   }
 }
