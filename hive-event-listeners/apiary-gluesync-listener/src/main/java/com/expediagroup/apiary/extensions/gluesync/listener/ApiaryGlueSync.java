@@ -58,24 +58,24 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
 
   public ApiaryGlueSync(Configuration config) {
     super(config);
-    glueClient = AWSGlueClientBuilder.standard().withRegion(System.getenv("AWS_REGION")).build();
+    this.glueClient = AWSGlueClientBuilder.standard().withRegion(System.getenv("AWS_REGION")).build();
     String gluePrefix = System.getenv("GLUE_PREFIX");
-    glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
-    glueTableService = new GlueTableService(glueClient, gluePrefix);
-    gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
-    isIcebergPredicate = new IsIcebergTablePredicate();
-    metricService = new MetricService();
+    this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
+    this.glueTableService = new GlueTableService(glueClient, gluePrefix);
+    this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
+    this.isIcebergPredicate = new IsIcebergTablePredicate();
+    this.metricService = new MetricService();
     log.debug("ApiaryGlueSync created");
   }
 
-  public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix) {
+  public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService) {
     super(config);
     this.glueClient = glueClient;
-    glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
-    glueTableService = new GlueTableService(glueClient, gluePrefix);
-    gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
-    isIcebergPredicate = new IsIcebergTablePredicate();
-    metricService = new MetricService();
+    this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
+    this.glueTableService = new GlueTableService(glueClient, gluePrefix);
+    this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
+    this.isIcebergPredicate = new IsIcebergTablePredicate();
+    this.metricService = metricService;
     log.debug("ApiaryGlueSync created");
   }
 
@@ -87,6 +87,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     Database database = event.getDatabase();
     try {
       glueDatabaseService.create(database);
+      metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_SUCCESS);
     } catch (AlreadyExistsException e) {
       log.info(database + " database already exists in glue, updating....");
       glueDatabaseService.update(database);
@@ -179,6 +180,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     glueTableService.create(newTable);
     glueTableService.copyPartitions(newTable, glueTableService.getPartitions(oldTable));
     glueTableService.delete(oldTable);
+    metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
     long duration = System.currentTimeMillis() - startTime;
     log.info("{} glue table rename to {} finised in {}ms", oldTable.getTableName(), newTable.getTableName(), duration);
   }
