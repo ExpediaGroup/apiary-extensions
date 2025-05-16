@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 8.1.6 - 2025-05-16
+### Changed
+- Glue sync failures are now handled silently.
+- Metrics added to glue-sync-listener.
+
 ## 8.1.5 - 2025-05-13
 ### Changed
 - Improved performance when cleaning column comments in glue listener.
