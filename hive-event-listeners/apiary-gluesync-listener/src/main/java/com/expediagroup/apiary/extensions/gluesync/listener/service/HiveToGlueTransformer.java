@@ -38,14 +38,17 @@ import com.amazonaws.services.glue.model.StorageDescriptor;
 import com.amazonaws.services.glue.model.TableInput;
 
 public class HiveToGlueTransformer {
+
   private static final Logger log = LoggerFactory.getLogger(HiveToGlueTransformer.class);
   public static final String MANAGED_BY_GLUESYNC_KEY = "managed-by";
   public static final String MANAGED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
 
   private final String gluePrefix;
+  private final IsIcebergTablePredicate isIcebergPredicate;
 
   public HiveToGlueTransformer(String gluePrefix) {
     this.gluePrefix = gluePrefix;
+    this.isIcebergPredicate = new IsIcebergTablePredicate();
   }
 
   public DatabaseInput transformDatabase(Database database) {
@@ -92,7 +95,7 @@ public class HiveToGlueTransformer {
         .withName(table.getTableName())
         .withLastAccessTime(date)
         .withOwner(table.getOwner())
-        .withParameters(table.getParameters())
+        .withParameters(addClassification(table.getParameters(), storageDescriptor.getInputFormat()))
         .withPartitionKeys(partitionKeys)
         .withRetention(table.getRetention())
         .withStorageDescriptor(sd)
@@ -179,6 +182,33 @@ public class HiveToGlueTransformer {
     } catch (Exception e) {
       log.error("Error formatting table date", e);
     }
+    return null;
+  }
+
+  private Map<String, String> addClassification(Map<String, String> params, String inputFormat) {
+    if (params == null) {
+      params = new HashMap<>();
+    }
+    if (!params.containsKey("classification")) {
+      if (isIcebergPredicate.test(params)) {
+        params.put("classification", params.getOrDefault("write.format.default", "parquet"));
+      } else {
+        String classification = getHiveClassification(inputFormat);
+        if (classification != null) {
+          params.put("classification", classification);
+        }
+      }
+    }
+    return params;
+  }
+
+  private String getHiveClassification(String inputFormat) {
+    String lower = inputFormat.toLowerCase();
+
+    if (lower.contains("parquet")) {return "parquet";}
+    if (lower.contains("avro")) {return "avro";}
+    if (lower.contains("orc")) {return "orc";}
+
     return null;
   }
 }
