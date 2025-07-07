@@ -71,7 +71,7 @@ public class JsonMetaStoreEventSerDe implements MetaStoreEventSerDe {
       }
       return bytes;
     } catch (IOException e) {
-      throw new SerDeException("Unable to marshal event " + listenerEvent);
+      throw new SerDeException("Unable to marshal event " + listenerEvent, e);
     }
   }
 
@@ -92,7 +92,7 @@ public class JsonMetaStoreEventSerDe implements MetaStoreEventSerDe {
       log.debug("Unmarshalled event is: {}", event);
       return event;
     } catch (Exception e) {
-      throw new SerDeException("Unable to unmarshal event from payload");
+      throw new SerDeException("Unable to unmarshal event from payload", e);
     }
   }
 
