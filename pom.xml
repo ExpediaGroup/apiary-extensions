@@ -119,6 +119,7 @@
     </dependencies>
   </dependencyManagement>
 
+<pluginManagement>
   <plugins>
     <plugin>
       <groupId>org.sonatype.plugins</groupId>
@@ -132,5 +133,6 @@
       </configuration>
     </plugin>
   </plugins>
+</pluginManagement>
   
 </project>
