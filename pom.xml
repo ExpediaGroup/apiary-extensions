@@ -119,7 +119,7 @@
     </dependencies>
   </dependencyManagement>
 
-<pluginManagement>
+<build>
   <plugins>
     <plugin>
       <groupId>org.sonatype.plugins</groupId>
@@ -133,6 +133,6 @@
       </configuration>
     </plugin>
   </plugins>
-</pluginManagement>
+</build>
   
 </project>
