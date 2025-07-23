@@ -10,7 +10,7 @@
   <groupId>com.expediagroup.apiary</groupId>
   <artifactId>apiary-extensions-parent</artifactId>
   <description>Various extensions to Apiary that provide additional, optional functionality</description>
-  <version>8.1.11-SNAPSHOT</version>
+  <version>8.1.9-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apiary Extensions</name>
   <inceptionYear>2018</inceptionYear>
