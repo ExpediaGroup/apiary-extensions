@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.expediagroup</groupId>
     <artifactId>eg-oss-parent</artifactId>
-    <version>2.4.1</version>
+    <version>3.0.1</version>
   </parent>
 
   <groupId>com.expediagroup.apiary</groupId>
@@ -36,8 +36,6 @@
     <beeju.version>4.0.0</beeju.version>
     <log4j2.version>2.17.2</log4j2.version>
     <expediagroup.shaded.prefix>com.expediagroup.apiary.extensions.shaded</expediagroup.shaded.prefix>
-    <nexus.staging.maven.plugin.version>1.7.0</nexus.staging.maven.plugin.version>
-    <skipTests>true</skipTests>
   </properties>
 
   <modules>
@@ -121,44 +119,4 @@
     </dependencies>
   </dependencyManagement>
 
-<build>
-  <plugins>
-    <plugin>
-      <groupId>org.sonatype.plugins</groupId>
-      <artifactId>nexus-staging-maven-plugin</artifactId>
-      <version>${nexus.staging.maven.plugin.version}</version>
-      <extensions>true</extensions>
-      <configuration>
-        <serverId>sonatype-nexus-staging</serverId>
-        <nexusUrl>https://ossrh-staging-api.central.sonatype.com</nexusUrl>
-        <autoReleaseAfterClose>true</autoReleaseAfterClose>
-      </configuration>
-    </plugin>
-      <plugin>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <version>3.1.4</version>
-        <executions>
-          <execution>
-            <id>default-deploy</id>
-            <phase>deploy</phase>
-            <goals>
-              <goal>deploy</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>    
-  </plugins>
-</build>
-
-  <distributionManagement>
-    <repository>
-      <id>sonatype-nexus-staging</id>
-      <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/</url>
-    </repository>
-    <snapshotRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <url>https://ossrh-staging-api.central.sonatype.com/content/repositories/snapshots/</url>
-    </snapshotRepository>
-  </distributionManagement>
-  
 </project>
