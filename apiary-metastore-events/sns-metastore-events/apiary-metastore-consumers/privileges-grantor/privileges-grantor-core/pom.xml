@@ -9,6 +9,7 @@
   </parent>
 
   <artifactId>apiary-privileges-grantor-core</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencies>
     <dependency>

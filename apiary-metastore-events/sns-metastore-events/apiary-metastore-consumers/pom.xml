@@ -8,6 +8,7 @@
   </parent>
 
   <artifactId>apiary-metastore-consumers-parent</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
   <modules>

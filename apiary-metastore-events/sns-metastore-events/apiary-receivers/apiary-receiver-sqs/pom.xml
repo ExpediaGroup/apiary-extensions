@@ -8,6 +8,7 @@
   </parent>
 
   <artifactId>apiary-receiver-sqs</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <properties>
     <aws.version>1.12.276</aws.version>

@@ -9,6 +9,7 @@
   </parent>
 
   <artifactId>apiary-privileges-grantor-lambda</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <properties>
     <!-- AWS SDK for Lambda -->

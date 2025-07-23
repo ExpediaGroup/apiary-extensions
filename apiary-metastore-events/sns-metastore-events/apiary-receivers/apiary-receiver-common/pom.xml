@@ -8,6 +8,7 @@
   </parent>
 
   <artifactId>apiary-receiver-common</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <properties>
     <commons.lang3.version>3.7</commons.lang3.version>

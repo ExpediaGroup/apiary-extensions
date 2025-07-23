@@ -9,6 +9,7 @@
 
   <artifactId>kafka-metastore-events-parent</artifactId>
   <packaging>pom</packaging>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <modules>
     <module>kafka-metastore-listener</module>
