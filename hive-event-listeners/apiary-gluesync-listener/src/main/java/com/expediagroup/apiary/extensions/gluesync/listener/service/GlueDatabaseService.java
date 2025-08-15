@@ -41,6 +41,22 @@ public class GlueDatabaseService {
     log.debug("ApiaryGlueSync created");
   }
 
+  public boolean exists(Database database) {
+    String glueDbName = transformer.glueDbName(database.getName());
+    try {
+      com.amazonaws.services.glue.model.Database glueDb = glueClient.getDatabase(
+          new GetDatabaseRequest().withName(glueDbName)).getDatabase();
+      if (glueDb != null) {
+        return true;
+      }
+    } catch (EntityNotFoundException e) {
+      return false;
+    }
+    // punt, this should be unreachable really.. either we get one
+    // or it should throw an exception. But the compiler doesn't know that I guess.
+    return false;
+  }
+
   public void create(Database database) {
     CreateDatabaseRequest createDatabaseRequest = new CreateDatabaseRequest()
         .withDatabaseInput(transformer.transformDatabase(database));

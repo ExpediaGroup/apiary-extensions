@@ -15,15 +15,25 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener.service;
 
-import org.apache.hadoop.hive.metastore.api.Partition;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.glue.AWSGlue;
+import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
+import com.amazonaws.services.glue.model.BatchDeletePartitionRequest;
+import com.amazonaws.services.glue.model.BatchUpdatePartitionRequest;
+import com.amazonaws.services.glue.model.BatchUpdatePartitionRequestEntry;
 import com.amazonaws.services.glue.model.CreatePartitionRequest;
 import com.amazonaws.services.glue.model.DeletePartitionRequest;
+import com.amazonaws.services.glue.model.GetPartitionsRequest;
 import com.amazonaws.services.glue.model.InvalidInputException;
+import com.amazonaws.services.glue.model.Partition;
 import com.amazonaws.services.glue.model.PartitionInput;
 import com.amazonaws.services.glue.model.UpdatePartitionRequest;
 import com.amazonaws.services.glue.model.ValidationException;
@@ -34,6 +44,12 @@ public class GluePartitionService {
   private final AWSGlue glueClient;
   private final HiveToGlueTransformer transformer;
   private final GlueMetadataStringCleaner cleaner = new GlueMetadataStringCleaner();
+  private final HiveToGluePartitionComparator partitionComparator = new HiveToGluePartitionComparator();
+  public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
+  private static final int DEFAULT_MAX_RESULTS_SIZE = 1000; // Current max supported by Glue
+  private static final int MAX_PARTITION_CREATE_BATCH_SIZE = 100;
+  private static final int MAX_PARTITION_UPDATE_BATCH_SIZE = 100;
+  private static final int MAX_PARTITION_DELETE_BATCH_SIZE = 25;
 
   public GluePartitionService(AWSGlue glueClient, String gluePrefix) {
     this.glueClient = glueClient;
@@ -41,7 +57,7 @@ public class GluePartitionService {
     log.debug("ApiaryGlueSync created");
   }
 
-  public void create(Table table, Partition partition) {
+  public void create(Table table, org.apache.hadoop.hive.metastore.api.Partition partition) {
     CreatePartitionRequest createPartitionRequest = new CreatePartitionRequest()
         .withPartitionInput(transformer.transformPartition(partition))
         .withDatabaseName(transformer.glueDbName(table))
@@ -58,7 +74,7 @@ public class GluePartitionService {
     }
   }
 
-  public void update(Table table, Partition partition) {
+  public void update(Table table, org.apache.hadoop.hive.metastore.api.Partition partition) {
     UpdatePartitionRequest updatePartitionRequest = new UpdatePartitionRequest()
         .withPartitionValueList(transformer.transformPartition(partition).getValues())
         .withPartitionInput(transformer.transformPartition(partition))
@@ -75,7 +91,7 @@ public class GluePartitionService {
     }
   }
 
-  public void delete(Table table, Partition partition) {
+  public void delete(Table table, org.apache.hadoop.hive.metastore.api.Partition partition) {
     DeletePartitionRequest deletePartitionRequest = new DeletePartitionRequest()
         .withPartitionValues(transformer.transformPartition(partition).getValues())
         .withDatabaseName(transformer.glueDbName(table))
@@ -91,5 +107,255 @@ public class GluePartitionService {
     long duration = System.currentTimeMillis() - startTime;
     log.debug("Clean up partition comments operation on {} finished in {}ms", partition, duration);
     return result;
+  }
+
+  /**
+   * Function to copy partitions using BatchCreatePartitionRequest but knowing the
+   * partition input list limit is 100,
+   * however input parameter can have larger list
+   */
+  public void copyPartitions(Table table, List<Partition> partitions) {
+    List<PartitionInput> partitionInputs = partitions.stream()
+        .map(this::convertToPartitionInput)
+        .collect(Collectors.toList());
+    int partitionCount = partitionInputs.size();
+    int batchSize = MAX_PARTITION_CREATE_BATCH_SIZE;
+    for (int i = 0; i < partitionCount; i += batchSize) {
+      int end = Math.min(i + batchSize, partitionCount);
+      List<PartitionInput> batch = partitionInputs.subList(i, end);
+      BatchCreatePartitionRequest batchCreatePartitionRequest = new BatchCreatePartitionRequest()
+          .withDatabaseName(transformer.glueDbName(table))
+          .withTableName(table.getTableName())
+          .withPartitionInputList(batch);
+      glueClient.batchCreatePartition(batchCreatePartitionRequest);
+    }
+  }
+
+  /**
+   * Function to return all partitions from a table, considering it could reach
+   * max results from request and
+   * then convert that into PartitionInput
+   */
+  public List<com.amazonaws.services.glue.model.Partition> getPartitions(Table table) {
+    List<com.amazonaws.services.glue.model.Partition> partitions = new ArrayList<>();
+    String nextToken = null;
+    do {
+      GetPartitionsRequest getPartitionsRequest = new GetPartitionsRequest()
+          .withDatabaseName(transformer.glueDbName(table))
+          .withTableName(table.getTableName())
+          .withMaxResults(DEFAULT_MAX_RESULTS_SIZE)
+          .withNextToken(nextToken);
+      com.amazonaws.services.glue.model.GetPartitionsResult result = glueClient.getPartitions(getPartitionsRequest);
+      if (result != null) {
+        partitions.addAll(result.getPartitions());
+        nextToken = result.getNextToken();
+      }
+    } while (nextToken != null);
+    return partitions;
+  }
+
+  public boolean shouldSkipArchive(Table table) {
+    boolean skipArchive = true;
+    if (table.getParameters() != null) {
+      // Only if explicitly overridden to false do enable table archive. Normally we
+      // want to skip archiving.
+      String skipArchiveParam = table.getParameters().get(APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM);
+      if ("false".equals(skipArchiveParam)) {
+        skipArchive = false;
+      }
+    }
+    return skipArchive;
+  }
+
+  public PartitionInput convertToPartitionInput(com.amazonaws.services.glue.model.Partition partition) {
+    return new PartitionInput()
+        .withValues(partition.getValues())
+        .withStorageDescriptor(partition.getStorageDescriptor())
+        .withParameters(partition.getParameters());
+  }
+
+  /*
+   * This method takes a dbName, a tableName and a list of hive partition objects,
+   * as well as a flag to
+   * indicate whether to do deletions.
+   * It fetches and maps the glue partitions to the hive partitions creating
+   * the following groups:
+   * - partitions that exist in both glue and hive (and test as unequal) - for
+   * update
+   * - partitions that exist only in glue - for delete
+   * - partitions that exist only in hive - for create
+   * Then it uses batch update functions on the glue api to create, update, or
+   * delete glue partitions in order to match the hive partitions.
+   * delete should only be performed if the flag deletePartitions is set to true
+   * cli.
+   */
+  public void synchronizePartitions(
+      Table table,
+      List<org.apache.hadoop.hive.metastore.api.Partition> hivePartitions,
+      boolean deletePartitions,
+      boolean verbose) {
+    List<Partition> gluePartitions = getPartitions(table);
+
+    // Map Glue partition values to Glue Partition object
+    HashMap<List<String>, Partition> gluePartitionMap = new HashMap<>();
+    for (Partition gluePartition : gluePartitions) {
+      gluePartitionMap.put(gluePartition.getValues(), gluePartition);
+    }
+
+    // Map Hive partition values to Hive Partition object
+    HashMap<List<String>, org.apache.hadoop.hive.metastore.api.Partition> hivePartitionMap = new HashMap<>();
+    for (org.apache.hadoop.hive.metastore.api.Partition hivePartition : hivePartitions) {
+      hivePartitionMap.put(hivePartition.getValues(), hivePartition);
+    }
+
+    // Partitions to create, update, delete
+    List<org.apache.hadoop.hive.metastore.api.Partition> partitionsToCreate = new ArrayList<>();
+    HashMap<org.apache.hadoop.hive.metastore.api.Partition, Partition> partitionsToUpdate = new HashMap<>();
+    List<Partition> partitionsToDelete = new ArrayList<>();
+
+    int skippedCount = 0;
+    // Find partitions to create or update
+    for (org.apache.hadoop.hive.metastore.api.Partition hivePartition : hivePartitions) {
+      List<String> values = hivePartition.getValues();
+      Partition gluePartition = gluePartitionMap.get(values);
+      if (gluePartition != null) {
+        // Exists in both: check if they are equal
+        if (partitionComparator.equals(hivePartition, gluePartition)) {
+          skippedCount++;
+        } else {
+          // Not equal: update
+          partitionsToUpdate.put(hivePartition, gluePartition);
+        }
+      } else {
+        // Exists only in Hive: create
+        partitionsToCreate.add(hivePartition);
+      }
+    }
+
+    log.debug("Partitions {} partitions to create, {} partitions to update, {} partitions unchanged",
+        partitionsToCreate.size(),
+        partitionsToUpdate.size(),
+        skippedCount);
+    batchCreatePartitions(table, partitionsToCreate);
+    batchUpdatePartitions(table, partitionsToUpdate);
+
+    // Find partitions to delete (only if flag is set)
+    if (deletePartitions) {
+      for (Partition gluePartition : gluePartitions) {
+        List<String> values = gluePartition.getValues();
+        if (!hivePartitionMap.containsKey(values)) {
+          // Exists only in Glue: delete
+          partitionsToDelete.add(gluePartition);
+        }
+      }
+      log.debug("Found {} partitions to delete", partitionsToDelete.size());
+      batchDeletePartitions(table, partitionsToDelete);
+    }
+  }
+
+  /**
+   * Creates partitions in AWS Glue in batches for the specified Hive table.
+   * <p>
+   * This method transforms and cleans the provided Hive partitions, then sends
+   * them to Glue in batches
+   * to avoid exceeding the maximum allowed batch size. If the input list is null
+   * or empty, the method returns immediately.
+   */
+  private void batchCreatePartitions(Table table, List<org.apache.hadoop.hive.metastore.api.Partition> hivePartitions) {
+    if (hivePartitions == null || hivePartitions.isEmpty()) {
+      return;
+    }
+    List<PartitionInput> partitionInputs = hivePartitions.stream()
+        .map(transformer::transformPartition)
+        .map(cleaner::cleanPartition)
+        .collect(Collectors.toList());
+
+    int batchSize = MAX_PARTITION_CREATE_BATCH_SIZE;
+    for (int i = 0; i < partitionInputs.size(); i += batchSize) {
+      int end = Math.min(i + batchSize, partitionInputs.size());
+      List<PartitionInput> batch = partitionInputs.subList(i, end);
+      BatchCreatePartitionRequest request = new BatchCreatePartitionRequest()
+          .withDatabaseName(transformer.glueDbName(table))
+          .withTableName(table.getTableName())
+          .withPartitionInputList(batch);
+
+      log.debug("Creating {} partitions ", batch.size());
+
+      glueClient.batchCreatePartition(request);
+    }
+  }
+
+  /**
+   * Updates multiple partitions in AWS Glue in batches.
+   * <p>
+   * This method transforms and cleans each Hive partition, then creates a batch
+   * update request
+   * for AWS Glue. The updates are performed in batches to avoid exceeding the
+   * maximum allowed
+   * batch size.
+   */
+  private void batchUpdatePartitions(
+      Table table,
+      HashMap<org.apache.hadoop.hive.metastore.api.Partition, Partition> partitionsToUpdate) {
+    if (partitionsToUpdate == null || partitionsToUpdate.isEmpty()) {
+      return;
+    }
+
+    List<BatchUpdatePartitionRequestEntry> entries = new ArrayList<>();
+    for (java.util.Map.Entry<org.apache.hadoop.hive.metastore.api.Partition, Partition> entry : partitionsToUpdate
+        .entrySet()) {
+      org.apache.hadoop.hive.metastore.api.Partition hivePartition = entry.getKey();
+      Partition gluePartition = entry.getValue();
+      PartitionInput partitionInput = transformer.transformPartition(hivePartition);
+      PartitionInput partitionInputCleaned = cleaner.cleanPartition(partitionInput);
+
+      BatchUpdatePartitionRequestEntry updateEntry = new BatchUpdatePartitionRequestEntry()
+          .withPartitionValueList(gluePartition.getValues())
+          .withPartitionInput(partitionInputCleaned);
+
+      entries.add(updateEntry);
+    }
+
+    int batchSize = MAX_PARTITION_UPDATE_BATCH_SIZE;
+    for (int i = 0; i < entries.size(); i += batchSize) {
+      int end = Math.min(i + batchSize, entries.size());
+      List<BatchUpdatePartitionRequestEntry> batch = entries.subList(i, end);
+
+      BatchUpdatePartitionRequest request = new BatchUpdatePartitionRequest()
+          .withDatabaseName(transformer.glueDbName(table))
+          .withTableName(table.getTableName())
+          .withEntries(batch);
+
+      log.debug("Updating {} partitions ", batch.size());
+
+      glueClient.batchUpdatePartition(request);
+    }
+  }
+
+  private void batchDeletePartitions(Table table, List<Partition> partitionsToDelete) {
+    if (partitionsToDelete == null || partitionsToDelete.isEmpty()) {
+      return;
+    }
+
+    List<List<String>> partitionValueLists = partitionsToDelete.stream()
+        .map(Partition::getValues)
+        .collect(Collectors.toList());
+
+    int batchSize = MAX_PARTITION_DELETE_BATCH_SIZE;
+    for (int i = 0; i < partitionValueLists.size(); i += batchSize) {
+      int end = Math.min(i + batchSize, partitionValueLists.size());
+      List<List<String>> batch = partitionValueLists.subList(i, end);
+
+      BatchDeletePartitionRequest request = new BatchDeletePartitionRequest()
+          .withDatabaseName(transformer.glueDbName(table))
+          .withTableName(table.getTableName())
+          .withPartitionsToDelete(batch.stream()
+              .map(values -> new com.amazonaws.services.glue.model.PartitionValueList().withValues(values))
+              .collect(Collectors.toList()));
+
+      log.debug("Deleting {} partitions ", batch.size());
+
+      glueClient.batchDeletePartition(request);
+    }
   }
 }

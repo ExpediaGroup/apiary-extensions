@@ -1,39 +1,41 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
     <artifactId>hive-event-listeners-parent</artifactId>
     <version>8.1.12-SNAPSHOT</version>
   </parent>
-
   <artifactId>apiary-gluesync-listener</artifactId>
   <name>Apiary GlueSync Listener</name>
   <description>Glue Sync Listener for Apiary that replays metadata events in AWS Glue catalog</description>
-
   <dependencies>
+    <dependency>
+      <groupId>com.expediagroup.apiary</groupId>
+      <artifactId>metastore-consumer-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.hotels</groupId>
+      <artifactId>hcommon-hive-metastore</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-glue</artifactId>
-      <version>${aws-java-sdk.version}</version>
     </dependency>
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-core</artifactId>
-      <version>${aws-java-sdk.version}</version>
     </dependency>
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-sts</artifactId>
-      <version>${aws-java-sdk.version}</version>
     </dependency>
-
-
     <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-metastore</artifactId>
-      <version>${hive.version}</version>
-      <scope>provided</scope>
       <exclusions>
         <exclusion>
           <groupId>org.apache.hbase</groupId>
@@ -41,12 +43,9 @@
         </exclusion>
       </exclusions>
     </dependency>
-
     <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-contrib</artifactId>
-      <version>${hive.version}</version>
-      <scope>provided</scope>
       <exclusions>
         <exclusion>
           <groupId>org.pentaho</groupId>
@@ -54,26 +53,46 @@
         </exclusion>
       </exclusions>
     </dependency>
-
+    <dependency>
+      <groupId>commons-cli</groupId>
+      <artifactId>commons-cli</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-reload4j</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-core</artifactId>
-      <version>1.9.9</version>
     </dependency>
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
-      <version>1.9.9</version>
     </dependency>
-
+    <!-- Provided -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
     <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-common</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -82,24 +101,32 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.iceberg</groupId>
       <artifactId>iceberg-hive-metastore</artifactId>
-      <version>1.0.0</version>
       <scope>test</scope>
+    </dependency>
+    <!-- Hadoop old MapReduce API (JobConf) needed at runtime when invoking Hive/Metastore APIs -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-core</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- Broader Hadoop client to cover additional transitive classes Hive may load reflectively at
+    runtime -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+      <scope>runtime</scope>
+      <exclusions>
+        <!-- Avoid duplicate/legacy logging bindings; we relocate Log4j2 separately -->
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
@@ -108,6 +135,7 @@
         <version>3.1.1</version>
         <executions>
           <execution>
+            <id>shade-all</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
@@ -121,6 +149,9 @@
                   <include>com.expediagroup.apiary:*</include>
                   <include>org.apache.httpcomponents:*</include>
                 </includes>
+                <excludes>
+                  <exclude>ch.qos.reload4j:reload4j</exclude>
+                </excludes>
               </artifactSet>
               <relocations>
                 <relocation>
@@ -128,10 +159,74 @@
                   <shadedPattern>${shade.prefix}.com.amazonaws</shadedPattern>
                 </relocation>
                 <relocation>
-                  <!-- Note org.apache.httpcomponents groupId but org.apache.http package, this is relocated due
+                  <!-- Note org.apache.httpcomponents groupId but org.apache.http package, this is
+                  relocated due
                     to newer version used by com.amazonaws, older version is provided by /usr/lib/hive/ -->
                   <pattern>org.apache.http</pattern>
                   <shadedPattern>${shade.prefix}.org.apache.http</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+          <execution>
+            <id>shade-full</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <keepDependenciesWithProvidedScope>true</keepDependenciesWithProvidedScope>
+              <artifactSet>
+                <excludes>
+                  <!-- Ensure a single SLF4J binding: use slf4j-reload4j only -->
+                  <exclude>org.apache.logging.log4j:log4j-slf4j-impl</exclude>
+                  <exclude>org.slf4j:slf4j-log4j12</exclude>
+                  <!-- Avoid Log4j2 bridging and old API shim when using reload4j -->
+                  <exclude>org.apache.logging.log4j:log4j-1.2-api</exclude>
+                  <exclude>org.apache.logging.log4j:log4j-to-slf4j</exclude>
+                  <!-- Exclude all Log4j 2 artifacts from the full CLI jar -->
+                  <exclude>org.apache.logging.log4j:*</exclude>
+                </excludes>
+              </artifactSet>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <!-- Merge Log4j2 plugin cache to support relocation below -->
+              <transformers>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat</resource>
+                </transformer>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>com.expediagroup.apiary.extensions.gluesync.cli.GlueSyncCliParser</mainClass>
+                </transformer>
+              </transformers>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>full</shadedClassifierName>
+              <relocations>
+                <relocation>
+                  <pattern>com.amazonaws</pattern>
+                  <shadedPattern>${shade.prefix}.com.amazonaws</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- Note org.apache.httpcomponents groupId but org.apache.http package, this is
+                  relocated due
+                    to newer version used by com.amazonaws, older version is provided by /usr/lib/hive/ -->
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>${shade.prefix}.org.apache.http</shadedPattern>
+                </relocation>
+                <!-- Relocate Log4j to avoid conflicts with versions provided by Hive/runtime -->
+                <relocation>
+                  <pattern>org.apache.logging.log4j</pattern>
+                  <shadedPattern>${shade.prefix}.org.apache.logging.log4j</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>

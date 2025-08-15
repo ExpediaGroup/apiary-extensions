@@ -23,7 +23,8 @@ import com.amazonaws.services.glue.model.PartitionInput;
 import com.amazonaws.services.glue.model.TableInput;
 
 /**
- * Following https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-catalog-tables.html#aws-glue-api-catalog-tables-Table
+ * Following
+ * https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-catalog-tables.html#aws-glue-api-catalog-tables-Table
  * validations
  */
 public class GlueMetadataStringCleaner {
@@ -40,18 +41,19 @@ public class GlueMetadataStringCleaner {
     // Clean SerDes
     cleanColumns(input.getStorageDescriptor().getColumns());
     // Clean Partition Keys
-    List<String> cleanedKeys = input.getValues().stream().map(this::removeNonUnicodeChars).collect(Collectors.toList());
+    List<String> cleanedKeys = input.getValues().stream().map(this::removeNonUnicodeChars)
+        .collect(Collectors.toList());
     input.setValues(cleanedKeys);
     return input;
   }
 
   private void cleanColumns(List<Column> columns) {
     for (Column column : columns) {
-      column.setComment(truncateToMaxAllowedChars(removeNonUnicodeChars(column.getComment())));
+      column.setComment(this.truncateToMaxAllowedChars(this.removeNonUnicodeChars(column.getComment())));
     }
   }
 
-  private String truncateToMaxAllowedChars(String input) {
+  public String truncateToMaxAllowedChars(String input) {
     if (input == null) {
       return null;
     }
@@ -61,7 +63,7 @@ public class GlueMetadataStringCleaner {
     return input;
   }
 
-  private String removeNonUnicodeChars(String input) {
+  public String removeNonUnicodeChars(String input) {
     if (input == null) {
       return null;
     }
@@ -76,11 +78,9 @@ public class GlueMetadataStringCleaner {
   }
 
   private boolean isUnicode(int cp) {
-    return (
-        cp == 0x9 || // tab
-            (cp >= 0x20 && cp <= 0xD7FF) ||
-            (cp >= 0xE000 && cp <= 0xFFFD) ||
-            (cp >= 0x10000 && cp <= 0x10FFFF)
-    );
+    return (cp == 0x9 || // tab
+        (cp >= 0x20 && cp <= 0xD7FF) ||
+        (cp >= 0xE000 && cp <= 0xFFFD) ||
+        (cp >= 0x10000 && cp <= 0x10FFFF));
   }
 }
