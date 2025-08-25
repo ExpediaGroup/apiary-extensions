@@ -4,16 +4,17 @@
   <parent>
     <groupId>com.expediagroup</groupId>
     <artifactId>eg-oss-parent</artifactId>
-    <version>2.4.1</version>
+    <version>3.0.1</version>
   </parent>
 
   <groupId>com.expediagroup.apiary</groupId>
   <artifactId>apiary-extensions-parent</artifactId>
   <description>Various extensions to Apiary that provide additional, optional functionality</description>
-  <version>8.1.9-SNAPSHOT</version>
+  <version>8.1.11-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Apiary Extensions Parent</name>
+  <name>Apiary Extensions</name>
   <inceptionYear>2018</inceptionYear>
+  <url>https://github.com/ExpediaGroup/apiary-extensions</url>
 
   <scm>
     <connection>scm:git:https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/ExpediaGroup/apiary-extensions.git</connection>

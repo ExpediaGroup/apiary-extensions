@@ -4,10 +4,11 @@
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
     <artifactId>apiary-metastore-events-parent</artifactId>
-    <version>8.1.9-SNAPSHOT</version>
+    <version>8.1.11-SNAPSHOT</version>
   </parent>
 
   <artifactId>sns-metastore-events-parent</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
   <modules>

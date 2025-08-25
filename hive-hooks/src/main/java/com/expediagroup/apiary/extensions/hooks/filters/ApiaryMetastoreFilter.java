@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2022 Expedia, Inc.
+ * Copyright (C) 2018-2025 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,11 @@ import java.util.List;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreFilterHook;
 import org.apache.hadoop.hive.metastore.api.Database;
-import org.apache.hadoop.hive.metastore.api.Index;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.PartitionSpec;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.api.TableMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,33 +64,25 @@ public class ApiaryMetastoreFilter implements MetaStoreFilterHook {
   }
 
   @Override
-  public List<String> filterTableNames(String dbName, List<String> tableList) {
-    return tableList;
-  }
-
-  @Override
   public List<PartitionSpec> filterPartitionSpecs(List<PartitionSpec> partitionSpecList) {
     return partitionSpecList;
   }
 
+
   @Override
-  public List<String> filterPartitionNames(String dbName, String tblName, List<String> partitionNames) {
+  public List<String> filterTableNames(String catName, String dbName, List<String> tableList) throws MetaException {
+    return tableList;
+  }
+
+  @Override
+  public List<TableMeta> filterTableMetas(List<TableMeta> tableMetas) throws MetaException {
+    return tableMetas;
+  }
+
+  @Override
+  public List<String> filterPartitionNames(String catName, String dbName, String tblName, List<String> partitionNames)
+          throws MetaException {
     return partitionNames;
-  }
-
-  @Override
-  public Index filterIndex(Index index) {
-    return index;
-  }
-
-  @Override
-  public List<String> filterIndexNames(String dbName, String tblName, List<String> indexList) {
-    return indexList;
-  }
-
-  @Override
-  public List<Index> filterIndexes(List<Index> indexList) {
-    return indexList;
   }
 
   @Override
@@ -135,4 +128,5 @@ public class ApiaryMetastoreFilter implements MetaStoreFilterHook {
   private String getQualifiedName(Partition partition) {
     return partition.getDbName() + "." + partition.getTableName() + "." + partition.getValues();
   }
+
 }

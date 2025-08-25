@@ -3,9 +3,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 8.1.9 - 2025-06-04
+## 8.1.11 - 2025-08-25
 ### Changed
 - Add classification support for `parquet`, `avro` and `orc` table formats in `glue-event-listener`.
+
+## 8.1.10 - 2025-08-14
+### Changed
+- Update Hive version for hive-hooks to `3.1.3` (was `2.3.7`)
+- Update Hadoop version for hive-hooks to `3.1.0` (was `2.7.1`)
+- Updated parent pom to deploy to sonatype central.
+
+## 8.1.9 - 2025-07-07
+### Changed
+- Update exceptions thrown from `JsonMetaStoreEventSerDe` to include the cause.
 
 ## 8.1.8 - 2025-05-22
 ### Changed

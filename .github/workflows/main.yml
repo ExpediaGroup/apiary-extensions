@@ -23,8 +23,8 @@ jobs:
              echo "Coveralls token not available"
              COVERALLS_SKIP=true
           else
-             echo "Coveralls token available"
-             COVERALLS_SKIP=false
+             echo "Coveralls token available but skipping temporarily"
+             COVERALLS_SKIP=true
           fi
           echo "COVERALLS_SKIP=${COVERALLS_SKIP}" >> $GITHUB_ENV
     - name: Set up JDK

@@ -4,11 +4,12 @@
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
     <artifactId>apiary-metastore-consumers-parent</artifactId>
-    <version>8.1.9-SNAPSHOT</version>
+    <version>8.1.11-SNAPSHOT</version>
   </parent>
 
   <artifactId>apiary-privileges-grantor-parent</artifactId>
   <packaging>pom</packaging>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <modules>
     <module>privileges-grantor-core</module>
