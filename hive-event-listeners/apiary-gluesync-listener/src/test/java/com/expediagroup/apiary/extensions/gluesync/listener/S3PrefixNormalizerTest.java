@@ -31,4 +31,10 @@ public class S3PrefixNormalizerTest {
     String s3aLocation = "my-bucket/path/to/table";
     assert normalizer.normalizeLocation(s3aLocation).equals("my-bucket/path/to/table");
   }
+
+  @Test
+  public void double_slash_after_prefix() {
+    String s3aLocation = "s3n://my-bucket//path//to/table";
+    assert normalizer.normalizeLocation(s3aLocation).equals("s3://my-bucket//path//to/table");
+  }
 }
