@@ -185,14 +185,15 @@ public class HiveToGlueTransformer {
     return null;
   }
 
+  /**
+   * Add classification parameter if not already present to help AWS Glue identify the table format.
+   */
   private Map<String, String> addClassification(Map<String, String> params, String inputFormat) {
     if (params == null) {
       params = new HashMap<>();
     }
     if (!params.containsKey("classification")) {
-      if (isIcebergPredicate.test(params)) {
-        params.put("classification", params.getOrDefault("write.format.default", "parquet"));
-      } else {
+      if (!isIcebergPredicate.test(params)) { // If it is Hive (non-Iceberg)
         String classification = getHiveClassification(inputFormat);
         if (classification != null) {
           params.put("classification", classification);
