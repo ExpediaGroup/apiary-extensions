@@ -45,9 +45,11 @@ public class HiveToGlueTransformer {
 
   private final String gluePrefix;
   private final IsIcebergTablePredicate isIcebergPredicate;
+  private final S3PrefixNormalizer s3PrefixNormalizer;
 
   public HiveToGlueTransformer(String gluePrefix) {
     this.gluePrefix = gluePrefix;
+    this.s3PrefixNormalizer = new S3PrefixNormalizer();
     this.isIcebergPredicate = new IsIcebergTablePredicate();
   }
 
@@ -83,7 +85,7 @@ public class HiveToGlueTransformer {
         .withColumns(columns)
         .withCompressed(storageDescriptor.isCompressed())
         .withInputFormat(storageDescriptor.getInputFormat())
-        .withLocation(storageDescriptor.getLocation())
+        .withLocation(s3PrefixNormalizer.normalizeLocation(storageDescriptor.getLocation()))
         .withNumberOfBuckets(storageDescriptor.getNumBuckets())
         .withOutputFormat(storageDescriptor.getOutputFormat())
         .withParameters(storageDescriptor.getParameters())
@@ -120,7 +122,7 @@ public class HiveToGlueTransformer {
         .withColumns(columns)
         .withCompressed(storageDescriptor.isCompressed())
         .withInputFormat(storageDescriptor.getInputFormat())
-        .withLocation(storageDescriptor.getLocation())
+        .withLocation(s3PrefixNormalizer.normalizeLocation(storageDescriptor.getLocation()))
         .withNumberOfBuckets(storageDescriptor.getNumBuckets())
         .withOutputFormat(storageDescriptor.getOutputFormat())
         .withParameters(storageDescriptor.getParameters())

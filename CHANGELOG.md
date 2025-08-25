@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 8.1.12 - 2025-08-25
+### Added
+- Table and partition locations s3 prefixes are changed to `s3://` because platforms like Databricks and AWS Cleanrooms,
+do not support other prefixes.
+
 ## 8.1.11 - 2025-08-25
 ### Changed
 - Add classification support for `parquet`, `avro` and `orc` table formats in `glue-event-listener`.
