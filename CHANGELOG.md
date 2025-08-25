@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - Table and partition locations s3 prefixes are changed to `s3://` because platforms like Databricks and AWS Cleanrooms,
 do not support other prefixes.
 
+## 8.1.11 - 2025-08-25
+### Changed
+- Add classification support for `parquet`, `avro` and `orc` table formats in `glue-event-listener`.
+
 ## 8.1.10 - 2025-08-14
 ### Changed
 - Update Hive version for hive-hooks to `3.1.3` (was `2.3.7`)

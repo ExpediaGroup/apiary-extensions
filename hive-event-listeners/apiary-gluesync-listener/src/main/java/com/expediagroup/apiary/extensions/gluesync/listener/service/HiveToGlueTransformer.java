@@ -44,11 +44,13 @@ public class HiveToGlueTransformer {
   public static final String MANAGED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
 
   private final String gluePrefix;
+  private final IsIcebergTablePredicate isIcebergPredicate;
   private final S3PrefixNormalizer s3PrefixNormalizer;
 
   public HiveToGlueTransformer(String gluePrefix) {
     this.gluePrefix = gluePrefix;
     this.s3PrefixNormalizer = new S3PrefixNormalizer();
+    this.isIcebergPredicate = new IsIcebergTablePredicate();
   }
 
   public DatabaseInput transformDatabase(Database database) {
@@ -95,7 +97,7 @@ public class HiveToGlueTransformer {
         .withName(table.getTableName())
         .withLastAccessTime(date)
         .withOwner(table.getOwner())
-        .withParameters(table.getParameters())
+        .withParameters(addClassification(table.getParameters(), storageDescriptor.getInputFormat()))
         .withPartitionKeys(partitionKeys)
         .withRetention(table.getRetention())
         .withStorageDescriptor(sd)
@@ -182,6 +184,34 @@ public class HiveToGlueTransformer {
     } catch (Exception e) {
       log.error("Error formatting table date", e);
     }
+    return null;
+  }
+
+  /**
+   * Add classification parameter if not already present to help AWS Glue identify the table format.
+   */
+  private Map<String, String> addClassification(Map<String, String> params, String inputFormat) {
+    if (params == null) {
+      params = new HashMap<>();
+    }
+    if (!params.containsKey("classification")) {
+      if (!isIcebergPredicate.test(params)) { // If it is Hive (non-Iceberg)
+        String classification = getHiveClassification(inputFormat);
+        if (classification != null) {
+          params.put("classification", classification);
+        }
+      }
+    }
+    return params;
+  }
+
+  private String getHiveClassification(String inputFormat) {
+    String lower = inputFormat.toLowerCase();
+
+    if (lower.contains("parquet")) {return "parquet";}
+    if (lower.contains("avro")) {return "avro";}
+    if (lower.contains("orc")) {return "orc";}
+
     return null;
   }
 }
