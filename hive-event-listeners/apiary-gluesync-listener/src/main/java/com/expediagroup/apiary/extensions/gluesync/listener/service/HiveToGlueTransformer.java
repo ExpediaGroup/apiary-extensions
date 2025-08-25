@@ -38,14 +38,17 @@ import com.amazonaws.services.glue.model.StorageDescriptor;
 import com.amazonaws.services.glue.model.TableInput;
 
 public class HiveToGlueTransformer {
+
   private static final Logger log = LoggerFactory.getLogger(HiveToGlueTransformer.class);
   public static final String MANAGED_BY_GLUESYNC_KEY = "managed-by";
   public static final String MANAGED_BY_GLUESYNC_VALUE = "apiary-glue-sync";
 
   private final String gluePrefix;
+  private final S3PrefixNormalizer s3PrefixNormalizer;
 
   public HiveToGlueTransformer(String gluePrefix) {
     this.gluePrefix = gluePrefix;
+    this.s3PrefixNormalizer = new S3PrefixNormalizer();
   }
 
   public DatabaseInput transformDatabase(Database database) {
@@ -80,7 +83,7 @@ public class HiveToGlueTransformer {
         .withColumns(columns)
         .withCompressed(storageDescriptor.isCompressed())
         .withInputFormat(storageDescriptor.getInputFormat())
-        .withLocation(storageDescriptor.getLocation())
+        .withLocation(s3PrefixNormalizer.normalizeLocation(storageDescriptor.getLocation()))
         .withNumberOfBuckets(storageDescriptor.getNumBuckets())
         .withOutputFormat(storageDescriptor.getOutputFormat())
         .withParameters(storageDescriptor.getParameters())
@@ -117,7 +120,7 @@ public class HiveToGlueTransformer {
         .withColumns(columns)
         .withCompressed(storageDescriptor.isCompressed())
         .withInputFormat(storageDescriptor.getInputFormat())
-        .withLocation(storageDescriptor.getLocation())
+        .withLocation(s3PrefixNormalizer.normalizeLocation(storageDescriptor.getLocation()))
         .withNumberOfBuckets(storageDescriptor.getNumBuckets())
         .withOutputFormat(storageDescriptor.getOutputFormat())
         .withParameters(storageDescriptor.getParameters())
