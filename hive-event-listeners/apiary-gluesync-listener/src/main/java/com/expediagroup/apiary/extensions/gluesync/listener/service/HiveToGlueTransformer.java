@@ -206,8 +206,9 @@ public class HiveToGlueTransformer {
   }
 
   private String getHiveClassification(String inputFormat) {
-    String lower = inputFormat.toLowerCase();
+    if (inputFormat == null) {return null;}
 
+    String lower = inputFormat.toLowerCase();
     if (lower.contains("parquet")) {return "parquet";}
     if (lower.contains("avro")) {return "avro";}
     if (lower.contains("orc")) {return "orc";}
