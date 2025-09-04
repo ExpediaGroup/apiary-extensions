@@ -4,7 +4,7 @@
   <parent>
     <artifactId>apiary-extensions-parent</artifactId>
     <groupId>com.expediagroup.apiary</groupId>
-    <version>8.1.11</version>
+    <version>8.1.12-SNAPSHOT</version>
   </parent>
 
   <artifactId>hive-event-listeners-parent</artifactId>
