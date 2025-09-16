@@ -27,12 +27,6 @@ import com.amazonaws.services.glue.model.TableInput;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
 import com.amazonaws.services.glue.model.ValidationException;
 
-/*
-//TODO: Should we just 'always clean' partitions and tables? Instead of doing it conditionally on failure only?
-//Reasoning: Non-unicode characters seem to be universally bad... I can't think of when we need them and it would
-//simply the code. Right now it's only spotty where we do it anyway.
-*/
-
 public class GlueTableService {
   private static final Logger log = LoggerFactory.getLogger(GlueTableService.class);
   public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";

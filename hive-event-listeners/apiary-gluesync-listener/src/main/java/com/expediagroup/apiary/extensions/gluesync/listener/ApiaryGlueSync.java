@@ -61,16 +61,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   private final boolean throwExceptions;
 
   public ApiaryGlueSync(Configuration config) {
-    super(config);
-    this.glueClient = AWSGlueClientBuilder.standard().withRegion(System.getenv("AWS_REGION")).build();
-    String gluePrefix = System.getenv("GLUE_PREFIX");
-    this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
-    this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
-    this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix);
-    this.isIcebergPredicate = new IsIcebergTablePredicate();
-    this.metricService = new MetricService();
-    this.throwExceptions = false;
-    log.debug("ApiaryGlueSync created");
+    this(config, false);
   }
 
   public ApiaryGlueSync(Configuration config, boolean throwExceptions) {
@@ -86,7 +77,11 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     log.debug("ApiaryGlueSync created");
   }
 
-  public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService) {
+  /**
+   * Just for testing.
+   */
+  public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService,
+      boolean throwExceptions) {
     super(config);
     this.glueClient = glueClient;
     this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
@@ -94,7 +89,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix);
     this.isIcebergPredicate = new IsIcebergTablePredicate();
     this.metricService = metricService;
-    this.throwExceptions = false;
+    this.throwExceptions = throwExceptions;
     log.debug("ApiaryGlueSync created");
   }
 
@@ -307,7 +302,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
    * stack traces so we don't lose info. This is really only needed in the CLI
    * because I want to be able to see if it failed in the CLI.
    */
-  public static MetaException wrap(Throwable t) {
+  private MetaException wrap(Throwable t) {
     StringWriter sw = new StringWriter();
     t.printStackTrace(new PrintWriter(sw));
     String msg = t.getClass().getName() + ": " + t.getMessage() + "\n" + sw.toString();

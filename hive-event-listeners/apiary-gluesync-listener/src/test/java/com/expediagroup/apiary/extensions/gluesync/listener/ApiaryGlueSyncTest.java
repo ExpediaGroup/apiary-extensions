@@ -132,7 +132,7 @@ public class ApiaryGlueSyncTest {
 
   @Before
   public void setup() {
-    glueSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService);
+    glueSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, false);
     when(glueClient.createTable(any(CreateTableRequest.class))).thenReturn(createTableResult);
   }
 

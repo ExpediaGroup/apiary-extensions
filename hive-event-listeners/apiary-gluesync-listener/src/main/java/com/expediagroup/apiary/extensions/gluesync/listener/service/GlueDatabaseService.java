@@ -46,15 +46,11 @@ public class GlueDatabaseService {
     try {
       com.amazonaws.services.glue.model.Database glueDb = glueClient.getDatabase(
           new GetDatabaseRequest().withName(glueDbName)).getDatabase();
-      if (glueDb != null) {
-        return true;
-      }
+      return glueDb != null;
+
     } catch (EntityNotFoundException e) {
       return false;
     }
-    // punt, this should be unreachable really.. either we get one
-    // or it should throw an exception. But the compiler doesn't know that I guess.
-    return false;
   }
 
   public void create(Database database) {
