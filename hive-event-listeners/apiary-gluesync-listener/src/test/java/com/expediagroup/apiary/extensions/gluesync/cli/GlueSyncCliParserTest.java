@@ -16,73 +16,41 @@
 
 package com.expediagroup.apiary.extensions.gluesync.cli;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.UnknownDBException;
 import org.apache.thrift.TException;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.contrib.java.lang.system.SystemErrRule;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 
 public class GlueSyncCliParserTest {
 
-  private ByteArrayOutputStream outContent;
-  private ByteArrayOutputStream errContent;
-  private PrintStream originalOut;
-  private PrintStream originalErr;
-  private SecurityManager originalSecurityManager;
+  @Rule
+  public final SystemOutRule systemOutRule = new SystemOutRule().enableLog();
+
+  @Rule
+  public final SystemErrRule systemErrRule = new SystemErrRule().enableLog();
+
+  @Rule
+  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
   static {
-    // Use Mockito to mock GlueSyncCli and prevent real constructor logic
     GlueSyncCli mock = mock(GlueSyncCli.class);
     GlueSyncCliParser.setGlueSyncCli(mock);
-  }
-
-  @Before
-  public void setUp() {
-    // Capture System.out and System.err
-    outContent = new ByteArrayOutputStream();
-    errContent = new ByteArrayOutputStream();
-    originalOut = System.out;
-    originalErr = System.err;
-    System.setOut(new PrintStream(outContent));
-    System.setErr(new PrintStream(errContent));
-
-    // Set up NoExitSecurityManager
-    originalSecurityManager = System.getSecurityManager();
-    System.setSecurityManager(new NoExitSecurityManager());
-  }
-
-  @After
-  public void tearDown() {
-    // Restore original streams and security manager
-    System.setOut(originalOut);
-    System.setErr(originalErr);
-    System.setSecurityManager(originalSecurityManager);
   }
 
   /**
    * Helper method to execute CLI with args and assert expected exit status
    */
   private void assertCliExitsWithStatus(String[] args, int expectedStatus) {
-    try {
-      GlueSyncCliParser.main(args);
-      fail("Expected SystemExitException");
-    } catch (SystemExitException e) {
-      assertEquals(expectedStatus, e.status);
-    }
-  }
-
-  /**
-   * Helper method to get the captured output content
-   */
-  private String getOutputContent() {
-    return outContent.toString();
+    exit.expectSystemExitWithStatus(expectedStatus);
+    GlueSyncCliParser.main(args);
   }
 
   @Test
@@ -98,7 +66,7 @@ public class GlueSyncCliParserTest {
     String[] args = { "--database-name-regex", "db.*" }; // missing table-name-regex
     assertCliExitsWithStatus(args, 1);
 
-    String output = getOutputContent();
+    String output = systemOutRule.getLog();
     assertTrue(output.contains("Error"));
     assertTrue(output.contains("usage:"));
     assertTrue(output.contains("GlueSyncCli"));
@@ -109,7 +77,7 @@ public class GlueSyncCliParserTest {
     String[] args = { "--help" };
     assertCliExitsWithStatus(args, 0);
 
-    String output = getOutputContent();
+    String output = systemOutRule.getLog();
     assertTrue(output.contains("usage:"));
     assertTrue(output.contains("GlueSyncCli"));
     assertTrue(output.contains("--help"));
@@ -157,32 +125,12 @@ public class GlueSyncCliParserTest {
     String[] args = { "--help" };
     assertCliExitsWithStatus(args, 0);
 
-    String output = getOutputContent();
+    String output = systemOutRule.getLog();
     assertTrue("Help should contain database-name-regex option", output.contains("database-name-regex"));
     assertTrue("Help should contain table-name-regex option", output.contains("table-name-regex"));
     assertTrue("Help should contain verbose option", output.contains("verbose"));
     assertTrue("Help should contain help option", output.contains("help"));
     assertTrue("Help should contain continueOnError option", output.contains("continueOnError"));
     assertTrue("Help should contain keep-glue-partitions option", output.contains("keep-glue-partitions"));
-  }
-
-  // Helper to catch System.exit for testing
-  public static class SystemExitException extends SecurityException {
-    public final int status;
-
-    public SystemExitException(int status) {
-      this.status = status;
-    }
-  }
-
-  public static class NoExitSecurityManager extends SecurityManager {
-    @Override
-    public void checkPermission(java.security.Permission perm) {
-    }
-
-    @Override
-    public void checkExit(int status) {
-      throw new SystemExitException(status);
-    }
   }
 }

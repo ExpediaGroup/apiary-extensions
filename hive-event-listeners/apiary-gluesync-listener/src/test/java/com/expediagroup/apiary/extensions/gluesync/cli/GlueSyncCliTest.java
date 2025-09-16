@@ -27,8 +27,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -46,9 +44,11 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.thrift.TException;
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemErrRule;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -87,27 +87,14 @@ public class GlueSyncCliTest {
   private IsIcebergTablePredicate mockIsIcebergTablePredicate;
 
   private GlueSyncCli glueSyncCli;
-  private ByteArrayOutputStream outContent;
-  private ByteArrayOutputStream errContent;
-  private PrintStream originalOut;
-  private PrintStream originalErr;
+  @Rule
+  public final SystemOutRule systemOutRule = new SystemOutRule().enableLog();
+
+  @Rule
+  public final SystemErrRule systemErrRule = new SystemErrRule().enableLog();
 
   @Before
   public void setUp() throws Exception {
-    // Capture System.out and System.err
-    outContent = new ByteArrayOutputStream();
-    errContent = new ByteArrayOutputStream();
-    originalOut = System.out;
-    originalErr = System.err;
-    System.setOut(new PrintStream(outContent));
-    System.setErr(new PrintStream(errContent));
-
-    // Create a GlueSyncCli instance with mocked dependencies using the new
-    // constructor. Use an anonymous subclass to override the partition
-    // iterator factory so tests can control partitions via
-    // mockMetastoreClient.listPartitions(...)
-    // Default mock behavior: assume databases exist in Glue unless a test overrides
-    // it
     when(mockGlueDatabaseService.exists(any(org.apache.hadoop.hive.metastore.api.Database.class))).thenReturn(true);
 
     glueSyncCli = new GlueSyncCli(
@@ -566,8 +553,6 @@ public class GlueSyncCliTest {
     verify(mockApiaryGlueSync, never()).onCreateDatabase(any(CreateDatabaseEvent.class));
     verify(mockApiaryGlueSync, never()).onCreateTable(any(CreateTableEvent.class));
     verify(mockGluePartitionService, never()).synchronizePartitions(any(), any(), anyBoolean(), anyBoolean());
-
-    // Output assertions removed; behavior is verified via mock interactions above.
   }
 
   @Test
@@ -593,11 +578,8 @@ public class GlueSyncCliTest {
     when(mockMetastoreClient.getDatabase(anyString())).thenReturn(mockDatabase);
 
     // Important: return false so we skip database. Do NOT stub downstream
-    // interactions
-    // (getTable, listPartitions, isIcebergTablePredicate) because they shouldn't be
-    // reached
-    // and Mockito strict stubbing will fail the test if they are present but
-    // unused.
+    // interaction (getTable, listPartitions, isIcebergTablePredicate) because they
+    // shouldn't be reached.
     when(mockGlueDatabaseService.exists(any(Database.class))).thenReturn(false);
 
     // Act
@@ -606,12 +588,5 @@ public class GlueSyncCliTest {
     // Assert - database should be skipped: no table sync or partition sync
     verify(mockApiaryGlueSync, never()).onCreateTable(any(CreateTableEvent.class));
     verify(mockGluePartitionService, never()).synchronizePartitions(any(), any(), anyBoolean(), anyBoolean());
-  }
-
-  @After
-  public void tearDown() {
-    // Restore System.out and System.err
-    System.setOut(originalOut);
-    System.setErr(originalErr);
   }
 }

@@ -43,6 +43,7 @@
     <beeju.version>4.0.0</beeju.version>
     <log4j2.version>2.17.2</log4j2.version>
     <hcommon.hive.metastore.version>1.4.2</hcommon.hive.metastore.version>
+    <system.rules.version>1.19.0</system.rules.version>
     <expediagroup.shaded.prefix>com.expediagroup.apiary.extensions.shaded</expediagroup.shaded.prefix>
   </properties>
 
@@ -74,6 +75,12 @@
         <groupId>com.amazonaws</groupId>
         <artifactId>aws-java-sdk-glue</artifactId>
         <version>${aws-java-sdk.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.stefanbirkner</groupId>
+        <artifactId>system-rules</artifactId>
+        <version>${system.rules.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>com.hotels</groupId>

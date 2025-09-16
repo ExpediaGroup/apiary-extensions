@@ -101,6 +101,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.github.stefanbirkner</groupId>
+      <artifactId>system-rules</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.iceberg</groupId>
       <artifactId>iceberg-hive-metastore</artifactId>
       <scope>test</scope>
@@ -169,7 +174,7 @@
             </configuration>
           </execution>
           <execution>
-            <id>shade-full</id>
+            <id>shade-cli</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
@@ -184,7 +189,7 @@
                   <!-- Avoid Log4j2 bridging and old API shim when using reload4j -->
                   <exclude>org.apache.logging.log4j:log4j-1.2-api</exclude>
                   <exclude>org.apache.logging.log4j:log4j-to-slf4j</exclude>
-                  <!-- Exclude all Log4j 2 artifacts from the full CLI jar -->
+                  <!-- Exclude all Log4j 2 artifacts from the cli CLI jar -->
                   <exclude>org.apache.logging.log4j:*</exclude>
                 </excludes>
               </artifactSet>
@@ -210,7 +215,7 @@
                 </transformer>
               </transformers>
               <shadedArtifactAttached>true</shadedArtifactAttached>
-              <shadedClassifierName>full</shadedClassifierName>
+              <shadedClassifierName>cli</shadedClassifierName>
               <relocations>
                 <relocation>
                   <pattern>com.amazonaws</pattern>
