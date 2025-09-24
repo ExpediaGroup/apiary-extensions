@@ -57,16 +57,12 @@ public class GlueSyncCli {
   private final ThriftHiveClient thriftHiveClient;
   private final IMetaStoreClient metastoreClient;
   private final ApiaryGlueSync apiaryGlueSync;
-  // TODO: This is skipping a layer, not sure it's right.
-  // but it's hard to fix without a larger refactoring...
   private final GluePartitionService gluePartitionService;
   private final GlueDatabaseService glueDatabaseService;
   private IsIcebergTablePredicate isIcebergTablePredicate;
 
   public GlueSyncCli() {
     ClientConfiguration clientConfig = new ClientConfiguration();
-    // 10 minutes in milliseconds.. this doesn't happen often but want to prevent
-    // waiting forever.
     clientConfig.setRequestTimeout(600000);
     AWSGlue glueClient = AWSGlueClientBuilder.standard()
         .withRegion(System.getenv("AWS_REGION"))
@@ -83,7 +79,7 @@ public class GlueSyncCli {
     this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
   }
 
-  // Constructor for testing - allows injection of dependencies
+  // For testing
   public GlueSyncCli(ThriftHiveClientFactory thriftHiveClientFactory,
       ThriftHiveClient thriftHiveClient,
       IMetaStoreClient metastoreClient,
@@ -101,7 +97,7 @@ public class GlueSyncCli {
     this.glueDatabaseService = glueDatabaseService;
   }
 
-  public void syncAll(CommandLine cmd) {
+  public void syncAll(CommandLine cmd) throws TException {
     logger.debug("Starting GlueSync operation");
 
     String dbRegex = cmd.getOptionValue("database-name-regex");
@@ -110,92 +106,60 @@ public class GlueSyncCli {
 
     logger.debug("Sync parameters: dbRegex={}, tableRegex={}, verbose={}", dbRegex, tableRegex, verbose);
 
-    // Default to false if not provided
     boolean continueOnError = cmd.hasOption("continueOnError");
-    // boolean deleteGlueTables = cmd.hasOption("delete-glue-tables");
     boolean deleteGluePartitions = !cmd.hasOption("keep-glue-partitions");
 
     logger.debug("Additional parameters: continueOnError={}, deleteGluePartitions={}", continueOnError,
         deleteGluePartitions);
 
     boolean hadError = false;
-    try {
-      for (String dbName : metastoreClient.getAllDatabases()) {
-        if (dbName.matches(dbRegex)) {
-          logger.debug("Processing database: {}", dbName);
-          try {
-            for (String tableName : metastoreClient.getAllTables(dbName)) {
-              if (tableName.matches(tableRegex)) {
-                try {
-                  logger.info("Syncing table: {} in database: {}", tableName, dbName);
-                  syncTable(dbName, tableName, deleteGluePartitions, verbose);
-                } catch (Exception e) {
-                  hadError = true;
-                  logger.error("Error syncing table: {} in database: {}: {}", tableName, dbName, e.getMessage());
-                  if (!continueOnError) {
-                    throw new RuntimeException("Error during sync operation", e);
-                  }
-                }
+    for (String dbName : metastoreClient.getAllDatabases()) {
+      if (dbName.matches(dbRegex)) {
+        logger.debug("Processing database: {}", dbName);
+        for (String tableName : metastoreClient.getAllTables(dbName)) {
+          if (tableName.matches(tableRegex)) {
+            try {
+              logger.info("Syncing table: {} in database: {}", tableName, dbName);
+              syncTable(dbName, tableName, deleteGluePartitions, verbose);
+            } catch (Exception e) {
+              hadError = true;
+              logger.error("Error syncing table: {} in database: {}: {}", tableName, dbName, e.getMessage());
+              if (!continueOnError) {
+                throw new RuntimeException("Error during sync operation", e);
               }
-            }
-          } catch (org.apache.thrift.TException e) {
-            hadError = true;
-            logger.error("Error fetching tables for database: {}: {}", dbName, e.getMessage());
-            if (!continueOnError) {
-              throw new RuntimeException("Error during sync operation", e);
             }
           }
         }
       }
-    } catch (org.apache.thrift.TException e) {
-      hadError = true;
-      logger.error("Error fetching databases: {}", e.getMessage());
-      if (!continueOnError) {
-        throw new RuntimeException("Error during sync operation", e);
-      }
     }
-    if (hadError && continueOnError) {
+    if (hadError) {
       logger.warn("Sync operation completed with errors.");
     } else {
-      logger.info("Sync operation completed.");
+      logger.info("Sync operation completed successfully.");
     }
   }
 
-  private void syncTable(String dbName, String tableName, boolean deleteGluePartitions, boolean verbose) {
-    try {
-      // Fetch the database metadata from the metastore
-      Database database = metastoreClient.getDatabase(dbName);
+  private void syncTable(String dbName, String tableName, boolean deleteGluePartitions, boolean verbose)
+      throws TException {
+    Database database = metastoreClient.getDatabase(dbName);
 
-      // Check if the database exist also in glue
-      if (!glueDatabaseService.exists(database)) {
-        logger.info("Database {} does not exist in Glue catalog, skipping the whole db...", database.getName());
-        return;
-      }
-
-      // Fetch the table metadata from the metastore
-      Table table = metastoreClient.getTable(dbName, tableName);
-
-      // Create a CreateTableEvent and sync the table
-      CreateTableEvent createTableEvent = new CreateTableEvent(table, true, null);
-      apiaryGlueSync.onCreateTable(createTableEvent);
-
-      /* Not sure if I need this or not */
-      if (!isIcebergTablePredicate.test(table.getParameters())) {
-        List<Partition> partitions = getPartitions(table);
-        gluePartitionService.synchronizePartitions(table, partitions, deleteGluePartitions, verbose);
-      }
-
-      logger.info("Successfully synced database: {} and table: {} to Glue", dbName, tableName);
-
-    } catch (
-
-    TException e) {
-      logger.error("Error fetching metadata for table {} in database {}: {}", tableName, dbName, e.getMessage());
-      throw new RuntimeException("Error during sync operation", e);
-    } catch (Exception e) {
-      logger.error("Error syncing table {} in database {} to Glue: {}", tableName, dbName, e.getMessage());
-      throw new RuntimeException("Error during sync operation", e);
+    if (!glueDatabaseService.exists(database)) {
+      logger.info("Database {} does not exist in Glue catalog, skipping the whole db...", database.getName());
+      return;
     }
+
+    Table table = metastoreClient.getTable(dbName, tableName);
+
+    CreateTableEvent createTableEvent = new CreateTableEvent(table, true, null);
+    apiaryGlueSync.onCreateTable(createTableEvent);
+
+    /* Not sure if I need this or not */
+    if (!isIcebergTablePredicate.test(table.getParameters())) {
+      List<Partition> partitions = getPartitions(table);
+      gluePartitionService.synchronizePartitions(table, partitions, deleteGluePartitions, verbose);
+    }
+
+    logger.info("Successfully synced database: {} and table: {} to Glue", dbName, tableName);
   }
 
   private List<Partition> getPartitions(Table table) throws MetaException, TException {
@@ -208,11 +172,6 @@ public class GlueSyncCli {
     return partitions;
   }
 
-  /**
-   * Factory method to create a partition iterator. Protected so tests can
-   * override
-   * to provide a custom iterator (e.g., backed by mocked listPartitions).
-   */
   protected Iterator<Partition> createPartitionIterator(IMetaStoreClient metastoreClient, Table table)
       throws org.apache.hadoop.hive.metastore.api.MetaException, org.apache.thrift.TException {
     return new PartitionIterator(metastoreClient, table, DEFAULT_PARTITION_BATCH_SIZE);

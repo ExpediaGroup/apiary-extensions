@@ -24,19 +24,20 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.help.HelpFormatter;
+import org.apache.thrift.TException;
 
 public class GlueSyncCliParser {
 
   private static GlueSyncCli glueSyncCli;
 
   /**
-   * Allows tests to inject a mock GlueSyncCli instance.
+   * For testing purposes only
    */
   public static void setGlueSyncCli(GlueSyncCli glueSyncCli) {
     GlueSyncCliParser.glueSyncCli = glueSyncCli;
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws TException {
     org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
 
     org.apache.log4j.Logger apiaryLogger = org.apache.log4j.Logger
@@ -68,7 +69,6 @@ public class GlueSyncCliParser {
         apiaryLogger.setLevel(org.apache.log4j.Level.INFO);
       }
 
-      // Check if help was requested after successful parsing
       if (cmd.hasOption("help")) {
         printUsage(options);
         System.exit(0);
@@ -81,7 +81,6 @@ public class GlueSyncCliParser {
 
       System.exit(0);
     } catch (ParseException e) {
-      // Check if help was requested when parsing failed
       for (String arg : args) {
         if ("--help".equals(arg)) {
           printUsage(options);
@@ -96,7 +95,6 @@ public class GlueSyncCliParser {
   }
 
   private static CommandLineParser getParser(Options options) {
-    // Mark options as required - this is the proper way!
     Option dbRegexOpt = new Option(null, "database-name-regex", true, "Regex for database name");
     dbRegexOpt.setRequired(true);
 
@@ -108,10 +106,6 @@ public class GlueSyncCliParser {
     options.addOption(new Option("v", "verbose", false, "Enable verbose output"));
     options.addOption(new Option("h", "help", false, "Print usage information"));
     options.addOption(new Option("c", "continueOnError", false, "Continue on error (default: false)"));
-    // TODO: Implement this.
-    // options.addOption(new Option(null, "delete-glue-tables", false,
-    // "If true, will delete glue tables if there is no corresponding hive table
-    // (default: false)"));
     options.addOption(new Option(null, "keep-glue-partitions", false,
         "If true, will keep glue partitions even if there is no corresponding hive partition. If false will delete them (default: false)"));
 

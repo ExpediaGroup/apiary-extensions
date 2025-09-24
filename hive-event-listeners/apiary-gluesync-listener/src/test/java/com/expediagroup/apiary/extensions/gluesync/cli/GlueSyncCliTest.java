@@ -43,7 +43,6 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
-import org.apache.thrift.TException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -264,20 +263,6 @@ public class GlueSyncCliTest {
     verify(mockApiaryGlueSync, never()).onCreateDatabase(any(CreateDatabaseEvent.class));
     verify(mockApiaryGlueSync, never()).onCreateTable(any(CreateTableEvent.class));
 
-  }
-
-  @Test(expected = RuntimeException.class)
-  public void testSyncAllWithTException() throws Exception {
-    // Arrange
-    String[] args = { "--database-name-regex", "test_db.*", "--table-name-regex", "test_table.*" };
-    CommandLine cmd = new DefaultParser().parse(createOptions(), args);
-
-    when(mockMetastoreClient.getAllDatabases()).thenThrow(new TException("Metastore connection failed"));
-
-    // Act
-    glueSyncCli.syncAll(cmd);
-
-    // Assert - exception should be thrown
   }
 
   @Test(expected = RuntimeException.class)

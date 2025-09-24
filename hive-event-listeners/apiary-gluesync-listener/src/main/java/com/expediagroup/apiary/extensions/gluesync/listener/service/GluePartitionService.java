@@ -239,6 +239,9 @@ public class GluePartitionService {
     batchCreatePartitions(table, partitionsToCreate);
     batchUpdatePartitions(table, partitionsToUpdate);
 
+    log.debug("Pre delete: hive part count {} glue part count {}, map size {}", hivePartitions.size(),
+        gluePartitions.size(), hivePartitionMap.size());
+
     // Find partitions to delete (only if flag is set)
     if (deletePartitions) {
       for (Partition gluePartition : gluePartitions) {

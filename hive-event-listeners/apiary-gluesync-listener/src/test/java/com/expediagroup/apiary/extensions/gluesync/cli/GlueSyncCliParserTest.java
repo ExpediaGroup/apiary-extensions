@@ -50,7 +50,11 @@ public class GlueSyncCliParserTest {
    */
   private void assertCliExitsWithStatus(String[] args, int expectedStatus) {
     exit.expectSystemExitWithStatus(expectedStatus);
-    GlueSyncCliParser.main(args);
+    try {
+      GlueSyncCliParser.main(args);
+    } catch (TException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Test
