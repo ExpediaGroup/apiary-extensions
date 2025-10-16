@@ -24,6 +24,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
 import com.amazonaws.services.glue.model.BatchDeletePartitionRequest;
@@ -110,9 +111,7 @@ public class GluePartitionService {
   }
 
   /**
-   * Function to copy partitions using BatchCreatePartitionRequest but knowing the
-   * partition input list limit is 100,
-   * however input parameter can have larger list
+   * Function to copy partitions using BatchCreatePartitionRequest.
    */
   public void copyPartitions(Table table, List<Partition> partitions) {
     List<PartitionInput> partitionInputs = partitions.stream()
@@ -120,14 +119,27 @@ public class GluePartitionService {
         .collect(Collectors.toList());
     int partitionCount = partitionInputs.size();
     int batchSize = MAX_PARTITION_CREATE_BATCH_SIZE;
-    for (int i = 0; i < partitionCount; i += batchSize) {
+    for (int i = 0; i < partitionCount;) {
       int end = Math.min(i + batchSize, partitionCount);
       List<PartitionInput> batch = partitionInputs.subList(i, end);
       BatchCreatePartitionRequest batchCreatePartitionRequest = new BatchCreatePartitionRequest()
           .withDatabaseName(transformer.glueDbName(table))
           .withTableName(table.getTableName())
           .withPartitionInputList(batch);
-      glueClient.batchCreatePartition(batchCreatePartitionRequest);
+
+      try {
+        log.debug("Copying {} partitions with batch size {}", batch.size(), batchSize);
+        glueClient.batchCreatePartition(batchCreatePartitionRequest);
+        i += batchSize;
+      } catch (AmazonServiceException e) {
+        if (e.getStatusCode() == 413 && batchSize > 1) {
+          batchSize = Math.max(1, batchSize / 2);
+          log.warn("Payload too large (413) when copying {} partitions. Reducing batch size to {} and retrying",
+              batch.size(), batchSize);
+        } else {
+          throw e;
+        }
+      }
     }
   }
 
@@ -260,11 +272,13 @@ public class GluePartitionService {
    * Creates partitions in AWS Glue in batches for the specified Hive table.
    * <p>
    * This method transforms and cleans the provided Hive partitions, then sends
-   * them to Glue in batches
-   * to avoid exceeding the maximum allowed batch size. If the input list is null
-   * or empty, the method returns immediately.
+   * them to Glue in batches to avoid exceeding the maximum allowed batch size.
+   * If the input list is null or empty, the method returns immediately. If a 413
+   * (Payload Too Large) error occurs, the batch size is dynamically reduced and
+   * the operation is retried.
    */
-  private void batchCreatePartitions(Table table, List<org.apache.hadoop.hive.metastore.api.Partition> hivePartitions) {
+  protected void batchCreatePartitions(Table table,
+      List<org.apache.hadoop.hive.metastore.api.Partition> hivePartitions) {
     if (hivePartitions == null || hivePartitions.isEmpty()) {
       return;
     }
@@ -274,7 +288,7 @@ public class GluePartitionService {
         .collect(Collectors.toList());
 
     int batchSize = MAX_PARTITION_CREATE_BATCH_SIZE;
-    for (int i = 0; i < partitionInputs.size(); i += batchSize) {
+    for (int i = 0; i < partitionInputs.size();) {
       int end = Math.min(i + batchSize, partitionInputs.size());
       List<PartitionInput> batch = partitionInputs.subList(i, end);
       BatchCreatePartitionRequest request = new BatchCreatePartitionRequest()
@@ -282,9 +296,19 @@ public class GluePartitionService {
           .withTableName(table.getTableName())
           .withPartitionInputList(batch);
 
-      log.debug("Creating {} partitions ", batch.size());
-
-      glueClient.batchCreatePartition(request);
+      try {
+        log.debug("Creating {} partitions with batch size {}", batch.size(), batchSize);
+        glueClient.batchCreatePartition(request);
+        i += batchSize;
+      } catch (AmazonServiceException e) {
+        if (e.getStatusCode() == 413 && batchSize > 1) {
+          batchSize = Math.max(1, batchSize / 2);
+          log.warn("Payload too large (413) when creating {} partitions. Reducing batch size to {} and retrying",
+              batch.size(), batchSize);
+        } else {
+          throw e;
+        }
+      }
     }
   }
 
@@ -292,12 +316,11 @@ public class GluePartitionService {
    * Updates multiple partitions in AWS Glue in batches.
    * <p>
    * This method transforms and cleans each Hive partition, then creates a batch
-   * update request
-   * for AWS Glue. The updates are performed in batches to avoid exceeding the
-   * maximum allowed
-   * batch size.
+   * update request for AWS Glue. The updates are performed in batches to avoid
+   * exceeding the maximum allowed batch size. If a 413 (Payload Too Large) error
+   * occurs, the batch size is dynamically reduced and the operation is retried.
    */
-  private void batchUpdatePartitions(
+  protected void batchUpdatePartitions(
       Table table,
       HashMap<org.apache.hadoop.hive.metastore.api.Partition, Partition> partitionsToUpdate) {
     if (partitionsToUpdate == null || partitionsToUpdate.isEmpty()) {
@@ -320,7 +343,7 @@ public class GluePartitionService {
     }
 
     int batchSize = MAX_PARTITION_UPDATE_BATCH_SIZE;
-    for (int i = 0; i < entries.size(); i += batchSize) {
+    for (int i = 0; i < entries.size();) {
       int end = Math.min(i + batchSize, entries.size());
       List<BatchUpdatePartitionRequestEntry> batch = entries.subList(i, end);
 
@@ -329,13 +352,30 @@ public class GluePartitionService {
           .withTableName(table.getTableName())
           .withEntries(batch);
 
-      log.debug("Updating {} partitions ", batch.size());
-
-      glueClient.batchUpdatePartition(request);
+      try {
+        log.debug("Updating {} partitions with batch size {}", batch.size(), batchSize);
+        glueClient.batchUpdatePartition(request);
+        i += batchSize;
+      } catch (AmazonServiceException e) {
+        if (e.getStatusCode() == 413 && batchSize > 1) {
+          batchSize = Math.max(1, batchSize / 2);
+          log.warn("Payload too large (413) when updating {} partitions. Reducing batch size to {} and retrying",
+              batch.size(), batchSize);
+        } else {
+          throw e;
+        }
+      }
     }
   }
 
-  private void batchDeletePartitions(Table table, List<Partition> partitionsToDelete) {
+  /**
+   * Deletes multiple partitions from AWS Glue in batches.
+   * <p>
+   * This method deletes the specified partitions in batches to avoid exceeding
+   * the maximum allowed batch size. If a 413 (Payload Too Large) error occurs,
+   * the batch size is dynamically reduced and the operation is retried.
+   */
+  protected void batchDeletePartitions(Table table, List<Partition> partitionsToDelete) {
     if (partitionsToDelete == null || partitionsToDelete.isEmpty()) {
       return;
     }
@@ -345,7 +385,7 @@ public class GluePartitionService {
         .collect(Collectors.toList());
 
     int batchSize = MAX_PARTITION_DELETE_BATCH_SIZE;
-    for (int i = 0; i < partitionValueLists.size(); i += batchSize) {
+    for (int i = 0; i < partitionValueLists.size();) {
       int end = Math.min(i + batchSize, partitionValueLists.size());
       List<List<String>> batch = partitionValueLists.subList(i, end);
 
@@ -356,9 +396,19 @@ public class GluePartitionService {
               .map(values -> new com.amazonaws.services.glue.model.PartitionValueList().withValues(values))
               .collect(Collectors.toList()));
 
-      log.debug("Deleting {} partitions ", batch.size());
-
-      glueClient.batchDeletePartition(request);
+      try {
+        log.debug("Deleting {} partitions with batch size {}", batch.size(), batchSize);
+        glueClient.batchDeletePartition(request);
+        i += batchSize;
+      } catch (AmazonServiceException e) {
+        if (e.getStatusCode() == 413 && batchSize > 1) {
+          batchSize = Math.max(1, batchSize / 2);
+          log.warn("Payload too large (413) when deleting {} partitions. Reducing batch size to {} and retrying",
+              batch.size(), batchSize);
+        } else {
+          throw e;
+        }
+      }
     }
   }
 }
