@@ -54,9 +54,6 @@ public class GluePartitionServiceTest {
   private GluePartitionService service;
   private Table testTable;
 
-  // No test subclass required — protected methods are accessible from tests in
-  // same package
-
   @Before
   public void setUp() {
     service = new GluePartitionService(mockGlueClient, "test-prefix-");
@@ -83,11 +80,8 @@ public class GluePartitionServiceTest {
     List<org.apache.hadoop.hive.metastore.api.Partition> hivePartitions = createHivePartitions(100);
 
     // First call fails with 413, second succeeds
-    AmazonServiceException exception413 = new AmazonServiceException("Request entity too large");
-    exception413.setStatusCode(413);
-
     when(mockGlueClient.batchCreatePartition(argThat(req -> req.getPartitionInputList().size() == 100)))
-        .thenThrow(exception413);
+        .thenThrow(exception413());
 
     service.batchCreatePartitions(testTable, hivePartitions);
 
@@ -99,15 +93,11 @@ public class GluePartitionServiceTest {
   @Test
   public void testBatchCreatePartitions_PayloadTooLarge_MultipleReductions() {
     List<org.apache.hadoop.hive.metastore.api.Partition> hivePartitions = createHivePartitions(100);
-
-    AmazonServiceException exception413 = new AmazonServiceException("Request entity too large");
-    exception413.setStatusCode(413);
-
     // Fail at 100, 50, and 25, succeed at 12
     when(mockGlueClient.batchCreatePartition(argThat(req -> {
       int size = req.getPartitionInputList().size();
       return size == 100 || size == 50 || size == 25;
-    }))).thenThrow(exception413);
+    }))).thenThrow(exception413());
 
     service.batchCreatePartitions(testTable, hivePartitions);
 
@@ -140,10 +130,7 @@ public class GluePartitionServiceTest {
     // When batch size reduces to 1 and still fails with 413, it should throw
     List<org.apache.hadoop.hive.metastore.api.Partition> hivePartitions = createHivePartitions(1);
 
-    AmazonServiceException exception413 = new AmazonServiceException("Request entity too large");
-    exception413.setStatusCode(413);
-
-    when(mockGlueClient.batchCreatePartition(any(BatchCreatePartitionRequest.class))).thenThrow(exception413);
+    when(mockGlueClient.batchCreatePartition(any(BatchCreatePartitionRequest.class))).thenThrow(exception413());
 
     try {
       service.batchCreatePartitions(testTable, hivePartitions);
@@ -161,12 +148,9 @@ public class GluePartitionServiceTest {
   public void testBatchCreateOperations_ProcessesAllPartitionsEvenWithRetries() {
     List<org.apache.hadoop.hive.metastore.api.Partition> hivePartitions = createHivePartitions(150);
 
-    AmazonServiceException exception413 = new AmazonServiceException("Request entity too large");
-    exception413.setStatusCode(413);
-
     // Fail only the first batch
     when(mockGlueClient.batchCreatePartition(argThat(req -> req.getPartitionInputList().size() == 100)))
-        .thenThrow(exception413);
+        .thenThrow(exception413());
 
     service.batchCreatePartitions(testTable, hivePartitions);
 
@@ -236,12 +220,9 @@ public class GluePartitionServiceTest {
       }
     }
 
-    AmazonServiceException exception413 = new AmazonServiceException("Request entity too large");
-    exception413.setStatusCode(413);
-
     // First batch of 100 fails, then succeed with 50
     when(mockGlueClient.batchUpdatePartition(argThat(req -> req.getEntries().size() == 100)))
-        .thenThrow(exception413);
+        .thenThrow(exception413());
 
     service.batchUpdatePartitions(testTable, partitionsToUpdate);
 
@@ -254,12 +235,9 @@ public class GluePartitionServiceTest {
   public void testBatchDeletePartitions_PayloadTooLarge_ReducesBatchSize() {
     List<com.amazonaws.services.glue.model.Partition> gluePartitions = createGluePartitions(25);
 
-    AmazonServiceException exception413 = new AmazonServiceException("Request entity too large");
-    exception413.setStatusCode(413);
-
     // First attempt with 25 fails, then retry with smaller batches
     when(mockGlueClient.batchDeletePartition(argThat(req -> req.getPartitionsToDelete().size() == 25)))
-        .thenThrow(exception413);
+        .thenThrow(exception413());
 
     service.batchDeletePartitions(testTable, gluePartitions);
 
@@ -269,6 +247,12 @@ public class GluePartitionServiceTest {
   }
 
   // Helper methods
+
+  private AmazonServiceException exception413() {
+    AmazonServiceException exception413 = new AmazonServiceException("Request entity too large");
+    exception413.setStatusCode(413);
+    return exception413;
+  }
 
   private Table createTestTable() {
     Table table = new Table();
