@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -16,7 +18,6 @@
     <aws-java-sdk-lambda.version>1.11.390</aws-java-sdk-lambda.version>
     <aws-lambda-java-core.version>1.2.0</aws-lambda-java-core.version>
     <aws-lambda-java-events.version>2.2.6</aws-lambda-java-events.version>
-    <system-rules.version>1.19.0</system-rules.version>
     <aws-serverless-java-container-core.version>1.3</aws-serverless-java-container-core.version>
   </properties>
 
@@ -66,7 +67,6 @@
     <dependency>
       <groupId>com.github.stefanbirkner</groupId>
       <artifactId>system-rules</artifactId>
-      <version>${system-rules.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

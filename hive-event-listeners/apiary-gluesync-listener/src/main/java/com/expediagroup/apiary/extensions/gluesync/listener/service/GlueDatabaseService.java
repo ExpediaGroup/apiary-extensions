@@ -41,6 +41,18 @@ public class GlueDatabaseService {
     log.debug("ApiaryGlueSync created");
   }
 
+  public boolean exists(Database database) {
+    String glueDbName = transformer.glueDbName(database.getName());
+    try {
+      com.amazonaws.services.glue.model.Database glueDb = glueClient.getDatabase(
+          new GetDatabaseRequest().withName(glueDbName)).getDatabase();
+      return glueDb != null;
+
+    } catch (EntityNotFoundException e) {
+      return false;
+    }
+  }
+
   public void create(Database database) {
     CreateDatabaseRequest createDatabaseRequest = new CreateDatabaseRequest()
         .withDatabaseInput(transformer.transformDatabase(database));

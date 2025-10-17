@@ -3,6 +3,8 @@
 ## Overview
 The GlueSync event listener is an optional Apiary component which, if enabled, will push metadata updates to an AWS Glue catalog.
 
+In addition to the GlueSync event listener, this component contains a CLI that uses the same code for on-demand syncing in case there are operational failures and you need to provide a quick fix. That is documented in [README_CLI.md](README_CLI.md). 
+
 ## Installation
 The listener can be activated by placing its jar file on the Hive metastore classpath and configuring Hive accordingly. For Apiary 
 this is done in [apiary-metastore-docker](https://github.com/ExpediaGroup/apiary-metastore-docker). 
@@ -24,4 +26,3 @@ If an archive is needed, this can be done per table by setting the Hive table pr
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 Copyright 2018-2019 Expedia, Inc.
-

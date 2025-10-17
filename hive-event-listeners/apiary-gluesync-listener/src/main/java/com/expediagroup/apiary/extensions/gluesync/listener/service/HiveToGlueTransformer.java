@@ -188,7 +188,8 @@ public class HiveToGlueTransformer {
   }
 
   /**
-   * Add classification parameter if not already present to help AWS Glue identify the table format.
+   * Add classification parameter if not already present to help AWS Glue identify
+   * the table format.
    */
   private Map<String, String> addClassification(Map<String, String> params, String inputFormat) {
     if (params == null) {
@@ -206,12 +207,20 @@ public class HiveToGlueTransformer {
   }
 
   private String getHiveClassification(String inputFormat) {
-    if (inputFormat == null) {return null;}
-
+    if (inputFormat == null) {
+      return null;
+    }
     String lower = inputFormat.toLowerCase();
-    if (lower.contains("parquet")) {return "parquet";}
-    if (lower.contains("avro")) {return "avro";}
-    if (lower.contains("orc")) {return "orc";}
+
+    if (lower.contains("parquet")) {
+      return "parquet";
+    }
+    if (lower.contains("avro")) {
+      return "avro";
+    }
+    if (lower.contains("orc")) {
+      return "orc";
+    }
 
     return null;
   }

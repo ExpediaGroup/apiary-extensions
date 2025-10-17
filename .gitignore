@@ -13,6 +13,9 @@
 *.iml
 *.iws
 
+# VSCode
+.vscode
+
 # Netbeans files
 nbactions.xml
 

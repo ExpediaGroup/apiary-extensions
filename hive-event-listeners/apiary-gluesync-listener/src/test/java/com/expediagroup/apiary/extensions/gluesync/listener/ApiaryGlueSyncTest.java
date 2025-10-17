@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
@@ -131,12 +132,12 @@ public class ApiaryGlueSyncTest {
 
   @Before
   public void setup() {
-    glueSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService);
+    glueSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, false);
     when(glueClient.createTable(any(CreateTableRequest.class))).thenReturn(createTableResult);
   }
 
   @Test
-  public void onCreateDatabase() {
+  public void onCreateDatabase() throws MetaException {
     CreateDatabaseEvent event = mock(CreateDatabaseEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getDatabase()).thenReturn(getDatabase(description, locationUri, params));
@@ -154,7 +155,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onCreateDatabaseThatAlreadyExists() {
+  public void onCreateDatabaseThatAlreadyExists() throws MetaException {
     CreateDatabaseEvent event = mock(CreateDatabaseEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getDatabase()).thenReturn(getDatabase(description, locationUri, params));
@@ -175,7 +176,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onDropDatabase() {
+  public void onDropDatabase() throws MetaException {
     DropDatabaseEvent event = mock(DropDatabaseEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getDatabase()).thenReturn(getDatabase(description, locationUri, params));
@@ -190,7 +191,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onDropDatabaseThatDoesntExist() {
+  public void onDropDatabaseThatDoesntExist() throws MetaException {
     DropDatabaseEvent event = mock(DropDatabaseEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getDatabase()).thenReturn(getDatabase(description, locationUri, params));
@@ -206,7 +207,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onDropDatabaseNotCreatedByGlueSync() {
+  public void onDropDatabaseNotCreatedByGlueSync() throws MetaException {
     DropDatabaseEvent event = mock(DropDatabaseEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getDatabase()).thenReturn(getDatabase(description, locationUri, Collections.emptyMap()));
@@ -221,7 +222,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onCreateHiveTable() {
+  public void onCreateHiveTable() throws MetaException {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -241,7 +242,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onCreateHiveTable_withIncorrectFormat() {
+  public void onCreateHiveTable_withIncorrectFormat() throws MetaException {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -267,7 +268,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onCreateIcebergTable() {
+  public void onCreateIcebergTable() throws MetaException {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -290,7 +291,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onAlterHiveTable() {
+  public void onAlterHiveTable() throws MetaException {
     AlterTableEvent event = mock(AlterTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -316,7 +317,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onAlterHiveTableSkipArchiveOverride() {
+  public void onAlterHiveTableSkipArchiveOverride() throws MetaException {
     AlterTableEvent event = mock(AlterTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -343,7 +344,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onAlterHiveTable_RenameTable() {
+  public void onAlterHiveTable_RenameTable() throws MetaException {
     AlterTableEvent event = mock(AlterTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -388,7 +389,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onCreateUnpartitionedHiveTable() {
+  public void onCreateUnpartitionedHiveTable() throws MetaException {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
 
@@ -408,7 +409,7 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onAddPartition_withIncorrectFormat() {
+  public void onAddPartition_withIncorrectFormat() throws MetaException {
     AddPartitionEvent event = mock(AddPartitionEvent.class);
     when(event.getStatus()).thenReturn(true);
 
