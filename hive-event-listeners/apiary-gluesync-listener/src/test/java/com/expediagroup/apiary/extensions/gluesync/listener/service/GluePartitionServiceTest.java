@@ -136,7 +136,7 @@ public class GluePartitionServiceTest {
       service.batchCreatePartitions(testTable, hivePartitions);
       fail("Expected AmazonServiceException to be thrown");
     } catch (AmazonServiceException e) {
-      assertThat(e.getStatusCode(), is(413));
+      assertThat(e.getStatusCode(), is(GluePartitionService.STATUS_CODE_413));
     }
 
     // Should retry multiple times reducing batch size until it reaches 1 and fails

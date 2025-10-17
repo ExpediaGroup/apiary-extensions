@@ -42,6 +42,8 @@ import com.amazonaws.services.glue.model.UpdatePartitionRequest;
 import com.amazonaws.services.glue.model.ValidationException;
 
 public class GluePartitionService {
+  protected static final int STATUS_CODE_413 = 413;
+
   private static final Logger log = LoggerFactory.getLogger(GluePartitionService.class);
 
   private final AWSGlue glueClient;
@@ -204,7 +206,7 @@ public class GluePartitionService {
         requestExecutor.accept(request);
         i += batchSize;
       } catch (AmazonServiceException e) {
-        if (e.getStatusCode() == 413 && batchSize > 1) {
+        if (e.getStatusCode() == STATUS_CODE_413 && batchSize > 1) {
           batchSize = Math.max(1, batchSize / 2);
           log.warn("Payload too large (413) when {} {} partitions. Reducing batch size to {} and retrying",
               actionVerb.toLowerCase(), batch.size(), batchSize);
