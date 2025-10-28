@@ -291,6 +291,30 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
+  public void onCreateHiveView() throws MetaException {
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table table = simpleHiveTable(simpleSchema(), Collections.emptyList());
+    table.setTableType("VIRTUAL_VIEW");
+    table.setViewOriginalText("SELECT * FROM some_table");
+    table.setViewExpandedText("SELECT * FROM some_table");
+    when(event.getTable()).thenReturn(table);
+
+    glueSync.onCreateTable(event);
+
+    verify(glueClient).createTable(createTableRequestCaptor.capture());
+    verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
+
+    assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
+    assertThat(createTableRequest.getTableInput().getName(), is(tableName));
+    assertThat(createTableRequest.getTableInput().getTableType(), is("VIRTUAL_VIEW"));
+    assertThat(createTableRequest.getTableInput().getViewOriginalText().isEmpty(), is(false));
+    assertThat(createTableRequest.getTableInput().getViewExpandedText().isEmpty(), is(false));
+  }
+
+  @Test
   public void onAlterHiveTable() throws MetaException {
     AlterTableEvent event = mock(AlterTableEvent.class);
     when(event.getStatus()).thenReturn(true);
