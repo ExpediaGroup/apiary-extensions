@@ -11,6 +11,11 @@
   <artifactId>apiary-gluesync-listener</artifactId>
   <name>Apiary GlueSync Listener</name>
   <description>Glue Sync Listener for Apiary that replays metadata events in AWS Glue catalog</description>
+
+  <properties>
+    <aws-java-sdk.version>1.12.792</aws-java-sdk.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.expediagroup.apiary</groupId>

@@ -26,7 +26,7 @@
   </scm>
 
   <properties>
-    <aws-java-sdk.version>1.12.792</aws-java-sdk.version>
+    <aws-java-sdk.version>1.12.276</aws-java-sdk.version>
     <hadoop.version>2.7.1</hadoop.version>
     <hive.version>2.3.7</hive.version>
     <iceberg.version>1.0.0</iceberg.version>
