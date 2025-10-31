@@ -101,7 +101,9 @@ public class HiveToGlueTransformer {
         .withPartitionKeys(partitionKeys)
         .withRetention(table.getRetention())
         .withStorageDescriptor(sd)
-        .withTableType(table.getTableType());
+        .withTableType(table.getTableType())
+        .withViewOriginalText(table.getViewOriginalText())
+        .withViewExpandedText(table.getViewExpandedText());
   }
 
   public PartitionInput transformPartition(final Partition partition) {

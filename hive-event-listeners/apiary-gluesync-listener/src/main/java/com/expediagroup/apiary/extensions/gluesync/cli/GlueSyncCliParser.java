@@ -108,6 +108,8 @@ public class GlueSyncCliParser {
     options.addOption(new Option("c", "continueOnError", false, "Continue on error (default: false)"));
     options.addOption(new Option(null, "keep-glue-partitions", false,
         "If true, will keep glue partitions even if there is no corresponding hive partition. If false will delete them (default: false)"));
+    options.addOption(new Option(null, "sync-only-views", false,
+        "If true, it will only sync VIRTUAL_VIEW table type (default: false)"));
 
     CommandLineParser parser = new DefaultParser();
     return parser;
