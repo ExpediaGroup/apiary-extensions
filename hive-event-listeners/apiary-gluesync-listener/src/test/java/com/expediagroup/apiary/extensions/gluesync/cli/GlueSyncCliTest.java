@@ -133,6 +133,7 @@ public class GlueSyncCliTest {
     options.addOption(new Option("h", "help", false, "Print usage information"));
     options.addOption(new Option(null, "continueOnError", false, "Continue processing on errors"));
     options.addOption(new Option(null, "keep-glue-partitions", false, "Keep existing Glue partitions"));
+    options.addOption(new Option(null, "sync-only-views", false, "If true, it will only sync VIRTUAL_VIEW table type"));
 
     return options;
   }
@@ -170,7 +171,6 @@ public class GlueSyncCliTest {
     verify(mockApiaryGlueSync, never()).onCreateDatabase(any(CreateDatabaseEvent.class));
     verify(mockApiaryGlueSync, times(4)).onCreateTable(any(CreateTableEvent.class));
     verify(mockGluePartitionService, times(4)).synchronizePartitions(any(), any(), anyBoolean(), anyBoolean());
-
   }
 
   @Test
@@ -209,7 +209,6 @@ public class GlueSyncCliTest {
     verify(mockApiaryGlueSync, never()).onCreateDatabase(any(CreateDatabaseEvent.class));
     verify(mockApiaryGlueSync, times(1)).onCreateTable(any(CreateTableEvent.class));
     verify(mockGluePartitionService, times(1)).synchronizePartitions(any(), any(), anyBoolean(), eq(true));
-
   }
 
   @Test
@@ -262,7 +261,6 @@ public class GlueSyncCliTest {
     // Assert
     verify(mockApiaryGlueSync, never()).onCreateDatabase(any(CreateDatabaseEvent.class));
     verify(mockApiaryGlueSync, never()).onCreateTable(any(CreateTableEvent.class));
-
   }
 
   @Test(expected = RuntimeException.class)
@@ -339,7 +337,7 @@ public class GlueSyncCliTest {
     // Arrange - Test that deleteGluePartitions is false when keep-glue-partitions
     // is set
     String[] args = { "--database-name-regex", "test_db.*", "--table-name-regex", "test_table.*",
-        "--keep-glue-partitions" };
+                      "--keep-glue-partitions" };
     CommandLine cmd = new DefaultParser().parse(createOptions(), args);
 
     List<String> databases = Arrays.asList("test_db1");
@@ -367,6 +365,70 @@ public class GlueSyncCliTest {
     // Assert - Verify that synchronizePartitions is called with
     // deleteGluePartitions=false
     verify(mockGluePartitionService, times(1)).synchronizePartitions(any(), any(), eq(false), anyBoolean());
+  }
+
+  @Test
+  public void testSyncAllWithSyncOnlyViewsOption_onView() throws Exception {
+    String[] args = { "--database-name-regex", "test_db.*", "--table-name-regex", "test_table.*",
+                      "--sync-only-views" };
+    CommandLine cmd = new DefaultParser().parse(createOptions(), args);
+
+    List<String> databases = Arrays.asList("test_db1");
+    List<String> tables = Arrays.asList("test_table1");
+
+    Database mockDatabase = new Database();
+    mockDatabase.setName("test_db1");
+
+    Table mockTable = new Table();
+    mockTable.setDbName("test_db1");
+    mockTable.setTableName("test_table1");
+    mockTable.setTableType("VIRTUAL_VIEW");
+    Map<String, String> tableParams = new HashMap<>();
+    mockTable.setParameters(tableParams);
+
+    when(mockMetastoreClient.getAllDatabases()).thenReturn(databases);
+    when(mockMetastoreClient.getAllTables("test_db1")).thenReturn(tables);
+    when(mockMetastoreClient.getDatabase(anyString())).thenReturn(mockDatabase);
+    when(mockMetastoreClient.getTable(anyString(), anyString())).thenReturn(mockTable);
+    when(mockIsIcebergTablePredicate.test(any())).thenReturn(false);
+    when(mockMetastoreClient.listPartitions(anyString(), anyString(), anyShort())).thenReturn(Arrays.asList());
+
+    // Act
+    glueSyncCli.syncAll(cmd);
+
+    // Assert - Verify that synchronizePartitions is called with
+    // deleteGluePartitions=false
+    verify(mockGluePartitionService, times(1)).synchronizePartitions(any(), any(), anyBoolean(), anyBoolean());
+  }
+
+  @Test
+  public void testSyncAllWithSyncOnlyViewsOption_onNormalTable() throws Exception {
+    String[] args = { "--database-name-regex", "test_db.*", "--table-name-regex", "test_table.*",
+                      "--sync-only-views" };
+    CommandLine cmd = new DefaultParser().parse(createOptions(), args);
+
+    List<String> databases = Arrays.asList("test_db1");
+    List<String> tables = Arrays.asList("test_table1");
+
+    Database mockDatabase = new Database();
+    mockDatabase.setName("test_db1");
+
+    Table mockTable = new Table();
+    mockTable.setDbName("test_db1");
+    mockTable.setTableName("test_table1");
+    mockTable.setTableType("EXTERNAL_TABLE");
+    Map<String, String> tableParams = new HashMap<>();
+    mockTable.setParameters(tableParams);
+
+    when(mockMetastoreClient.getAllDatabases()).thenReturn(databases);
+    when(mockMetastoreClient.getAllTables("test_db1")).thenReturn(tables);
+    when(mockMetastoreClient.getDatabase(anyString())).thenReturn(mockDatabase);
+    when(mockMetastoreClient.getTable(anyString(), anyString())).thenReturn(mockTable);
+
+    // Act
+    glueSyncCli.syncAll(cmd);
+
+    verify(mockGluePartitionService, times(0)).synchronizePartitions(any(), any(), anyBoolean(), anyBoolean());
   }
 
   @Test
@@ -443,7 +505,6 @@ public class GlueSyncCliTest {
     // Assert
     verify(mockGluePartitionService, times(1)).synchronizePartitions(any(), eq(largePartitionList), anyBoolean(),
         eq(true));
-
   }
 
   @Test(expected = RuntimeException.class)
@@ -498,7 +559,6 @@ public class GlueSyncCliTest {
     verify(mockApiaryGlueSync, never()).onCreateDatabase(any(CreateDatabaseEvent.class));
     verify(mockApiaryGlueSync, never()).onCreateTable(any(CreateTableEvent.class));
     verify(mockGluePartitionService, never()).synchronizePartitions(any(), any(), anyBoolean(), anyBoolean());
-
   }
 
   @Test
@@ -516,7 +576,6 @@ public class GlueSyncCliTest {
     verify(mockApiaryGlueSync, never()).onCreateDatabase(any(CreateDatabaseEvent.class));
     verify(mockApiaryGlueSync, never()).onCreateTable(any(CreateTableEvent.class));
     verify(mockGluePartitionService, never()).synchronizePartitions(any(), any(), anyBoolean(), anyBoolean());
-
   }
 
   @Test

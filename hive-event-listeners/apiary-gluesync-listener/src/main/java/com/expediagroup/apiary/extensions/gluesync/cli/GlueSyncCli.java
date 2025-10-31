@@ -47,6 +47,7 @@ import com.expediagroup.apiary.extensions.gluesync.listener.service.IsIcebergTab
 import com.hotels.hcommon.hive.metastore.iterator.PartitionIterator;
 
 public class GlueSyncCli {
+
   private static final Logger logger = LoggerFactory.getLogger(GlueSyncCli.class);
 
   private static final String THRIFT_CONNECTION_URI = System.getenv("THRIFT_CONNECTION_URI");
@@ -108,9 +109,10 @@ public class GlueSyncCli {
 
     boolean continueOnError = cmd.hasOption("continueOnError");
     boolean deleteGluePartitions = !cmd.hasOption("keep-glue-partitions");
+    boolean syncOnlyViews = cmd.hasOption("sync-only-views");
 
-    logger.debug("Additional parameters: continueOnError={}, deleteGluePartitions={}", continueOnError,
-        deleteGluePartitions);
+    logger.debug("Additional parameters: continueOnError={}, deleteGluePartitions={}, syncOnlyViews={}",
+        continueOnError, deleteGluePartitions, syncOnlyViews);
 
     boolean hadError = false;
     for (String dbName : metastoreClient.getAllDatabases()) {
@@ -120,7 +122,7 @@ public class GlueSyncCli {
           if (tableName.matches(tableRegex)) {
             try {
               logger.info("Syncing table: {} in database: {}", tableName, dbName);
-              syncTable(dbName, tableName, deleteGluePartitions, verbose);
+              syncTable(dbName, tableName, deleteGluePartitions, syncOnlyViews, verbose);
             } catch (Exception e) {
               hadError = true;
               logger.error("Error syncing table: {} in database: {}: {}", tableName, dbName, e.getMessage());
@@ -139,8 +141,8 @@ public class GlueSyncCli {
     }
   }
 
-  private void syncTable(String dbName, String tableName, boolean deleteGluePartitions, boolean verbose)
-      throws TException {
+  private void syncTable(String dbName, String tableName, boolean deleteGluePartitions, boolean syncOnlyViews,
+      boolean verbose) throws TException {
     Database database = metastoreClient.getDatabase(dbName);
 
     if (!glueDatabaseService.exists(database)) {
@@ -149,6 +151,14 @@ public class GlueSyncCli {
     }
 
     Table table = metastoreClient.getTable(dbName, tableName);
+
+    if (syncOnlyViews) {
+      String type = table.getTableType();
+      if (type != null && !type.equalsIgnoreCase("VIRTUAL_VIEW")) {
+        logger.info("Table {}.{} is not a view, skipping as syncOnlyViews flag is active", dbName, tableName);
+        return;
+      }
+    }
 
     CreateTableEvent createTableEvent = new CreateTableEvent(table, true, null);
     apiaryGlueSync.onCreateTable(createTableEvent);
@@ -176,5 +186,4 @@ public class GlueSyncCli {
       throws org.apache.hadoop.hive.metastore.api.MetaException, org.apache.thrift.TException {
     return new PartitionIterator(metastoreClient, table, DEFAULT_PARTITION_BATCH_SIZE);
   }
-
 }
