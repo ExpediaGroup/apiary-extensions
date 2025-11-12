@@ -17,6 +17,7 @@
 package com.expediagroup.apiary.extensions.gluesync.cli;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -109,10 +110,12 @@ public class GlueSyncCli {
 
     boolean continueOnError = cmd.hasOption("continueOnError");
     boolean deleteGluePartitions = !cmd.hasOption("keep-glue-partitions");
-    boolean syncOnlyViews = cmd.hasOption("sync-only-views");
 
-    logger.debug("Additional parameters: continueOnError={}, deleteGluePartitions={}, syncOnlyViews={}",
-        continueOnError, deleteGluePartitions, syncOnlyViews);
+    String syncTypesFlag = cmd.getOptionValue("sync-types");
+    List<String> syncTypes = syncTypesFlag == null ? null : Arrays.asList(syncTypesFlag.split(","));
+
+    logger.debug("Additional parameters: continueOnError={}, deleteGluePartitions={}, syncTypes={}",
+        continueOnError, deleteGluePartitions, syncTypesFlag);
 
     boolean hadError = false;
     for (String dbName : metastoreClient.getAllDatabases()) {
@@ -122,7 +125,7 @@ public class GlueSyncCli {
           if (tableName.matches(tableRegex)) {
             try {
               logger.info("Syncing table: {} in database: {}", tableName, dbName);
-              syncTable(dbName, tableName, deleteGluePartitions, syncOnlyViews, verbose);
+              syncTable(dbName, tableName, deleteGluePartitions, syncTypes, verbose);
             } catch (Exception e) {
               hadError = true;
               logger.error("Error syncing table: {} in database: {}: {}", tableName, dbName, e.getMessage());
@@ -141,7 +144,7 @@ public class GlueSyncCli {
     }
   }
 
-  private void syncTable(String dbName, String tableName, boolean deleteGluePartitions, boolean syncOnlyViews,
+  private void syncTable(String dbName, String tableName, boolean deleteGluePartitions, List<String> syncTypes,
       boolean verbose) throws TException {
     Database database = metastoreClient.getDatabase(dbName);
 
@@ -152,10 +155,10 @@ public class GlueSyncCli {
 
     Table table = metastoreClient.getTable(dbName, tableName);
 
-    if (syncOnlyViews) {
+    if (syncTypes != null) {
       String type = table.getTableType();
-      if (type != null && !type.equalsIgnoreCase("VIRTUAL_VIEW")) {
-        logger.info("Table {}.{} is not a view, skipping as syncOnlyViews flag is active", dbName, tableName);
+      if (type != null && !syncTypes.contains(type)) {
+        logger.info("Table {}.{} is {}, skipping as syncTypes flag {} is active", dbName, tableName, type, syncTypes);
         return;
       }
     }
