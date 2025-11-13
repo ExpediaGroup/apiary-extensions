@@ -109,7 +109,7 @@ public class GlueSyncCliParser {
     options.addOption(new Option(null, "keep-glue-partitions", false,
         "If true, will keep glue partitions even if there is no corresponding hive partition. If false will delete them (default: false)"));
     options.addOption(new Option(null, "sync-types", true,
-        "Choose what table type to sync. If non specified it will be sync all table types. Example: sync-types=EXTERNAL_VIEW,MANAGED_TABLE,EXTERNAL_TABLE"));
+        "List of table types to sync. If non specified it will be sync all table types. Example: sync-types=MANAGED_TABLE,EXTERNAL_TABLE. Possible types: VIRTUAL_VIEW,MANAGED_TABLE,EXTERNAL_TABLE"));
 
     CommandLineParser parser = new DefaultParser();
     return parser;
