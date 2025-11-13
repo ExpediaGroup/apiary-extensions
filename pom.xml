@@ -1,6 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -12,7 +10,7 @@
   <groupId>com.expediagroup.apiary</groupId>
   <artifactId>apiary-extensions-parent</artifactId>
   <description>Various extensions to Apiary that provide additional, optional functionality</description>
-  <version>8.1.12-SNAPSHOT</version>
+  <version>8.1.12</version>
   <packaging>pom</packaging>
   <name>Apiary Extensions</name>
   <inceptionYear>2018</inceptionYear>
@@ -22,7 +20,7 @@
     <connection>scm:git:https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/ExpediaGroup/apiary-extensions.git</connection>
     <developerConnection>scm:git:https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/ExpediaGroup/apiary-extensions.git</developerConnection>
     <url>https://github.com/ExpediaGroup/apiary-extensions</url>
-    <tag>HEAD</tag>
+    <tag>apiary-extensions-parent-8.1.12</tag>
   </scm>
 
   <properties>

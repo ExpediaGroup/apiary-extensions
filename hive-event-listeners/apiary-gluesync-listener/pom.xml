@@ -1,12 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
     <artifactId>hive-event-listeners-parent</artifactId>
-    <version>8.1.12-SNAPSHOT</version>
+    <version>8.1.12</version>
   </parent>
   <artifactId>apiary-gluesync-listener</artifactId>
   <name>Apiary GlueSync Listener</name>
@@ -222,12 +220,10 @@
               </filters>
               <!-- Merge Log4j2 plugin cache to support relocation below -->
               <transformers>
-                <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat</resource>
                 </transformer>
-                <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>com.expediagroup.apiary.extensions.gluesync.cli.GlueSyncCliParser</mainClass>
                 </transformer>
               </transformers>
