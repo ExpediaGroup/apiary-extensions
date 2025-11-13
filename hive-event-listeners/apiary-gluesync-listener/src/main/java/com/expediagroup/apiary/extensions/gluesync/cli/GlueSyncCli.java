@@ -17,6 +17,7 @@
 package com.expediagroup.apiary.extensions.gluesync.cli;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -47,6 +48,7 @@ import com.expediagroup.apiary.extensions.gluesync.listener.service.IsIcebergTab
 import com.hotels.hcommon.hive.metastore.iterator.PartitionIterator;
 
 public class GlueSyncCli {
+
   private static final Logger logger = LoggerFactory.getLogger(GlueSyncCli.class);
 
   private static final String THRIFT_CONNECTION_URI = System.getenv("THRIFT_CONNECTION_URI");
@@ -109,8 +111,11 @@ public class GlueSyncCli {
     boolean continueOnError = cmd.hasOption("continueOnError");
     boolean deleteGluePartitions = !cmd.hasOption("keep-glue-partitions");
 
-    logger.debug("Additional parameters: continueOnError={}, deleteGluePartitions={}", continueOnError,
-        deleteGluePartitions);
+    String syncTypesFlag = cmd.getOptionValue("sync-types");
+    List<String> syncTypes = syncTypesFlag == null ? null : Arrays.asList(syncTypesFlag.split(","));
+
+    logger.debug("Additional parameters: continueOnError={}, deleteGluePartitions={}, syncTypes={}",
+        continueOnError, deleteGluePartitions, syncTypesFlag);
 
     boolean hadError = false;
     for (String dbName : metastoreClient.getAllDatabases()) {
@@ -120,7 +125,7 @@ public class GlueSyncCli {
           if (tableName.matches(tableRegex)) {
             try {
               logger.info("Syncing table: {} in database: {}", tableName, dbName);
-              syncTable(dbName, tableName, deleteGluePartitions, verbose);
+              syncTable(dbName, tableName, deleteGluePartitions, syncTypes, verbose);
             } catch (Exception e) {
               hadError = true;
               logger.error("Error syncing table: {} in database: {}: {}", tableName, dbName, e.getMessage());
@@ -139,8 +144,8 @@ public class GlueSyncCli {
     }
   }
 
-  private void syncTable(String dbName, String tableName, boolean deleteGluePartitions, boolean verbose)
-      throws TException {
+  private void syncTable(String dbName, String tableName, boolean deleteGluePartitions, List<String> syncTypes,
+      boolean verbose) throws TException {
     Database database = metastoreClient.getDatabase(dbName);
 
     if (!glueDatabaseService.exists(database)) {
@@ -149,6 +154,14 @@ public class GlueSyncCli {
     }
 
     Table table = metastoreClient.getTable(dbName, tableName);
+
+    if (syncTypes != null) {
+      String type = table.getTableType();
+      if (type != null && !syncTypes.contains(type)) {
+        logger.info("Table {}.{} is {}, skipping as syncTypes flag {} is active", dbName, tableName, type, syncTypes);
+        return;
+      }
+    }
 
     CreateTableEvent createTableEvent = new CreateTableEvent(table, true, null);
     apiaryGlueSync.onCreateTable(createTableEvent);
@@ -176,5 +189,4 @@ public class GlueSyncCli {
       throws org.apache.hadoop.hive.metastore.api.MetaException, org.apache.thrift.TException {
     return new PartitionIterator(metastoreClient, table, DEFAULT_PARTITION_BATCH_SIZE);
   }
-
 }

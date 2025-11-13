@@ -11,6 +11,11 @@
   <artifactId>apiary-gluesync-listener</artifactId>
   <name>Apiary GlueSync Listener</name>
   <description>Glue Sync Listener for Apiary that replays metadata events in AWS Glue catalog</description>
+
+  <properties>
+    <aws-java-sdk.version>1.12.792</aws-java-sdk.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.expediagroup.apiary</groupId>
@@ -137,7 +142,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.1.1</version>
+        <version>3.6.1</version>
         <executions>
           <execution>
             <id>shade-all</id>
@@ -153,6 +158,8 @@
                   <include>com.amazonaws:*</include>
                   <include>com.expediagroup.apiary:*</include>
                   <include>org.apache.httpcomponents:*</include>
+                  <include>io.micrometer:*</include>
+                  <include>io.prometheus:*</include>
                 </includes>
                 <excludes>
                   <exclude>ch.qos.reload4j:reload4j</exclude>
@@ -169,6 +176,16 @@
                     to newer version used by com.amazonaws, older version is provided by /usr/lib/hive/ -->
                   <pattern>org.apache.http</pattern>
                   <shadedPattern>${shade.prefix}.org.apache.http</shadedPattern>
+                </relocation>
+                <!-- Micrometer and prometheus are not part of Hive Metastore libraries.
+                Ensuring version take precedence -->
+                <relocation>
+                  <pattern>io.micrometer</pattern>
+                  <shadedPattern>${shade.prefix}.io.micrometer</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>io.prometheus</pattern>
+                  <shadedPattern>${shade.prefix}.io.prometheus</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
