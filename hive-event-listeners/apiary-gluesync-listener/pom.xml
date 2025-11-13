@@ -177,6 +177,16 @@
                   <pattern>org.apache.http</pattern>
                   <shadedPattern>${shade.prefix}.org.apache.http</shadedPattern>
                 </relocation>
+                <!-- Micrometer and prometheus are not part of Hive Metastore libraries.
+                Ensuring version take precedence -->
+                <relocation>
+                  <pattern>io.micrometer</pattern>
+                  <shadedPattern>${shade.prefix}.io.micrometer</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>io.prometheus</pattern>
+                  <shadedPattern>${shade.prefix}.io.prometheus</shadedPattern>
+                </relocation>
               </relocations>
             </configuration>
           </execution>
