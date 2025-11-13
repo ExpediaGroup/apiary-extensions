@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
     <artifactId>hive-event-listeners-parent</artifactId>
-    <version>8.1.12</version>
+    <version>8.1.13-SNAPSHOT</version>
   </parent>
   <artifactId>apiary-gluesync-listener</artifactId>
   <name>Apiary GlueSync Listener</name>
