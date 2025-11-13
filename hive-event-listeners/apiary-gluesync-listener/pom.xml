@@ -158,6 +158,8 @@
                   <include>com.amazonaws:*</include>
                   <include>com.expediagroup.apiary:*</include>
                   <include>org.apache.httpcomponents:*</include>
+                  <include>io.micrometer:*</include>
+                  <include>io.prometheus:*</include>
                 </includes>
                 <excludes>
                   <exclude>ch.qos.reload4j:reload4j</exclude>
