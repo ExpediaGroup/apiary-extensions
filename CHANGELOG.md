@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 8.1.14 - 2025-11-25
+### Changed
+- Remove metric relocations for apiary-gluesync-listener because Spring doesn't find those in bean initialisation.
+
 ## 8.1.13 - 2025-11-13
 ### Changed
 - Upgrade maven shade plugin to `3.6.1` (was `3.1.1`).
