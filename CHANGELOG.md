@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 8.1.15 - 2025-11-27
+### Changed
+- When sending the events we hash based on db and table name. By default we are taking the newest table name.
+We realised this could potentially break the order of operations because it will send the event to a different kafka partition.
+
 ## 8.1.14 - 2025-11-25
 ### Changed
 - Remove metric relocations for apiary-gluesync-listener because Spring doesn't find those in bean initialisation.
