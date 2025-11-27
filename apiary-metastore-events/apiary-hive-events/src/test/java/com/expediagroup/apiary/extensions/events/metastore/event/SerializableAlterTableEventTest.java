@@ -29,8 +29,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class SerializableAlterTableEventTest {
 
-  private static final String NEW_DATABASE = "new_db";
-  private static final String NEW_TABLE = "new_tbl";
+  private static final String OLD_DATABASE = "old_db";
+  private static final String OLD_TABLE = "old_tbl";
 
   private @Mock AlterTableEvent alterTableEvent;
   private @Mock Table newTable;
@@ -40,8 +40,8 @@ public class SerializableAlterTableEventTest {
 
   @Before
   public void init() {
-    when(newTable.getDbName()).thenReturn(NEW_DATABASE);
-    when(newTable.getTableName()).thenReturn(NEW_TABLE);
+    when(oldTable.getDbName()).thenReturn(OLD_DATABASE);
+    when(oldTable.getTableName()).thenReturn(OLD_TABLE);
     when(alterTableEvent.getNewTable()).thenReturn(newTable);
     when(alterTableEvent.getOldTable()).thenReturn(oldTable);
     event = new ApiaryAlterTableEvent(alterTableEvent);
@@ -49,12 +49,12 @@ public class SerializableAlterTableEventTest {
 
   @Test
   public void databaseName() {
-    assertThat(event.getDatabaseName()).isEqualTo(NEW_DATABASE);
+    assertThat(event.getDatabaseName()).isEqualTo(OLD_DATABASE);
   }
 
   @Test
   public void tableName() {
-    assertThat(event.getTableName()).isEqualTo(NEW_TABLE);
+    assertThat(event.getTableName()).isEqualTo(OLD_TABLE);
   }
 
   @Test
@@ -67,5 +67,4 @@ public class SerializableAlterTableEventTest {
     assertThat(event.getNewTable()).isSameAs(newTable);
     assertThat(event.getOldTable()).isSameAs(oldTable);
   }
-
 }

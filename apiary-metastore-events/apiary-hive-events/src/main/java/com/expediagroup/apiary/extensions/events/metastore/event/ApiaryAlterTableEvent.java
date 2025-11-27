@@ -21,6 +21,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
 
 public class ApiaryAlterTableEvent extends ApiaryListenerEvent {
+
   private static final long serialVersionUID = 1L;
 
   private Table oldTable;
@@ -36,12 +37,12 @@ public class ApiaryAlterTableEvent extends ApiaryListenerEvent {
 
   @Override
   public String getDatabaseName() {
-    return newTable.getDbName();
+    return oldTable.getDbName();
   }
 
   @Override
   public String getTableName() {
-    return newTable.getTableName();
+    return oldTable.getTableName();
   }
 
   public Table getOldTable() {
@@ -63,5 +64,4 @@ public class ApiaryAlterTableEvent extends ApiaryListenerEvent {
     ApiaryAlterTableEvent other = (ApiaryAlterTableEvent) obj;
     return super.equals(other) && Objects.equals(oldTable, other.oldTable) && Objects.equals(newTable, other.newTable);
   }
-
 }
