@@ -22,12 +22,28 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
-import org.apache.hadoop.hive.metastore.events.*;
+import org.apache.hadoop.hive.metastore.events.AddIndexEvent;
+import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
+import org.apache.hadoop.hive.metastore.events.AlterIndexEvent;
+import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
+import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
+import org.apache.hadoop.hive.metastore.events.ConfigChangeEvent;
+import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
+import org.apache.hadoop.hive.metastore.events.CreateFunctionEvent;
+import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
+import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
+import org.apache.hadoop.hive.metastore.events.DropFunctionEvent;
+import org.apache.hadoop.hive.metastore.events.DropIndexEvent;
+import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
+import org.apache.hadoop.hive.metastore.events.DropTableEvent;
+import org.apache.hadoop.hive.metastore.events.InsertEvent;
+import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAlterTableEvent;
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEventFactory;
 import com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe;
@@ -35,6 +51,7 @@ import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.Kafka
 import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.MskMessageSender;
 
 public class MskMetaStoreEventListener extends MetaStoreEventListener {
+
   private static final Logger log = LoggerFactory.getLogger(MskMetaStoreEventListener.class);
 
   private final MetaStoreEventSerDe eventSerDe;
@@ -43,7 +60,7 @@ public class MskMetaStoreEventListener extends MetaStoreEventListener {
 
   public MskMetaStoreEventListener(Configuration config) {
     this(config, new ApiaryListenerEventFactory(), serDeForClassName(stringProperty(config, SERDE_CLASS)),
-      new MskMessageSender(config));
+        new MskMessageSender(config));
   }
 
   @VisibleForTesting
@@ -59,12 +76,19 @@ public class MskMetaStoreEventListener extends MetaStoreEventListener {
   }
 
   private KafkaMessage withPayload(ApiaryListenerEvent event) {
+    String database = event.getDatabaseName();
+    String table = event.getTableName();
+    // Ensuring ALTER_TABLE events will use old table name for partition hashing
+    if (event instanceof ApiaryAlterTableEvent) {
+      database = ((ApiaryAlterTableEvent) event).getOldTable().getDbName();
+      table = ((ApiaryAlterTableEvent) event).getOldTable().getTableName();
+    }
     return KafkaMessage
-      .builder()
-      .database(event.getDatabaseName())
-      .table(event.getTableName())
-      .payload(eventSerDe.marshal(event))
-      .build();
+        .builder()
+        .database(database)
+        .table(table)
+        .payload(eventSerDe.marshal(event))
+        .build();
   }
 
   @Override
@@ -163,5 +187,4 @@ public class MskMetaStoreEventListener extends MetaStoreEventListener {
 
   @Override
   public void onDropFunction(DropFunctionEvent fnEvent) {}
-
 }

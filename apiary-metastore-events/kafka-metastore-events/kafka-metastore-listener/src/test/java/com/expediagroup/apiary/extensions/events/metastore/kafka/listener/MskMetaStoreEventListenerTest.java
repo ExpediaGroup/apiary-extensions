@@ -16,17 +16,44 @@
 package com.expediagroup.apiary.extensions.events.metastore.kafka.listener;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.metastore.events.*;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.events.AddIndexEvent;
+import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
+import org.apache.hadoop.hive.metastore.events.AlterIndexEvent;
+import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
+import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
+import org.apache.hadoop.hive.metastore.events.ConfigChangeEvent;
+import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
+import org.apache.hadoop.hive.metastore.events.CreateFunctionEvent;
+import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
+import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
+import org.apache.hadoop.hive.metastore.events.DropFunctionEvent;
+import org.apache.hadoop.hive.metastore.events.DropIndexEvent;
+import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
+import org.apache.hadoop.hive.metastore.events.DropTableEvent;
+import org.apache.hadoop.hive.metastore.events.InsertEvent;
+import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.expediagroup.apiary.extensions.events.metastore.event.*;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAddPartitionEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAlterPartitionEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAlterTableEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryCreateTableEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryDropPartitionEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryDropTableEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryInsertEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
+import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEventFactory;
 import com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe;
 import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessage;
 import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.MskMessageSender;
@@ -66,8 +93,12 @@ public class MskMetaStoreEventListenerTest {
   public void onAlterTable() {
     AlterTableEvent event = mock(AlterTableEvent.class);
     ApiaryAlterTableEvent apiaryEvent = mock(ApiaryAlterTableEvent.class);
+    Table oldTable = mock(Table.class);
+    when(apiaryEvent.getOldTable()).thenReturn(oldTable);
     when(apiaryEvent.getDatabaseName()).thenReturn(DATABASE);
     when(apiaryEvent.getTableName()).thenReturn(TABLE);
+    when(oldTable.getDbName()).thenReturn(DATABASE);
+    when(oldTable.getTableName()).thenReturn(TABLE);
     when(apiaryListenerEventFactory.create(event)).thenReturn(apiaryEvent);
     listener.onAlterTable(event);
     verify(mskMessageSender).send(any(KafkaMessage.class));
@@ -190,5 +221,4 @@ public class MskMetaStoreEventListenerTest {
     verify(mskMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
-
 }
