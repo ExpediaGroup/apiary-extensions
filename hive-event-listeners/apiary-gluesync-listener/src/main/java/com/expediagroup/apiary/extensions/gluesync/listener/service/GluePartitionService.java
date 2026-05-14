@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,16 +50,51 @@ public class GluePartitionService {
   private final HiveToGlueTransformer transformer;
   private final GlueMetadataStringCleaner cleaner = new GlueMetadataStringCleaner();
   private final HiveToGluePartitionComparator partitionComparator = new HiveToGluePartitionComparator();
+  private final Boolean defaultSkipArchive;
   public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
+  public static final String GLUE_SKIP_ARCHIVE_ENV = "GLUE_SKIP_ARCHIVE";
   private static final int DEFAULT_MAX_RESULTS_SIZE = 1000; // Current max supported by Glue
   private static final int MAX_PARTITION_CREATE_BATCH_SIZE = 100;
   private static final int MAX_PARTITION_UPDATE_BATCH_SIZE = 100;
   private static final int MAX_PARTITION_DELETE_BATCH_SIZE = 25;
 
   public GluePartitionService(AWSGlue glueClient, String gluePrefix) {
+    this(glueClient, gluePrefix, parseSkipArchiveDefaultFromEnv());
+  }
+
+  public GluePartitionService(AWSGlue glueClient, String gluePrefix, Boolean defaultSkipArchive) {
     this.glueClient = glueClient;
     this.transformer = new HiveToGlueTransformer(gluePrefix);
+    this.defaultSkipArchive = defaultSkipArchive;
     log.debug("ApiaryGlueSync created");
+  }
+
+  /**
+   * Reads the {@value #GLUE_SKIP_ARCHIVE_ENV} environment variable
+   * and returns its boolean value.
+   * <p>
+   * Only the literals {@code "true"} and {@code "false"} (case-insensitive) are
+   * accepted. When the variable is not set or is empty, {@code null} is returned
+   * so the built-in default applies. Any other value causes an
+   * {@link IllegalArgumentException} to be thrown at startup.
+   */
+  static Boolean parseSkipArchiveDefaultFromEnv() {
+    return parseSkipArchiveDefault(System.getenv(GLUE_SKIP_ARCHIVE_ENV));
+  }
+
+  static Boolean parseSkipArchiveDefault(String value) {
+    if (value == null || value.isEmpty()) {
+      return null;
+    }
+    if ("true".equalsIgnoreCase(value)) {
+      return Boolean.TRUE;
+    }
+    if ("false".equalsIgnoreCase(value)) {
+      return Boolean.FALSE;
+    }
+    throw new IllegalArgumentException(
+        "Invalid value for environment variable " + GLUE_SKIP_ARCHIVE_ENV
+            + ": '" + value + "'. Expected 'true' or 'false'.");
   }
 
   public void create(Table table, org.apache.hadoop.hive.metastore.api.Partition partition) {
@@ -155,16 +190,20 @@ public class GluePartitionService {
   }
 
   public boolean shouldSkipArchive(Table table) {
-    boolean skipArchive = true;
-    if (table.getParameters() != null) {
-      // Only if explicitly overridden to false do enable table archive. Normally we
-      // want to skip archiving.
+    if (table != null && table.getParameters() != null) {
+      // Explicit per-table override always wins.
       String skipArchiveParam = table.getParameters().get(APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM);
-      if ("false".equals(skipArchiveParam)) {
-        skipArchive = false;
+      if ("false".equalsIgnoreCase(skipArchiveParam)) {
+        return false;
+      }
+      if ("true".equalsIgnoreCase(skipArchiveParam)) {
+        return true;
       }
     }
-    return skipArchive;
+    if (defaultSkipArchive != null) {
+      return defaultSkipArchive;
+    }
+    return true;
   }
 
   public PartitionInput convertToPartitionInput(com.amazonaws.services.glue.model.Partition partition) {

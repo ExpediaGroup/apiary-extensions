@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,10 +82,20 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
    */
   public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService,
       boolean throwExceptions) {
+    this(config, glueClient, gluePrefix, metricService, throwExceptions, null);
+  }
+
+  /**
+   * Just for testing. Allows injecting the default {@code SkipArchive} value
+   * that would otherwise be read from the
+   * {@code GLUE_SKIP_ARCHIVE} environment variable.
+   */
+  public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService,
+      boolean throwExceptions, Boolean defaultSkipArchive) {
     super(config);
     this.glueClient = glueClient;
     this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
-    this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
+    this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix, defaultSkipArchive);
     this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix);
     this.isIcebergPredicate = new IsIcebergTablePredicate();
     this.metricService = metricService;
