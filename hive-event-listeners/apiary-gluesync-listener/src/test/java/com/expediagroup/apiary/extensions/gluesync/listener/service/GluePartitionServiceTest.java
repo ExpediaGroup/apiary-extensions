@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -352,5 +352,62 @@ public class GluePartitionServiceTest {
     sd.setLocation(location);
     partition.setStorageDescriptor(sd);
     return partition;
+  }
+
+  @Test
+  public void parseSkipArchiveDefault_returnsNullWhenUnset() {
+    assertThat(GluePartitionService.parseSkipArchiveDefault(null), is((Boolean) null));
+    assertThat(GluePartitionService.parseSkipArchiveDefault(""), is((Boolean) null));
+  }
+
+  @Test
+  public void parseSkipArchiveDefault_acceptsTrueAndFalseCaseInsensitive() {
+    assertThat(GluePartitionService.parseSkipArchiveDefault("true"), is(Boolean.TRUE));
+    assertThat(GluePartitionService.parseSkipArchiveDefault("TRUE"), is(Boolean.TRUE));
+    assertThat(GluePartitionService.parseSkipArchiveDefault("True"), is(Boolean.TRUE));
+    assertThat(GluePartitionService.parseSkipArchiveDefault("false"), is(Boolean.FALSE));
+    assertThat(GluePartitionService.parseSkipArchiveDefault("FALSE"), is(Boolean.FALSE));
+    assertThat(GluePartitionService.parseSkipArchiveDefault("False"), is(Boolean.FALSE));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseSkipArchiveDefault_throwsOnInvalidValue() {
+    GluePartitionService.parseSkipArchiveDefault("yes");
+  }
+
+  @Test
+  public void shouldSkipArchive_defaultsToTrueWhenNothingSet() {
+    GluePartitionService svc = new GluePartitionService(mockGlueClient, "test-prefix-", null);
+    Table table = new Table();
+    table.setParameters(new HashMap<>());
+    assertThat(svc.shouldSkipArchive(table), is(true));
+  }
+
+  @Test
+  public void shouldSkipArchive_usesEnvDefaultWhenTableParamAbsent() {
+    GluePartitionService svc = new GluePartitionService(mockGlueClient, "test-prefix-", Boolean.FALSE);
+    Table table = new Table();
+    table.setParameters(new HashMap<>());
+    assertThat(svc.shouldSkipArchive(table), is(false));
+  }
+
+  @Test
+  public void shouldSkipArchive_tableParamOverridesEnvDefault() {
+    GluePartitionService svc = new GluePartitionService(mockGlueClient, "test-prefix-", Boolean.FALSE);
+    Table table = new Table();
+    HashMap<String, String> params = new HashMap<>();
+    params.put(GluePartitionService.APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM, "true");
+    table.setParameters(params);
+    assertThat(svc.shouldSkipArchive(table), is(true));
+  }
+
+  @Test
+  public void shouldSkipArchive_tableParamFalseOverridesEnvDefaultTrue() {
+    GluePartitionService svc = new GluePartitionService(mockGlueClient, "test-prefix-", Boolean.TRUE);
+    Table table = new Table();
+    HashMap<String, String> params = new HashMap<>();
+    params.put(GluePartitionService.APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM, "false");
+    table.setParameters(params);
+    assertThat(svc.shouldSkipArchive(table), is(false));
   }
 }

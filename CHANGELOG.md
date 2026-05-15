@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 8.1.16 - 2026-05-14
+### Added
+- `apiary-gluesync-listener`: new `GLUE_SKIP_ARCHIVE` environment variable to set the default value of
+  `SkipArchive` on AWS Glue `UpdateTable` requests (triggered by Hive `ALTER TABLE` events). Accepts
+  `true` or `false` (case-insensitive). When unset, the existing built-in default (`true`) is used.
+  Any other value fails at startup. The per-table Hive property `apiary.gluesync.skipArchive` still
+  takes precedence.
+
 ## 8.1.15 - 2025-11-28
 ### Changed
 - When sending the events we hash based on db and table name. By default we are taking the newest table name.

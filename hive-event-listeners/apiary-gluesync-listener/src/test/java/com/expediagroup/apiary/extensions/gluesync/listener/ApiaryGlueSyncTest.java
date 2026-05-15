@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -365,6 +365,68 @@ public class ApiaryGlueSyncTest {
     assertThat(toList(updateTableRequest.getTableInput().getPartitionKeys()), is(asList(partNames)));
     assertThat(toList(updateTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
     assertThat(updateTableRequest.getSkipArchive(), is(false));
+  }
+
+  @Test
+  public void onAlterHiveTableSkipArchiveDefaultEnvFalse() throws MetaException {
+    ApiaryGlueSync glueSyncWithDefault = new ApiaryGlueSync(
+        configuration, glueClient, gluePrefix, metricService, false, Boolean.FALSE);
+
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table newTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    newTable.setTableName("table2");
+    when(event.getOldTable()).thenReturn(newTable);
+    when(event.getNewTable()).thenReturn(newTable);
+
+    glueSyncWithDefault.onAlterTable(event);
+
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    UpdateTableRequest updateTableRequest = updateTableRequestCaptor.getValue();
+    assertThat(updateTableRequest.getSkipArchive(), is(false));
+  }
+
+  @Test
+  public void onAlterHiveTableSkipArchiveDefaultEnvTrue() throws MetaException {
+    ApiaryGlueSync glueSyncWithDefault = new ApiaryGlueSync(
+        configuration, glueClient, gluePrefix, metricService, false, Boolean.TRUE);
+
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table newTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    newTable.setTableName("table2");
+    when(event.getOldTable()).thenReturn(newTable);
+    when(event.getNewTable()).thenReturn(newTable);
+
+    glueSyncWithDefault.onAlterTable(event);
+
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    UpdateTableRequest updateTableRequest = updateTableRequestCaptor.getValue();
+    assertThat(updateTableRequest.getSkipArchive(), is(true));
+  }
+
+  @Test
+  public void onAlterHiveTableTableParamOverridesEnvDefault() throws MetaException {
+    // Env default says do not skip archiving, but the table explicitly asks to skip.
+    ApiaryGlueSync glueSyncWithDefault = new ApiaryGlueSync(
+        configuration, glueClient, gluePrefix, metricService, false, Boolean.FALSE);
+
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table newTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    newTable.setTableName("table2");
+    newTable.putToParameters(APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM, "true");
+    when(event.getOldTable()).thenReturn(newTable);
+    when(event.getNewTable()).thenReturn(newTable);
+
+    glueSyncWithDefault.onAlterTable(event);
+
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    UpdateTableRequest updateTableRequest = updateTableRequestCaptor.getValue();
+    assertThat(updateTableRequest.getSkipArchive(), is(true));
   }
 
   @Test
