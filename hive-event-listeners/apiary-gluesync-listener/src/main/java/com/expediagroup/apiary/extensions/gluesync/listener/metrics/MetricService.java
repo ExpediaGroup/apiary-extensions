@@ -15,6 +15,7 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener.metrics;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.jmx.JmxConfig;
 import io.micrometer.jmx.JmxMeterRegistry;
 
@@ -65,11 +67,11 @@ public class MetricService {
     }
   }
 
-  public void incrementCounter(String name, String outcome) {
+  public void incrementCounter(String name, Tag... tags) {
     try {
-      Counter.builder(name).tag("outcome", outcome).register(Metrics.globalRegistry).increment();
+      Counter.builder(name).tags(Arrays.asList(tags)).register(Metrics.globalRegistry).increment();
     } catch (Exception e) {
-      log.warn("Unable to increment counter {} with outcome {}", name, outcome, e);
+      log.warn("Unable to increment counter {} with tags {}", name, Arrays.toString(tags), e);
     }
   }
 }
