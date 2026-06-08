@@ -162,6 +162,8 @@
                   <include>org.apache.httpcomponents:*</include>
                   <include>io.micrometer:*</include>
                   <include>io.prometheus:*</include>
+                  <include>io.dropwizard.metrics:metrics-jmx</include>
+                  <include>io.dropwizard.metrics:metrics-core</include>
                 </includes>
                 <excludes>
                   <exclude>ch.qos.reload4j:reload4j</exclude>
@@ -178,6 +180,13 @@
                     to newer version used by com.amazonaws, older version is provided by /usr/lib/hive/ -->
                   <pattern>org.apache.http</pattern>
                   <shadedPattern>${shade.prefix}.org.apache.http</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- metrics-jmx 4.x ships com.codahale.metrics.jmx classes; Hive provides
+                  metrics-core 3.x on its classpath which has incompatible core classes.
+                  Relocating avoids NoSuchMethodError at runtime. -->
+                  <pattern>com.codahale.metrics</pattern>
+                  <shadedPattern>${shade.prefix}.com.codahale.metrics</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
