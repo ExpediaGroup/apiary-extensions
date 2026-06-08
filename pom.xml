@@ -107,6 +107,11 @@
         <version>${io.micrometer.version}</version>
       </dependency>
       <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-registry-jmx</artifactId>
+        <version>${io.micrometer.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-client</artifactId>
         <version>${hadoop.version}</version>
