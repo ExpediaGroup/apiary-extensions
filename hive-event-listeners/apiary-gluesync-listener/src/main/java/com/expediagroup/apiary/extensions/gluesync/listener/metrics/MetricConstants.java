@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,15 @@ public class MetricConstants {
   public static final String LISTENER_TABLE_SUCCESS = "glue_listener_table_success";
   public static final String LISTENER_PARTITION_FAILURE = "glue_listener_partition_failure";
   public static final String LISTENER_PARTITION_SUCCESS = "glue_listener_partition_success";
+
+  public static final String CREATE_DATABASE = "glue_listener_create_database";
+  public static final String DROP_DATABASE = "glue_listener_drop_database";
+  public static final String CREATE_TABLE = "glue_listener_create_table";
+  public static final String DROP_TABLE = "glue_listener_drop_table";
+  public static final String ALTER_TABLE = "glue_listener_alter_table";
+  public static final String ADD_PARTITION = "glue_listener_add_partition";
+  public static final String DROP_PARTITION = "glue_listener_drop_partition";
+  public static final String ALTER_PARTITION = "glue_listener_alter_partition";
 
   public static final List<String> LISTENER_METRICS = Arrays.asList(
       LISTENER_DATABASE_FAILURE,

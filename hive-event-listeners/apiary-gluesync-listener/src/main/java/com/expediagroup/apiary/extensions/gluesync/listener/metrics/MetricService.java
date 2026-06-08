@@ -64,4 +64,12 @@ public class MetricService {
       log.warn("Unable to increment counter {}", name, e);
     }
   }
+
+  public void incrementCounter(String name, String outcome) {
+    try {
+      Counter.builder(name).tag("outcome", outcome).register(Metrics.globalRegistry).increment();
+    } catch (Exception e) {
+      log.warn("Unable to increment counter {} with outcome {}", name, outcome, e);
+    }
+  }
 }
