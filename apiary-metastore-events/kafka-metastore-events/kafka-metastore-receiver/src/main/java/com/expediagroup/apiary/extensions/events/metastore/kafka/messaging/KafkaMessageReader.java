@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2020 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
+
 import com.google.common.annotations.VisibleForTesting;
 
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
@@ -42,16 +45,21 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
   private KafkaConsumer<Long, byte[]> consumer;
   private MetaStoreEventSerDe eventSerDe;
   private Iterator<ConsumerRecord<Long, byte[]>> records;
+  private KafkaClientMetrics kafkaClientMetrics;
 
-  private KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, Properties consumerProperties) {
-    this(topicName, eventSerDe, new KafkaConsumer(consumerProperties));
+  private KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, Properties consumerProperties, MeterRegistry meterRegistry) {
+    this(topicName, eventSerDe, new KafkaConsumer(consumerProperties), meterRegistry);
   }
 
   @VisibleForTesting
-  KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, KafkaConsumer<Long, byte[]> consumer) {
+  KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, KafkaConsumer<Long, byte[]> consumer, MeterRegistry meterRegistry) {
     this.eventSerDe = eventSerDe;
     this.consumer = consumer;
     this.consumer.subscribe(Collections.singletonList(topicName));
+    if (meterRegistry != null) {
+      this.kafkaClientMetrics = new KafkaClientMetrics(consumer);
+      this.kafkaClientMetrics.bindTo(meterRegistry);
+    }
   }
 
   @Override
@@ -73,6 +81,9 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
 
   @Override
   public void close() {
+    if (kafkaClientMetrics != null) {
+      kafkaClientMetrics.close();
+    }
     consumer.close();
   }
 
@@ -89,6 +100,7 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
     private String groupId = "apiary-kafka-metastore-receiver-";
     private MetaStoreEventSerDe metaStoreEventSerDe = new JsonMetaStoreEventSerDe();
     private Properties consumerProperties = new Properties();
+    private MeterRegistry meterRegistry;
 
     private KafkaMessageReaderBuilder(String bootstrapServers, String topicName, String applicationName) {
       this.bootstrapServers = bootstrapServers;
@@ -114,6 +126,11 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
       return this;
     }
 
+    public KafkaMessageReaderBuilder withMeterRegistry(MeterRegistry meterRegistry) {
+      this.meterRegistry = meterRegistry;
+      return this;
+    }
+
     public KafkaMessageReader build() {
       Properties props = new Properties();
       props.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -121,7 +138,7 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
       props.put("key.deserializer", "org.apache.kafka.common.serialization.LongDeserializer");
       props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
       consumerProperties.forEach((key, value) -> props.merge(key, value, (v1, v2) -> v1));
-      return new KafkaMessageReader(topicName, metaStoreEventSerDe, props);
+      return new KafkaMessageReader(topicName, metaStoreEventSerDe, props, meterRegistry);
     }
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2020 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -60,9 +62,11 @@ public class KafkaMessageReaderTest {
 
   private ConsumerRecords<Long, byte[]> messages;
   private KafkaMessageReader reader;
+  private SimpleMeterRegistry meterRegistry;
 
   @Before
   public void init() {
+    meterRegistry = new SimpleMeterRegistry();
     List<ConsumerRecord<Long, byte[]>> messageList = ImmutableList.of(message);
     Map<TopicPartition, List<ConsumerRecord<Long, byte[]>>> messageMap = ImmutableMap
         .of(new TopicPartition(TOPIC_NAME, PARTITION), messageList);
@@ -70,7 +74,7 @@ public class KafkaMessageReaderTest {
     when(consumer.poll(any(Duration.class))).thenReturn(messages);
     when(message.value()).thenReturn(MESSAGE_CONTENT);
     when(serDe.unmarshal(MESSAGE_CONTENT)).thenReturn(event);
-    reader = new KafkaMessageReader(TOPIC_NAME, serDe, consumer);
+    reader = new KafkaMessageReader(TOPIC_NAME, serDe, consumer, meterRegistry);
   }
 
   @Test
