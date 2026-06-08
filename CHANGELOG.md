@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## [Unreleased]
 ### Fixed
-- `apiary-gluesync-listener`: glue sync metrics (`glue_listener_table_*`, `glue_listener_database_*`, `glue_listener_partition_*`) were silently dropped in HMS deployments because no backend registry was bound to Micrometer's global registry. `ApiaryGlueSync` now creates a `JmxMeterRegistry` by default, making counters visible via JMX. A new `ApiaryGlueSync(Configuration, boolean, MeterRegistry)` constructor allows framework deployments (e.g. Dronefly/Spring Boot) to inject their own registry instead.
+- `apiary-gluesync-listener`: fix glue sync metrics not exported in HMS deployments. `ApiaryGlueSync` now defaults to a `JmxMeterRegistry`; a new constructor allows framework deployments to inject their own `MeterRegistry`.
 
 ## 8.1.16 - 2026-05-14
 ### Added
