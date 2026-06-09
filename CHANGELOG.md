@@ -3,11 +3,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 8.2.0 - 2026-06-08
-### Changed
-- `apiary-gluesync-listener`: **breaking** — `ApiaryGlueSync` default constructor now registers metrics to a `JmxMeterRegistry` instead of `Metrics.globalRegistry`. Framework deployments (e.g. Dronefly/Spring Boot) must use the new `ApiaryGlueSync(Configuration, boolean, MeterRegistry)` constructor to inject their own registry.
+## 8.1.18 - 2026-06-09
 ### Fixed
-- `apiary-gluesync-listener`: glue sync metrics were silently dropped in HMS deployments; counters are now exported via JMX.
+- `apiary-gluesync-listener`: glue sync metrics were silently dropped in HMS deployments; counters are now exported via JMX. In framework deployments (e.g. Dronefly/Spring Boot), metrics continue to flow to the existing registry (e.g. Prometheus) unchanged.
 
 ## 8.1.16 - 2026-05-14
 ### Added
