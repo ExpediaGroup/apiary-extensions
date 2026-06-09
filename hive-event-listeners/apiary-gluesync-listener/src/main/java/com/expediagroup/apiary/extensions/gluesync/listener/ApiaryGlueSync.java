@@ -36,11 +36,6 @@ import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.jmx.JmxConfig;
-import io.micrometer.jmx.JmxMeterRegistry;
-
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
@@ -69,20 +64,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     this(config, false);
   }
 
-  /**
-   * HMS deployment constructor. Registers metrics to a {@link JmxMeterRegistry} so they are
-   * visible via JMX.
-   */
   public ApiaryGlueSync(Configuration config, boolean throwExceptions) {
-    this(config, throwExceptions, new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM));
-  }
-
-  /**
-   * Framework deployment constructor (e.g. Dronefly/Spring Boot). Pass the framework-managed
-   * {@link MeterRegistry} so metrics flow through the existing export pipeline (e.g.
-   * {@code /actuator/prometheus}).
-   */
-  public ApiaryGlueSync(Configuration config, boolean throwExceptions, MeterRegistry meterRegistry) {
     super(config);
     this.glueClient = AWSGlueClientBuilder.standard().withRegion(System.getenv("AWS_REGION")).build();
     String gluePrefix = System.getenv("GLUE_PREFIX");
@@ -90,7 +72,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
     this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix);
     this.isIcebergPredicate = new IsIcebergTablePredicate();
-    this.metricService = new MetricService(meterRegistry);
+    this.metricService = new MetricService();
     this.throwExceptions = throwExceptions;
     log.debug("ApiaryGlueSync created");
   }
