@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.expediagroup.apiary</groupId>
     <artifactId>hive-event-listeners-parent</artifactId>
-    <version>8.1.18-SNAPSHOT</version>
+    <version>8.1.19-SNAPSHOT</version>
   </parent>
   <artifactId>apiary-gluesync-listener</artifactId>
   <name>Apiary GlueSync Listener</name>
@@ -75,6 +75,10 @@
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-jmx</artifactId>
     </dependency>
     <!-- Provided -->
     <dependency>
@@ -158,6 +162,8 @@
                   <include>org.apache.httpcomponents:*</include>
                   <include>io.micrometer:*</include>
                   <include>io.prometheus:*</include>
+                  <include>io.dropwizard.metrics:metrics-jmx</include>
+                  <include>io.dropwizard.metrics:metrics-core</include>
                 </includes>
                 <excludes>
                   <exclude>ch.qos.reload4j:reload4j</exclude>
@@ -174,6 +180,28 @@
                     to newer version used by com.amazonaws, older version is provided by /usr/lib/hive/ -->
                   <pattern>org.apache.http</pattern>
                   <shadedPattern>${shade.prefix}.org.apache.http</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- metrics-jmx 4.x ships com.codahale.metrics.jmx classes; Hive provides
+                  metrics-core 3.x on its classpath which has incompatible core classes.
+                  Relocating avoids NoSuchMethodError at runtime. -->
+                  <pattern>com.codahale.metrics</pattern>
+                  <shadedPattern>${shade.prefix}.com.codahale.metrics</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- Relocate micrometer-registry-jmx and its dropwizard bridge so Spring Boot's
+                  JmxMetricsExportAutoConfiguration cannot find io.micrometer.jmx.JmxMeterRegistry
+                  on the classpath and attempt to instantiate it. Without this, Spring Boot's
+                  @ConditionalOnClass(JmxMeterRegistry.class) triggers, tries to construct the
+                  shaded JmxMeterRegistry (which calls DropwizardMeterRegistry with relocated
+                  Codahale types), and fails with NoSuchMethodError against the external
+                  micrometer-core on the Spring Boot classpath. -->
+                  <pattern>io.micrometer.jmx</pattern>
+                  <shadedPattern>${shade.prefix}.io.micrometer.jmx</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>io.micrometer.core.instrument.dropwizard</pattern>
+                  <shadedPattern>${shade.prefix}.io.micrometer.core.instrument.dropwizard</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
@@ -235,6 +263,13 @@
                 <relocation>
                   <pattern>org.apache.logging.log4j</pattern>
                   <shadedPattern>${shade.prefix}.org.apache.logging.log4j</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- metrics-jmx 4.x ships com.codahale.metrics.jmx classes; Hive provides
+                  metrics-core 3.x on its classpath which has incompatible core classes.
+                  Relocating avoids NoSuchMethodError at runtime. Mirrors shade-all. -->
+                  <pattern>com.codahale.metrics</pattern>
+                  <shadedPattern>${shade.prefix}.com.codahale.metrics</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>

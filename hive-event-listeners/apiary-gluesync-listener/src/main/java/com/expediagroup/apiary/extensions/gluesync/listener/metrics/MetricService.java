@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,35 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
+import io.micrometer.jmx.JmxConfig;
+import io.micrometer.jmx.JmxMeterRegistry;
 
 public class MetricService {
 
   private static final Logger log = LoggerFactory.getLogger(MetricService.class);
   private final Map<String, Counter> metrics;
 
-  public MetricService() {
+  public MetricService(MeterRegistry registry) {
     this.metrics = MetricConstants.LISTENER_METRICS.stream()
         .collect(Collectors.toMap(
             metricName -> metricName,
-            metricName -> Counter.builder(metricName).register(Metrics.globalRegistry)
+            metricName -> Counter.builder(metricName).register(registry)
         ));
+  }
+
+  public MetricService() {
+    this(configuredRegistry());
+  }
+
+  private static MeterRegistry configuredRegistry() {
+    if (Metrics.globalRegistry.getRegistries().isEmpty()) {
+      Metrics.addRegistry(new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM));
+    }
+    return Metrics.globalRegistry;
   }
 
   public void incrementCounter(String name) {

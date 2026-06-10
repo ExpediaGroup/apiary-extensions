@@ -10,7 +10,7 @@
   <groupId>com.expediagroup.apiary</groupId>
   <artifactId>apiary-extensions-parent</artifactId>
   <description>Various extensions to Apiary that provide additional, optional functionality</description>
-  <version>8.1.18-SNAPSHOT</version>
+  <version>8.1.19-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apiary Extensions</name>
   <inceptionYear>2018</inceptionYear>
@@ -29,6 +29,12 @@
     <hive.version>2.3.7</hive.version>
     <iceberg.version>1.0.0</iceberg.version>
     <io.micrometer.version>1.9.9</io.micrometer.version>
+    <!-- micrometer-registry-jmx pulls in metrics-jmx 4.x; pin it here to prevent Maven
+         nearest-wins from resolving an incompatible version. The shade plugin in
+         apiary-gluesync-listener relocates com.codahale.metrics to the shaded namespace to
+         isolate these 4.x classes from Hive's metrics-core 3.x at runtime.
+         metrics-core is deliberately NOT pinned — other modules use the 3.x API directly. -->
+    <dropwizard.metrics.version>4.2.17</dropwizard.metrics.version>
     <ranger.version>2.0.0</ranger.version>
     <reload4j.version>1.2.19</reload4j.version>
     <solr.version>7.7.1</solr.version>
@@ -106,6 +112,20 @@
         <artifactId>micrometer-registry-prometheus</artifactId>
         <version>${io.micrometer.version}</version>
       </dependency>
+      <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-registry-jmx</artifactId>
+        <version>${io.micrometer.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-jmx</artifactId>
+        <version>${dropwizard.metrics.version}</version>
+      </dependency>
+      <!-- metrics-core is intentionally NOT pinned here: other modules (e.g. apiary-metastore-metrics)
+           depend on the 3.x API (JmxReporter in metrics-core, not the separate metrics-jmx artifact).
+           The shade-all in apiary-gluesync-listener includes and relocates whichever version resolves,
+           so 3.x or 4.x both work for the shaded fat JAR. -->
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-client</artifactId>
