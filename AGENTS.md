@@ -172,7 +172,7 @@ Log levels: `DEBUG` for trace/diagnostics, `INFO` for lifecycle events, `WARN` f
 
 **REQUIRED**: Always create a branch before starting work. Never commit directly to `main`.
 
-Branch format: `{type}/EGDL-XXXX/<short-name>` (see `.claude/rules/git-branches.md`)
+Branch format: `{type}/<short-name>` (see `.claude/rules/git-branches.md`)
 
 ### Commit messages
 
