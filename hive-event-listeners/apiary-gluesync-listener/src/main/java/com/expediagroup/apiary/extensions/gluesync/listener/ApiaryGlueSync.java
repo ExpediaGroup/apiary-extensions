@@ -248,7 +248,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
     metricService.recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "renamed");
     long duration = System.currentTimeMillis() - startTime;
-    log.info("{} glue table rename to {} finised in {}ms", oldTable.getTableName(), newTable.getTableName(), duration);
+    metricService.recordDuration(MetricConstants.LISTENER_TABLE_RENAME_DURATION, duration);
+    log.info("{} glue table rename to {} finished in {}ms", oldTable.getTableName(), newTable.getTableName(), duration);
   }
 
   private boolean isTableRename(Table oldTable, Table newTable) {
@@ -298,6 +299,12 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
         gluePartitionService.delete(table, partition);
         metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
         metricService.recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_SUCCESS, "deleted");
+      } catch (EntityNotFoundException e) {
+        log.info("{} partition doesn't exist in glue catalog", partition);
+        metricService.recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_SUCCESS, "not_found");
+        if (throwExceptions) {
+          throw wrap(e);
+        }
       } catch (Exception e) {
         log.error("Failed drop partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
         metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);

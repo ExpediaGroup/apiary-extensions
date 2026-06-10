@@ -20,6 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.lang.management.ManagementFactory;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -58,6 +59,17 @@ public class MetricServiceTest {
     for (String name : MetricConstants.LISTENER_METRICS) {
       assertThat("expected counter " + name, registry.get(name).counter().count(), is(0.0));
     }
+  }
+
+  @Test
+  public void recordDurationRegistersTimer() {
+    MeterRegistry registry = new SimpleMeterRegistry();
+    MetricService metricService = new MetricService(registry);
+
+    metricService.recordDuration(MetricConstants.LISTENER_TABLE_RENAME_DURATION, 500L);
+
+    assertThat(registry.get(MetricConstants.LISTENER_TABLE_RENAME_DURATION).timer().count(), is(1L));
+    assertThat(registry.get(MetricConstants.LISTENER_TABLE_RENAME_DURATION).timer().totalTime(TimeUnit.MILLISECONDS), is(500.0));
   }
 
   @Test

@@ -28,6 +28,7 @@ public class MetricConstants {
   public static final String LISTENER_PARTITION_SUCCESS = "glue_listener_partition_success";
 
   public static final String LISTENER_EVENT = "glue_listener_event";
+  public static final String LISTENER_TABLE_RENAME_DURATION = "glue_listener_table_rename_duration";
 
   public static final String TAG_OPERATION = "operation";
   public static final String TAG_RESULT    = "result";

@@ -21,7 +21,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -477,6 +479,7 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).deleteTable(deleteTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
     verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "renamed");
+    verify(metricService).recordDuration(eq(MetricConstants.LISTENER_TABLE_RENAME_DURATION), anyLong());
     DeleteTableRequest deleteTableRequest = deleteTableRequestCaptor.getValue();
 
     // test create new table
@@ -789,6 +792,24 @@ public class ApiaryGlueSyncTest {
     verify(glueClient, times(0)).batchCreatePartition(any());
   }
 
+  @Test
+  public void onDropPartition_partitionNotFoundInGlue() throws MetaException {
+    DropPartitionEvent event = mock(DropPartitionEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table table = simpleHiveTable(simpleSchema(), simplePartitioning());
+    Partition partition = new Partition();
+    partition.setValues(Arrays.asList("part1Value", "part2Value"));
+    partition.setSd(table.getSd());
+    when(event.getTable()).thenReturn(table);
+    when(event.getPartitionIterator()).thenReturn(Arrays.asList(partition).iterator());
+    when(glueClient.deletePartition(any())).thenThrow(new EntityNotFoundException(""));
+
+    glueSync.onDropPartition(event);
+
+    verify(metricService).recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_SUCCESS, "not_found");
+    verifyNoMoreInteractions(metricService);
+  }
   private Table simpleHiveTable(List<FieldSchema> schema, List<FieldSchema> partitions) {
     Table table = new Table();
     table.setTableName(tableName);
