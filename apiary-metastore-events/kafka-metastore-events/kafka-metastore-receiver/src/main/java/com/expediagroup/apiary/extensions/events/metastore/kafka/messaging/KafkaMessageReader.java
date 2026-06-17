@@ -29,8 +29,12 @@ import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
+import io.micrometer.jmx.JmxConfig;
+import io.micrometer.jmx.JmxMeterRegistry;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -138,7 +142,20 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
       props.put("key.deserializer", "org.apache.kafka.common.serialization.LongDeserializer");
       props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
       consumerProperties.forEach((key, value) -> props.merge(key, value, (v1, v2) -> v1));
-      return new KafkaMessageReader(topicName, metaStoreEventSerDe, props, meterRegistry);
+      MeterRegistry registry = meterRegistry != null ? meterRegistry : configuredRegistry();
+      return new KafkaMessageReader(topicName, metaStoreEventSerDe, props, registry);
+    }
+
+    // DO NOT extract to a shared utility. MetricService in apiary-gluesync-listener contains an
+    // identical copy, but that module shades and relocates micrometer-jmx because it runs inside
+    // HMS (Codahale classpath conflict). Shading breaks Spring Boot auto-configuration, so each
+    // module must own this method and use the correct (shaded or unshaded) JmxMeterRegistry for
+    // its deployment context. Keep these two copies in sync manually.
+    private static MeterRegistry configuredRegistry() {
+      if (Metrics.globalRegistry.getRegistries().isEmpty()) {
+        Metrics.addRegistry(new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM));
+      }
+      return Metrics.globalRegistry;
     }
   }
 }
