@@ -28,6 +28,8 @@ import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -44,6 +46,7 @@ import com.expediagroup.apiary.extensions.events.metastore.io.jackson.JsonMetaSt
 
 public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closeable {
 
+  private static final Logger log = LoggerFactory.getLogger(KafkaMessageReader.class);
   private static final Duration POLL_TIMEOUT = Duration.ofMinutes(5);
 
   private KafkaConsumer<Long, byte[]> consumer;
@@ -153,6 +156,7 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
     // its deployment context. Keep these two copies in sync manually.
     private static MeterRegistry configuredRegistry() {
       if (Metrics.globalRegistry.getRegistries().isEmpty()) {
+        log.info("No MeterRegistry found; registering JmxMeterRegistry for Kafka consumer metrics");
         Metrics.addRegistry(new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM));
       }
       return Metrics.globalRegistry;
