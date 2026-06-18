@@ -54,7 +54,7 @@ public class MetricService {
   // runs inside HMS (Codahale classpath conflict). Shading breaks Spring Boot auto-configuration,
   // so each module must own this method and use the correct (shaded or unshaded) JmxMeterRegistry
   // for its deployment context. Keep these two copies in sync manually.
-  private static MeterRegistry configuredRegistry() {
+  private static synchronized MeterRegistry configuredRegistry() {
     if (Metrics.globalRegistry.getRegistries().isEmpty()) {
       Metrics.addRegistry(new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM));
     }
