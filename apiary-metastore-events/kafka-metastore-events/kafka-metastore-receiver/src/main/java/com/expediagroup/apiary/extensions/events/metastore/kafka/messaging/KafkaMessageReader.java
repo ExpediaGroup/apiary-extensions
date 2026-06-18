@@ -88,10 +88,13 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
 
   @Override
   public void close() {
-    if (kafkaClientMetrics != null) {
-      kafkaClientMetrics.close();
+    try {
+      if (kafkaClientMetrics != null) {
+        kafkaClientMetrics.close();
+      }
+    } finally {
+      consumer.close();
     }
-    consumer.close();
   }
 
   private void readRecordsIfNeeded() {
