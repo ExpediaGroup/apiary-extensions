@@ -266,6 +266,17 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     }
   }
 
+  private GlueOutcome createOrUpdatePartition(Table table, Partition partition) {
+    try {
+      gluePartitionService.create(table, partition);
+      return GlueOutcome.CREATED;
+    } catch (AlreadyExistsException e) {
+      log.info("{} partition already exists in glue, updating....", partition);
+      gluePartitionService.update(table, partition);
+      return GlueOutcome.UPDATED;
+    }
+  }
+
   private GlueOutcome updateOrCreatePartition(Table table, Partition partition) {
     try {
       gluePartitionService.update(table, partition);
@@ -305,13 +316,9 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     while (partitions.hasNext()) {
       Partition partition = partitions.next();
       try {
-        gluePartitionService.create(table, partition);
+        GlueOutcome outcome = createOrUpdatePartition(table, partition);
         metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
-        metricService.recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, "created");
-      } catch (AlreadyExistsException e) {
-        gluePartitionService.update(table, partition);
-        metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
-        metricService.recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, "updated");
+        metricService.recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, outcome.name());
       } catch (Exception e) {
         log.error("Failed add partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
         metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);
