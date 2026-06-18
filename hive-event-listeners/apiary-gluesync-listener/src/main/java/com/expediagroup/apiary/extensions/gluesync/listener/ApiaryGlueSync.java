@@ -18,6 +18,7 @@ package com.expediagroup.apiary.extensions.gluesync.listener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -36,10 +37,13 @@ import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
+import com.amazonaws.services.glue.model.InvalidInputException;
+import com.amazonaws.services.glue.model.OperationTimeoutException;
 
 import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants;
 import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricService;
@@ -51,6 +55,12 @@ import com.expediagroup.apiary.extensions.gluesync.listener.service.IsIcebergTab
 public class ApiaryGlueSync extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGlueSync.class);
+
+  private static final List<Class<? extends Exception>> KNOWN_EXCEPTIONS = List.of(
+      OperationTimeoutException.class,
+      InvalidInputException.class,
+      AmazonServiceException.class
+  );
 
   private final AWSGlue glueClient;
   private final GlueDatabaseService glueDatabaseService;
@@ -122,7 +132,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     } catch (Exception e) {
       log.error("Failed create database {} in glue", database.getName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_FAILURE);
-      metricService.recordEvent(MetricConstants.CREATE_DATABASE, MetricConstants.RESULT_FAILURE, e.getClass().getSimpleName());
+      metricService.recordEvent(MetricConstants.CREATE_DATABASE, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
@@ -143,7 +153,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     } catch (Exception e) {
       log.error("Failed drop database {} in glue", database.getName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_FAILURE);
-      metricService.recordEvent(MetricConstants.DROP_DATABASE, MetricConstants.RESULT_FAILURE, e.getClass().getSimpleName());
+      metricService.recordEvent(MetricConstants.DROP_DATABASE, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
@@ -169,7 +179,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     } catch (Exception e) {
       log.error("Failed create table {}.{} in glue", table.getDbName(), table.getTableName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
-      metricService.recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_FAILURE, e.getClass().getSimpleName());
+      metricService.recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
@@ -196,7 +206,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     } catch (Exception e) {
       log.error("Failed drop table {}.{} in glue", table.getDbName(), table.getTableName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
-      metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_FAILURE, e.getClass().getSimpleName());
+      metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
@@ -232,7 +242,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     } catch (Exception e) {
       log.error("Failed alter table {}.{} in glue", oldTable.getDbName(), oldTable.getTableName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
-      metricService.recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_FAILURE, e.getClass().getSimpleName());
+      metricService.recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
@@ -277,7 +287,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       } catch (Exception e) {
         log.error("Failed add partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
         metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);
-        metricService.recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_FAILURE, e.getClass().getSimpleName());
+        metricService.recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_FAILURE, toOutcome(e));
         if (throwExceptions) {
           throw wrap(e);
         }
@@ -308,7 +318,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       } catch (Exception e) {
         log.error("Failed drop partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
         metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);
-        metricService.recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_FAILURE, e.getClass().getSimpleName());
+        metricService.recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_FAILURE, toOutcome(e));
         if (throwExceptions) {
           throw wrap(e);
         }
@@ -338,11 +348,20 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     } catch (Exception e) {
       log.error("Failed alter partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);
-      metricService.recordEvent(MetricConstants.ALTER_PARTITION, MetricConstants.RESULT_FAILURE, e.getClass().getSimpleName());
+      metricService.recordEvent(MetricConstants.ALTER_PARTITION, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
     }
+  }
+
+  private static String toOutcome(Exception e) {
+    for (Class<? extends Exception> type : KNOWN_EXCEPTIONS) {
+      if (type.isInstance(e)) {
+        return type.getSimpleName();
+      }
+    }
+    return "other";
   }
 
   /*
