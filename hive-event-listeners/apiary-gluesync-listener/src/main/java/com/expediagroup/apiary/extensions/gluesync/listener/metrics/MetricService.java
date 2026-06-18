@@ -16,6 +16,7 @@
 package com.expediagroup.apiary.extensions.gluesync.listener.metrics;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -30,11 +31,17 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.jmx.JmxConfig;
 import io.micrometer.jmx.JmxMeterRegistry;
 
+import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.LISTENER_EVENT;
+import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OPERATION;
+import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OUTCOME;
+import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_RESULT;
+
 public class MetricService {
 
   private static final Logger log = LoggerFactory.getLogger(MetricService.class);
   private final MeterRegistry registry;
   private final Map<String, Counter> metrics;
+  private final Map<String, Counter> events = new ConcurrentHashMap<>();
 
   public MetricService(MeterRegistry registry) {
     this.registry = registry;
@@ -51,7 +58,7 @@ public class MetricService {
 
   // DO NOT extract to a shared utility. KafkaMessageReaderBuilder in kafka-metastore-receiver
   // contains an identical copy, but this module shades and relocates micrometer-jmx because it
-  // runs inside HMS (Codahale classpath conflict). Shading breaks Spring Boot auto-configuration,
+  // runs inside HMS (classpath conflicts). Shading breaks Spring Boot auto-configuration,
   // so each module must own this method and use the correct (shaded or unshaded) JmxMeterRegistry
   // for its deployment context. Keep these two copies in sync manually.
   private static synchronized MeterRegistry configuredRegistry() {
@@ -86,11 +93,10 @@ public class MetricService {
 
   public void recordEvent(String operation, String result, String outcome) {
     try {
-      Counter.builder(MetricConstants.LISTENER_EVENT)
-          .tags(MetricConstants.TAG_OPERATION, operation,
-              MetricConstants.TAG_RESULT, result,
-              MetricConstants.TAG_OUTCOME, outcome)
-          .register(registry)
+      events.computeIfAbsent(operation + "|" + result + "|" + outcome, k ->
+          Counter.builder(LISTENER_EVENT)
+              .tags(TAG_OPERATION, operation, TAG_RESULT, result, TAG_OUTCOME, outcome)
+              .register(registry))
           .increment();
     } catch (Exception e) {
       log.warn("Unable to record event {} {} {}", operation, result, outcome, e);
