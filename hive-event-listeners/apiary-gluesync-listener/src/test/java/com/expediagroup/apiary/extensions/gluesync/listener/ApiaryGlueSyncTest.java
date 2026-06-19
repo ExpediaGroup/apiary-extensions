@@ -157,7 +157,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).createDatabase(createDatabaseRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_DATABASE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.CREATE_DATABASE, MetricConstants.RESULT_SUCCESS, "CREATED");
+    verify(metricService).recordEvent(MetricConstants.CREATE_DATABASE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     CreateDatabaseRequest createDatabaseRequest = createDatabaseRequestCaptor.getValue();
 
     assertThat(createDatabaseRequest.getDatabaseInput().getName(), is(gluePrefix + dbName));
@@ -178,7 +178,7 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).createDatabase(createDatabaseRequestCaptor.capture());
     verify(glueClient).updateDatabase(updateDatabaseRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_DATABASE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.CREATE_DATABASE, MetricConstants.RESULT_SUCCESS, "UPDATED");
+    verify(metricService).recordEvent(MetricConstants.CREATE_DATABASE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
     UpdateDatabaseRequest updateDatabaseRequest = updateDatabaseRequestCaptor.getValue();
 
     assertThat(updateDatabaseRequest.getName(), is(gluePrefix + dbName));
@@ -249,7 +249,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).createTable(createTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, "CREATED");
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
 
     assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
@@ -277,7 +277,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient, times(2)).createTable(createTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, "CREATED");
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
 
     assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
@@ -297,7 +297,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).createTable(createTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, "CREATED");
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
 
     assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
@@ -324,7 +324,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).createTable(createTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, "CREATED");
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
 
     assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
@@ -350,7 +350,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).updateTable(updateTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "UPDATED");
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
     UpdateTableRequest updateTableRequest = updateTableRequestCaptor.getValue();
 
     assertThat(updateTableRequest.getDatabaseName(), is(gluePrefix + dbName));
@@ -378,7 +378,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).updateTable(updateTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "UPDATED");
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
     UpdateTableRequest updateTableRequest = updateTableRequestCaptor.getValue();
 
     assertThat(updateTableRequest.getDatabaseName(), is(gluePrefix + dbName));
@@ -510,7 +510,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).createTable(createTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, "CREATED");
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     CreateTableRequest createTableRequest = createTableRequestCaptor.getValue();
 
     assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
@@ -545,7 +545,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient, times(2)).createPartition(createPartitionRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, "CREATED");
+    verify(metricService).recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     CreatePartitionRequest createTableRequest = createPartitionRequestCaptor.getValue();
 
     assertThat(createTableRequest.getDatabaseName(), is(gluePrefix + dbName));
@@ -565,7 +565,7 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).createTable(any());
     verify(glueClient).updateTable(updateTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, "UPDATED");
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
     assertThat(updateTableRequestCaptor.getValue().getDatabaseName(), is(gluePrefix + dbName));
     assertThat(updateTableRequestCaptor.getValue().getTableInput().getName(), is(tableName));
   }
@@ -584,7 +584,7 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).updateTable(any());
     verify(glueClient).createTable(createTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "CREATED");
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     assertThat(createTableRequestCaptor.getValue().getDatabaseName(), is(gluePrefix + dbName));
     assertThat(createTableRequestCaptor.getValue().getTableInput().getName(), is(tableName));
   }
@@ -604,7 +604,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).updatePartition(updatePartitionRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ALTER_PARTITION, MetricConstants.RESULT_SUCCESS, "UPDATED");
+    verify(metricService).recordEvent(MetricConstants.ALTER_PARTITION, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
     assertThat(updatePartitionRequestCaptor.getValue().getDatabaseName(), is(gluePrefix + dbName));
     assertThat(updatePartitionRequestCaptor.getValue().getTableName(), is(tableName));
   }
@@ -626,7 +626,7 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).updatePartition(any());
     verify(glueClient).createPartition(createPartitionRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ALTER_PARTITION, MetricConstants.RESULT_SUCCESS, "CREATED");
+    verify(metricService).recordEvent(MetricConstants.ALTER_PARTITION, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     assertThat(createPartitionRequestCaptor.getValue().getDatabaseName(), is(gluePrefix + dbName));
     assertThat(createPartitionRequestCaptor.getValue().getTableName(), is(tableName));
   }
@@ -646,7 +646,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).createPartition(createPartitionRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, "CREATED");
+    verify(metricService).recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     assertThat(createPartitionRequestCaptor.getValue().getDatabaseName(), is(gluePrefix + dbName));
     assertThat(createPartitionRequestCaptor.getValue().getTableName(), is(tableName));
   }
@@ -668,7 +668,7 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).createPartition(any());
     verify(glueClient).updatePartition(updatePartitionRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, "UPDATED");
+    verify(metricService).recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
     assertThat(updatePartitionRequestCaptor.getValue().getDatabaseName(), is(gluePrefix + dbName));
     assertThat(updatePartitionRequestCaptor.getValue().getTableName(), is(tableName));
   }
@@ -823,7 +823,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).updateTable(updateTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "UPDATED");
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
     assertThat(updateTableRequestCaptor.getValue().getTableInput().getName(), is("table_renamed"));
     // rename operation (copy+delete) must not be triggered for Iceberg tables
     verify(glueClient, times(0)).deleteTable(any());
