@@ -716,6 +716,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).deletePartition(any());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
+    verify(metricService).recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_SUCCESS, "deleted");
   }
 
   @Test
@@ -768,6 +769,7 @@ public class ApiaryGlueSyncTest {
     glueSync.onCreateTable(event);
 
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_FAILURE, "OperationTimeoutException");
     verifyNoMoreInteractions(metricService);
   }
 
@@ -787,6 +789,7 @@ public class ApiaryGlueSyncTest {
     }
 
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_FAILURE, "OperationTimeoutException");
   }
 
   @Test
