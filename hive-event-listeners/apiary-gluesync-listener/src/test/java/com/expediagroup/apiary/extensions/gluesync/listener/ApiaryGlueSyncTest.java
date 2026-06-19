@@ -682,6 +682,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).deleteTable(deleteTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "deleted");
     assertThat(deleteTableRequestCaptor.getValue().getDatabaseName(), is(gluePrefix + dbName));
     assertThat(deleteTableRequestCaptor.getValue().getName(), is(tableName));
   }
@@ -696,6 +697,7 @@ public class ApiaryGlueSyncTest {
     glueSync.onDropTable(event);
 
     verify(glueClient).deleteTable(any());
+    verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "not_found");
     verifyNoMoreInteractions(metricService);
   }
 
@@ -745,6 +747,14 @@ public class ApiaryGlueSyncTest {
     glueSync.onAlterPartition(alterPartition);
 
     verifyZeroInteractions(glueClient);
+    verify(metricService).recordEvent(MetricConstants.CREATE_DATABASE, MetricConstants.RESULT_IGNORED, "ignored");
+    verify(metricService).recordEvent(MetricConstants.DROP_DATABASE, MetricConstants.RESULT_IGNORED, "ignored");
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_IGNORED, "ignored");
+    verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_IGNORED, "ignored");
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_IGNORED, "ignored");
+    verify(metricService).recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_IGNORED, "ignored");
+    verify(metricService).recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_IGNORED, "ignored");
+    verify(metricService).recordEvent(MetricConstants.ALTER_PARTITION, MetricConstants.RESULT_IGNORED, "ignored");
     verifyNoMoreInteractions(metricService);
   }
 
