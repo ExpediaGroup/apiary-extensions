@@ -154,7 +154,7 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
 
     // DO NOT extract to a shared utility. MetricService in apiary-gluesync-listener contains an
     // identical copy, but that module shades and relocates micrometer-jmx because it runs inside
-    // HMS (Codahale classpath conflict). Shading breaks Spring Boot auto-configuration, so each
+    // HMS (classpath conflicts). Shading breaks Spring Boot auto-configuration, so each
     // module must own this method and use the correct (shaded or unshaded) JmxMeterRegistry for
     // its deployment context. Keep these two copies in sync manually.
     private static synchronized MeterRegistry configuredRegistry() {

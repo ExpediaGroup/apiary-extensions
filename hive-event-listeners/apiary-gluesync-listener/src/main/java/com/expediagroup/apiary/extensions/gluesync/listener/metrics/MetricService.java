@@ -15,6 +15,11 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener.metrics;
 
+import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.LISTENER_EVENT;
+import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OPERATION;
+import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OUTCOME;
+import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_RESULT;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -30,11 +35,6 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.jmx.JmxConfig;
 import io.micrometer.jmx.JmxMeterRegistry;
-
-import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.LISTENER_EVENT;
-import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OPERATION;
-import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OUTCOME;
-import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_RESULT;
 
 public class MetricService {
 
