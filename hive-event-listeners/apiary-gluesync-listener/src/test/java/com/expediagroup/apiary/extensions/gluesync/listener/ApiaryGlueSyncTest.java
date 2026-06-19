@@ -72,6 +72,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
 import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
@@ -791,6 +792,36 @@ public class ApiaryGlueSyncTest {
     verifyNoMoreInteractions(metricService);
   }
 
+  // KNOWN_EXCEPTION_NAMES holds simple class names (strings) rather than Class literals because the
+  // Maven shade plugin relocates com.amazonaws.* to com.expediagroup.apiary.shaded.com.amazonaws.*
+  // at runtime. Class.isInstance() against the original class literal would never match the shaded
+  // runtime type; getSimpleName() is package-agnostic and survives relocation.
+  @Test
+  public void toOutcome_awsSubclassNotInKnownList_matchesSuperclassName() throws MetaException {
+    // UnknownGlueException extends AmazonServiceException but is not in KNOWN_EXCEPTION_NAMES.
+    // The hierarchy walk should surface "AmazonServiceException" rather than "other".
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(simpleHiveTable(simpleSchema(), simplePartitioning()));
+    when(glueClient.createTable(any())).thenThrow(new UnknownGlueException("unlisted AWS error"));
+
+    glueSync.onCreateTable(event);
+
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_FAILURE, "AmazonServiceException");
+  }
+
+  @Test
+  public void toOutcome_unknownException_returnsOther() throws MetaException {
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(simpleHiveTable(simpleSchema(), simplePartitioning()));
+    when(glueClient.createTable(any())).thenThrow(new RuntimeException("unexpected"));
+
+    glueSync.onCreateTable(event);
+
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_FAILURE, "other");
+  }
+
   @Test
   public void onCreateTable_exceptionRethrownWhenThrowExceptionsEnabled() throws MetaException {
     ApiaryGlueSync throwingSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, true);
@@ -900,5 +931,11 @@ public class ApiaryGlueSyncTest {
   private GetDatabaseResult getGlueDatabaseResult(Map<String, String> params) {
     return new GetDatabaseResult().withDatabase(new com.amazonaws.services.glue.model.Database().withName(
         dbName).withParameters(params));
+  }
+
+  private static class UnknownGlueException extends AmazonServiceException {
+    UnknownGlueException(String msg) {
+      super(msg);
+    }
   }
 }

@@ -38,13 +38,10 @@ import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
-import com.amazonaws.services.glue.model.InvalidInputException;
-import com.amazonaws.services.glue.model.OperationTimeoutException;
 
 import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants;
 import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricService;
@@ -57,12 +54,14 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGlueSync.class);
 
-  // Order matters: subclasses must precede their superclass so isInstance() matches the most specific type first.
-  // OperationTimeoutException and InvalidInputException both extend AmazonServiceException.
-  private static final List<Class<? extends Exception>> KNOWN_EXCEPTIONS = Arrays.asList(
-      OperationTimeoutException.class,
-      InvalidInputException.class,
-      AmazonServiceException.class
+  // Simple names of AWS exception types to surface as outcome tags. Walking the class hierarchy
+  // from specific to general means subclasses (e.g. OperationTimeoutException) are matched before
+  // their superclass (AmazonServiceException) without relying on class literals, which break when
+  // the shade plugin relocates com.amazonaws.* to a shaded package at runtime.
+  private static final List<String> KNOWN_EXCEPTION_NAMES = Arrays.asList(
+      "OperationTimeoutException",
+      "InvalidInputException",
+      "AmazonServiceException"
   );
 
   private final AWSGlue glueClient;
@@ -385,10 +384,12 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   }
 
   private static String toOutcome(Exception e) {
-    for (Class<? extends Exception> type : KNOWN_EXCEPTIONS) {
-      if (type.isInstance(e)) {
+    Class<?> type = e.getClass();
+    while (type != null) {
+      if (KNOWN_EXCEPTION_NAMES.contains(type.getSimpleName())) {
         return type.getSimpleName();
       }
+      type = type.getSuperclass();
     }
     return "other";
   }
