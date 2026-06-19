@@ -152,11 +152,12 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
       return new KafkaMessageReader(topicName, metaStoreEventSerDe, props, registry);
     }
 
-    // DO NOT extract to a shared utility. MetricService in apiary-gluesync-listener contains an
-    // identical copy, but that module shades and relocates micrometer-jmx because it runs inside
-    // HMS (classpath conflicts). Shading breaks Spring Boot auto-configuration, so each
-    // module must own this method and use the correct (shaded or unshaded) JmxMeterRegistry for
-    // its deployment context. Keep these two copies in sync manually.
+    // DO NOT extract to a shared utility. MetricService in apiary-gluesync-listener has a
+    // similar method, but the two implementations intentionally differ: that module shades and
+    // relocates micrometer-jmx for HMS classpath isolation, and uses a Dropwizard-backed
+    // JmxMeterRegistry with TaggedObjectNameFactory for tagged JMX ObjectName properties. This
+    // module runs outside HMS and uses a plain JmxMeterRegistry without tag promotion.
+    // Each module must own its own copy.
     private static synchronized MeterRegistry configuredRegistry() {
       if (Metrics.globalRegistry.getRegistries().isEmpty()) {
         log.info("No MeterRegistry found; registering JmxMeterRegistry for Kafka consumer metrics");

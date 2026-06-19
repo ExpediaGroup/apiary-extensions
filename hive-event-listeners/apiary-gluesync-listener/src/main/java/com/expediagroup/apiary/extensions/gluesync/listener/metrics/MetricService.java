@@ -63,10 +63,11 @@ public class MetricService {
   }
 
   // DO NOT extract to a shared utility. KafkaMessageReaderBuilder in kafka-metastore-receiver
-  // contains an identical copy, but this module shades and relocates micrometer-jmx because it
-  // runs inside HMS (classpath conflicts). Shading breaks Spring Boot auto-configuration,
-  // so each module must own this method and use the correct (shaded or unshaded) JmxMeterRegistry
-  // for its deployment context. Keep these two copies in sync manually.
+  // has a similar method, but the two implementations intentionally differ: this module shades
+  // and relocates micrometer-jmx for HMS classpath isolation, and uses a Dropwizard-backed
+  // JmxMeterRegistry with TaggedObjectNameFactory to promote Micrometer tags to proper JMX
+  // ObjectName key properties. KafkaMessageReaderBuilder runs outside HMS and uses a plain
+  // JmxMeterRegistry without tag promotion. Each module must own its own copy.
   private static synchronized MeterRegistry configuredRegistry() {
     if (Metrics.globalRegistry.getRegistries().isEmpty()) {
       MetricRegistry dropwizardRegistry = new MetricRegistry();
