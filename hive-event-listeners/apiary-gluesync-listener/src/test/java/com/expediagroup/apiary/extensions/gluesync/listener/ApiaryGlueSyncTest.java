@@ -646,6 +646,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).createPartition(createPartitionRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
+    verify(metricService).recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, "CREATED");
     assertThat(createPartitionRequestCaptor.getValue().getDatabaseName(), is(gluePrefix + dbName));
     assertThat(createPartitionRequestCaptor.getValue().getTableName(), is(tableName));
   }
@@ -699,6 +700,23 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).deleteTable(any());
     verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "not_found");
     verifyNoMoreInteractions(metricService);
+  }
+
+  @Test
+  public void onAlterHiveTable_RenameOperationFailureIsMetered() throws MetaException {
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    Table oldTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    Table newTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    newTable.setTableName("table_renamed");
+    when(event.getOldTable()).thenReturn(oldTable);
+    when(event.getNewTable()).thenReturn(newTable);
+    when(glueClient.createTable(any())).thenThrow(new OperationTimeoutException("timeout"));
+
+    glueSync.onAlterTable(event);
+
+    verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_FAILURE, "OperationTimeoutException");
   }
 
   @Test
@@ -805,7 +823,9 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).updateTable(updateTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "UPDATED");
     assertThat(updateTableRequestCaptor.getValue().getTableInput().getName(), is("table_renamed"));
+    // rename operation (copy+delete) must not be triggered for Iceberg tables
     verify(glueClient, times(0)).deleteTable(any());
     verify(glueClient, times(0)).batchCreatePartition(any());
   }
