@@ -20,6 +20,7 @@ import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.Metri
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OUTCOME;
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_RESULT;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -28,11 +29,16 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jmx.JmxReporter;
+
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.jmx.JmxConfig;
 import io.micrometer.jmx.JmxMeterRegistry;
 
@@ -63,9 +69,37 @@ public class MetricService {
   // for its deployment context. Keep these two copies in sync manually.
   private static synchronized MeterRegistry configuredRegistry() {
     if (Metrics.globalRegistry.getRegistries().isEmpty()) {
-      Metrics.addRegistry(new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM));
+      MetricRegistry dropwizardRegistry = new MetricRegistry();
+      JmxReporter reporter = JmxReporter.forRegistry(dropwizardRegistry)
+          .inDomain("metrics")
+          .createsObjectNamesWith(new TaggedObjectNameFactory())
+          .build();
+      Metrics.addRegistry(new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM, taggedNameMapper(), dropwizardRegistry, reporter));
     }
     return Metrics.globalRegistry;
+  }
+
+  // Encodes Micrometer tags as "name[key=value,key=value]" in the Dropwizard metric name so that
+  // TaggedObjectNameFactory can promote them to proper JMX ObjectName key properties.
+  static HierarchicalNameMapper taggedNameMapper() {
+    return (id, convention) -> {
+      String baseName = convention.name(id.getName(), id.getType(), id.getBaseUnit());
+      List<Tag> tags = id.getTags();
+      if (tags.isEmpty()) {
+        return baseName;
+      }
+      StringBuilder sb = new StringBuilder(baseName).append('[');
+      for (int i = 0; i < tags.size(); i++) {
+        Tag tag = tags.get(i);
+        if (i > 0) {
+          sb.append(',');
+        }
+        sb.append(convention.tagKey(tag.getKey()))
+            .append('=')
+            .append(convention.tagValue(tag.getValue()));
+      }
+      return sb.append(']').toString();
+    };
   }
 
   public void incrementCounter(String name) {

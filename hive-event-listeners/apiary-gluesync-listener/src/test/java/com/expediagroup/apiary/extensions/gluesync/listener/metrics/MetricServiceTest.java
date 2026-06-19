@@ -27,6 +27,9 @@ import javax.management.ObjectName;
 
 import org.junit.Test;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jmx.JmxReporter;
+
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -84,6 +87,32 @@ public class MetricServiceTest {
     boolean found = beans.stream()
         .anyMatch(n -> n.toString().contains(MetricConstants.LISTENER_TABLE_SUCCESS));
     assertThat("expected JMX MBean for " + MetricConstants.LISTENER_TABLE_SUCCESS, found, is(true));
+
+    jmxRegistry.close();
+  }
+
+  @Test
+  public void taggedEventCounterExposesTagsAsJmxKeyProperties() throws Exception {
+    MetricRegistry dropwizardRegistry = new MetricRegistry();
+    JmxReporter reporter = JmxReporter.forRegistry(dropwizardRegistry)
+        .inDomain("metrics")
+        .createsObjectNamesWith(new TaggedObjectNameFactory())
+        .build();
+    JmxMeterRegistry jmxRegistry = new JmxMeterRegistry(
+        JmxConfig.DEFAULT, Clock.SYSTEM,
+        MetricService.taggedNameMapper(), dropwizardRegistry, reporter);
+    MetricService metricService = new MetricService(jmxRegistry);
+
+    metricService.recordEvent("alter_table", "failure", "other");
+
+    MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+    Set<ObjectName> beans = mbs.queryNames(
+        new ObjectName("metrics:name=" + MetricConstants.LISTENER_EVENT + ",*"), null);
+    assertThat("expected exactly one event MBean", beans.size(), is(1));
+    ObjectName bean = beans.iterator().next();
+    assertThat(bean.getKeyProperty("operation"), is("alter_table"));
+    assertThat(bean.getKeyProperty("result"), is("failure"));
+    assertThat(bean.getKeyProperty("outcome"), is("other"));
 
     jmxRegistry.close();
   }
