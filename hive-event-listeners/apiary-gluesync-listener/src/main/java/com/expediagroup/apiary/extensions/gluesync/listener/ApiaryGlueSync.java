@@ -17,6 +17,7 @@ package com.expediagroup.apiary.extensions.gluesync.listener;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -58,7 +59,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
 
   // Order matters: subclasses must precede their superclass so isInstance() matches the most specific type first.
   // OperationTimeoutException and InvalidInputException both extend AmazonServiceException.
-  private static final List<Class<? extends Exception>> KNOWN_EXCEPTIONS = List.of(
+  private static final List<Class<? extends Exception>> KNOWN_EXCEPTIONS = Arrays.asList(
       OperationTimeoutException.class,
       InvalidInputException.class,
       AmazonServiceException.class
