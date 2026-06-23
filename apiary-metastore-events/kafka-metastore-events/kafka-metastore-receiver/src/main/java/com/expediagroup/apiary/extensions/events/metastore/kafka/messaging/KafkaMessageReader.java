@@ -162,6 +162,8 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
       if (Metrics.globalRegistry.getRegistries().isEmpty()) {
         log.info("No MeterRegistry found; registering JmxMeterRegistry for Kafka consumer metrics");
         Metrics.addRegistry(new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM));
+      } else {
+        log.info("Using existing MeterRegistry for Kafka consumer metrics: {}", Metrics.globalRegistry);
       }
       return Metrics.globalRegistry;
     }
