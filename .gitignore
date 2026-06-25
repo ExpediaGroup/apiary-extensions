@@ -28,3 +28,6 @@ dependency-reduced-pom.xml
 
 # Jenv file
 .java-version
+
+# Maven shade plugin artifact
+dependency-reduced-pom.xml

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2020 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,15 @@ import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
+import io.micrometer.jmx.JmxConfig;
+import io.micrometer.jmx.JmxMeterRegistry;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -37,21 +46,27 @@ import com.expediagroup.apiary.extensions.events.metastore.io.jackson.JsonMetaSt
 
 public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closeable {
 
+  private static final Logger log = LoggerFactory.getLogger(KafkaMessageReader.class);
   private static final Duration POLL_TIMEOUT = Duration.ofMinutes(5);
 
   private KafkaConsumer<Long, byte[]> consumer;
   private MetaStoreEventSerDe eventSerDe;
   private Iterator<ConsumerRecord<Long, byte[]>> records;
+  private KafkaClientMetrics kafkaClientMetrics;
 
-  private KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, Properties consumerProperties) {
-    this(topicName, eventSerDe, new KafkaConsumer(consumerProperties));
+  private KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, Properties consumerProperties, MeterRegistry meterRegistry) {
+    this(topicName, eventSerDe, new KafkaConsumer(consumerProperties), meterRegistry);
   }
 
   @VisibleForTesting
-  KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, KafkaConsumer<Long, byte[]> consumer) {
+  KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, KafkaConsumer<Long, byte[]> consumer, MeterRegistry meterRegistry) {
     this.eventSerDe = eventSerDe;
     this.consumer = consumer;
     this.consumer.subscribe(Collections.singletonList(topicName));
+    if (meterRegistry != null) {
+      this.kafkaClientMetrics = new KafkaClientMetrics(consumer);
+      this.kafkaClientMetrics.bindTo(meterRegistry);
+    }
   }
 
   @Override
@@ -73,7 +88,13 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
 
   @Override
   public void close() {
-    consumer.close();
+    try {
+      if (kafkaClientMetrics != null) {
+        kafkaClientMetrics.close();
+      }
+    } finally {
+      consumer.close();
+    }
   }
 
   private void readRecordsIfNeeded() {
@@ -89,6 +110,7 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
     private String groupId = "apiary-kafka-metastore-receiver-";
     private MetaStoreEventSerDe metaStoreEventSerDe = new JsonMetaStoreEventSerDe();
     private Properties consumerProperties = new Properties();
+    private MeterRegistry meterRegistry;
 
     private KafkaMessageReaderBuilder(String bootstrapServers, String topicName, String applicationName) {
       this.bootstrapServers = bootstrapServers;
@@ -114,6 +136,11 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
       return this;
     }
 
+    public KafkaMessageReaderBuilder withMeterRegistry(MeterRegistry meterRegistry) {
+      this.meterRegistry = meterRegistry;
+      return this;
+    }
+
     public KafkaMessageReader build() {
       Properties props = new Properties();
       props.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -121,7 +148,24 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
       props.put("key.deserializer", "org.apache.kafka.common.serialization.LongDeserializer");
       props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
       consumerProperties.forEach((key, value) -> props.merge(key, value, (v1, v2) -> v1));
-      return new KafkaMessageReader(topicName, metaStoreEventSerDe, props);
+      MeterRegistry registry = meterRegistry != null ? meterRegistry : configuredRegistry();
+      return new KafkaMessageReader(topicName, metaStoreEventSerDe, props, registry);
+    }
+
+    // DO NOT extract to a shared utility. MetricService in apiary-gluesync-listener has a
+    // similar method, but the two implementations intentionally differ: that module shades and
+    // relocates micrometer-jmx for HMS classpath isolation, and uses a Dropwizard-backed
+    // JmxMeterRegistry with TaggedObjectNameFactory for tagged JMX ObjectName properties. This
+    // module runs outside HMS and uses a plain JmxMeterRegistry without tag promotion.
+    // Each module must own its own copy.
+    private static synchronized MeterRegistry configuredRegistry() {
+      if (Metrics.globalRegistry.getRegistries().isEmpty()) {
+        log.info("No MeterRegistry found; registering JmxMeterRegistry for Kafka consumer metrics");
+        Metrics.addRegistry(new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM));
+      } else {
+        log.info("Using existing MeterRegistry for Kafka consumer metrics: {}", Metrics.globalRegistry);
+      }
+      return Metrics.globalRegistry;
     }
   }
 }

@@ -17,7 +17,9 @@ package com.expediagroup.apiary.extensions.gluesync.listener;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
@@ -51,6 +53,16 @@ import com.expediagroup.apiary.extensions.gluesync.listener.service.IsIcebergTab
 public class ApiaryGlueSync extends MetaStoreEventListener {
 
   private static final Logger log = LoggerFactory.getLogger(ApiaryGlueSync.class);
+
+  // Simple names of AWS exception types to surface as outcome tags. Walking the class hierarchy
+  // from specific to general means subclasses (e.g. OperationTimeoutException) are matched before
+  // their superclass (AmazonServiceException) without relying on class literals, which break when
+  // the shade plugin relocates com.amazonaws.* to a shaded package at runtime.
+  private static final List<String> KNOWN_EXCEPTION_NAMES = Arrays.asList(
+      "OperationTimeoutException",
+      "InvalidInputException",
+      "AmazonServiceException"
+  );
 
   private final AWSGlue glueClient;
   private final GlueDatabaseService glueDatabaseService;
@@ -106,19 +118,18 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   @Override
   public void onCreateDatabase(CreateDatabaseEvent event) throws MetaException {
     if (!event.getStatus()) {
+      metricService.recordEvent(MetricConstants.CREATE_DATABASE, MetricConstants.RESULT_IGNORED, "ignored");
       return;
     }
     Database database = event.getDatabase();
     try {
-      glueDatabaseService.create(database);
+      String outcome = createOrUpdateDatabase(database);
       metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_SUCCESS);
-    } catch (AlreadyExistsException e) {
-      log.info(database + " database already exists in glue, updating....");
-      glueDatabaseService.update(database);
-      metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_SUCCESS);
+      metricService.recordEvent(MetricConstants.CREATE_DATABASE, MetricConstants.RESULT_SUCCESS, outcome);
     } catch (Exception e) {
       log.error("Failed create database {} in glue", database.getName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_FAILURE);
+      metricService.recordEvent(MetricConstants.CREATE_DATABASE, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
@@ -128,15 +139,18 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   @Override
   public void onDropDatabase(DropDatabaseEvent event) throws MetaException {
     if (!event.getStatus()) {
+      metricService.recordEvent(MetricConstants.DROP_DATABASE, MetricConstants.RESULT_IGNORED, "ignored");
       return;
     }
     Database database = event.getDatabase();
     try {
       glueDatabaseService.delete(database);
       metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_SUCCESS);
+      metricService.recordEvent(MetricConstants.DROP_DATABASE, MetricConstants.RESULT_SUCCESS, "deleted");
     } catch (Exception e) {
       log.error("Failed drop database {} in glue", database.getName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_DATABASE_FAILURE);
+      metricService.recordEvent(MetricConstants.DROP_DATABASE, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
@@ -146,19 +160,18 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   @Override
   public void onCreateTable(CreateTableEvent event) throws MetaException {
     if (!event.getStatus()) {
+      metricService.recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_IGNORED, "ignored");
       return;
     }
     Table table = event.getTable();
     try {
-      glueTableService.create(table);
+      String outcome = createOrUpdateTable(table);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    } catch (AlreadyExistsException e) {
-      log.info(table + " table already exists in glue, updating....");
-      glueTableService.update(table);
-      metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+      metricService.recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, outcome);
     } catch (Exception e) {
       log.error("Failed create table {}.{} in glue", table.getDbName(), table.getTableName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
+      metricService.recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
@@ -168,20 +181,24 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   @Override
   public void onDropTable(DropTableEvent event) throws MetaException {
     if (!event.getStatus()) {
+      metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_IGNORED, "ignored");
       return;
     }
     Table table = event.getTable();
     try {
       glueTableService.delete(table);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+      metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "deleted");
     } catch (EntityNotFoundException e) {
       log.info(table + " table doesn't exist in glue catalog");
+      metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "not_found");
       if (throwExceptions) {
         throw wrap(e);
       }
     } catch (Exception e) {
       log.error("Failed drop table {}.{} in glue", table.getDbName(), table.getTableName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
+      metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
@@ -191,6 +208,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   @Override
   public void onAlterTable(AlterTableEvent event) throws MetaException {
     if (!event.getStatus()) {
+      metricService.recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_IGNORED, "ignored");
       return;
     }
     Table oldTable = event.getOldTable();
@@ -202,21 +220,71 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
         doRenameOperation(oldTable, newTable);
         return;
       }
-      glueTableService.update(newTable);
+      String outcome = updateOrCreateTable(newTable);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    } catch (EntityNotFoundException e) {
-      log.info(newTable + " table doesn't exist in glue, creating....");
-      glueTableService.create(newTable);
-      metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-      if (throwExceptions) {
-        throw wrap(e);
-      }
+      metricService.recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, outcome);
     } catch (Exception e) {
       log.error("Failed alter table {}.{} in glue", oldTable.getDbName(), oldTable.getTableName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
+      metricService.recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
+    }
+  }
+
+  private String createOrUpdateDatabase(Database database) {
+    try {
+      glueDatabaseService.create(database);
+      return MetricConstants.OUTCOME_CREATED;
+    } catch (AlreadyExistsException e) {
+      log.info("{} database already exists in glue, updating....", database.getName());
+      glueDatabaseService.update(database);
+      return MetricConstants.OUTCOME_UPDATED;
+    }
+  }
+
+  private String createOrUpdateTable(Table table) {
+    try {
+      glueTableService.create(table);
+      return MetricConstants.OUTCOME_CREATED;
+    } catch (AlreadyExistsException e) {
+      log.info("{} table already exists in glue, updating....", table.getTableName());
+      glueTableService.update(table);
+      return MetricConstants.OUTCOME_UPDATED;
+    }
+  }
+
+  private String updateOrCreateTable(Table table) {
+    try {
+      glueTableService.update(table);
+      return MetricConstants.OUTCOME_UPDATED;
+    } catch (EntityNotFoundException e) {
+      log.info("{} table doesn't exist in glue, creating....", table.getTableName());
+      glueTableService.create(table);
+      return MetricConstants.OUTCOME_CREATED;
+    }
+  }
+
+  private String createOrUpdatePartition(Table table, Partition partition) {
+    try {
+      gluePartitionService.create(table, partition);
+      return MetricConstants.OUTCOME_CREATED;
+    } catch (AlreadyExistsException e) {
+      log.info("{} partition already exists in glue, updating....", partition);
+      gluePartitionService.update(table, partition);
+      return MetricConstants.OUTCOME_UPDATED;
+    }
+  }
+
+  private String updateOrCreatePartition(Table table, Partition partition) {
+    try {
+      gluePartitionService.update(table, partition);
+      return MetricConstants.OUTCOME_UPDATED;
+    } catch (EntityNotFoundException e) {
+      log.info("{} partition doesn't exist in glue, creating....", partition);
+      gluePartitionService.create(table, partition);
+      return MetricConstants.OUTCOME_CREATED;
     }
   }
 
@@ -227,8 +295,10 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     gluePartitionService.copyPartitions(newTable, gluePartitionService.getPartitions(oldTable));
     glueTableService.delete(oldTable);
     metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    metricService.recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "renamed");
     long duration = System.currentTimeMillis() - startTime;
-    log.info("{} glue table rename to {} finised in {}ms", oldTable.getTableName(), newTable.getTableName(), duration);
+    metricService.recordDuration(MetricConstants.LISTENER_TABLE_RENAME_DURATION, duration);
+    log.info("{} glue table rename to {} finished in {}ms", oldTable.getTableName(), newTable.getTableName(), duration);
   }
 
   private boolean isTableRename(Table oldTable, Table newTable) {
@@ -238,6 +308,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   @Override
   public void onAddPartition(AddPartitionEvent event) throws MetaException {
     if (!event.getStatus()) {
+      metricService.recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_IGNORED, "ignored");
       return;
     }
     Table table = event.getTable();
@@ -245,14 +316,13 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     while (partitions.hasNext()) {
       Partition partition = partitions.next();
       try {
-        gluePartitionService.create(table, partition);
+        String outcome = createOrUpdatePartition(table, partition);
         metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
-      } catch (AlreadyExistsException e) {
-        gluePartitionService.update(table, partition);
-        metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
+        metricService.recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_SUCCESS, outcome);
       } catch (Exception e) {
         log.error("Failed add partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
         metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);
+        metricService.recordEvent(MetricConstants.ADD_PARTITION, MetricConstants.RESULT_FAILURE, toOutcome(e));
         if (throwExceptions) {
           throw wrap(e);
         }
@@ -263,6 +333,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   @Override
   public void onDropPartition(DropPartitionEvent event) throws MetaException {
     if (!event.getStatus()) {
+      metricService.recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_IGNORED, "ignored");
       return;
     }
     Table table = event.getTable();
@@ -272,9 +343,17 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       try {
         gluePartitionService.delete(table, partition);
         metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
+        metricService.recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_SUCCESS, "deleted");
+      } catch (EntityNotFoundException e) {
+        log.info("{} partition doesn't exist in glue catalog", partition);
+        metricService.recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_SUCCESS, "not_found");
+        if (throwExceptions) {
+          throw wrap(e);
+        }
       } catch (Exception e) {
         log.error("Failed drop partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
         metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);
+        metricService.recordEvent(MetricConstants.DROP_PARTITION, MetricConstants.RESULT_FAILURE, toOutcome(e));
         if (throwExceptions) {
           throw wrap(e);
         }
@@ -285,26 +364,34 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   @Override
   public void onAlterPartition(AlterPartitionEvent event) throws MetaException {
     if (!event.getStatus()) {
+      metricService.recordEvent(MetricConstants.ALTER_PARTITION, MetricConstants.RESULT_IGNORED, "ignored");
       return;
     }
     Table table = event.getTable();
     Partition partition = event.getNewPartition();
     try {
-      gluePartitionService.update(table, partition);
+      String outcome = updateOrCreatePartition(table, partition);
       metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
-    } catch (EntityNotFoundException e) {
-      gluePartitionService.create(table, partition);
-      metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_SUCCESS);
-      if (throwExceptions) {
-        throw wrap(e);
-      }
+      metricService.recordEvent(MetricConstants.ALTER_PARTITION, MetricConstants.RESULT_SUCCESS, outcome);
     } catch (Exception e) {
       log.error("Failed alter partition on table {}.{} in glue", table.getDbName(), table.getTableName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_PARTITION_FAILURE);
+      metricService.recordEvent(MetricConstants.ALTER_PARTITION, MetricConstants.RESULT_FAILURE, toOutcome(e));
       if (throwExceptions) {
         throw wrap(e);
       }
     }
+  }
+
+  private static String toOutcome(Exception e) {
+    Class<?> type = e.getClass();
+    while (type != null) {
+      if (KNOWN_EXCEPTION_NAMES.contains(type.getSimpleName())) {
+        return type.getSimpleName();
+      }
+      type = type.getSuperclass();
+    }
+    return "other";
   }
 
   /*

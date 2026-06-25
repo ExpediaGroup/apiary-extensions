@@ -20,6 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.lang.management.ManagementFactory;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -31,6 +32,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.jmx.JmxConfig;
 import io.micrometer.jmx.JmxMeterRegistry;
+
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jmx.JmxReporter;
 
 public class MetricServiceTest {
 
@@ -61,6 +65,17 @@ public class MetricServiceTest {
   }
 
   @Test
+  public void recordDurationRegistersTimer() {
+    MeterRegistry registry = new SimpleMeterRegistry();
+    MetricService metricService = new MetricService(registry);
+
+    metricService.recordDuration(MetricConstants.LISTENER_TABLE_RENAME_DURATION, 500L);
+
+    assertThat(registry.get(MetricConstants.LISTENER_TABLE_RENAME_DURATION).timer().count(), is(1L));
+    assertThat(registry.get(MetricConstants.LISTENER_TABLE_RENAME_DURATION).timer().totalTime(TimeUnit.MILLISECONDS), is(500.0));
+  }
+
+  @Test
   public void jmxRegistryExposesCountersAsMBeans() throws Exception {
     JmxMeterRegistry jmxRegistry = new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM);
     MetricService metricService = new MetricService(jmxRegistry);
@@ -72,6 +87,32 @@ public class MetricServiceTest {
     boolean found = beans.stream()
         .anyMatch(n -> n.toString().contains(MetricConstants.LISTENER_TABLE_SUCCESS));
     assertThat("expected JMX MBean for " + MetricConstants.LISTENER_TABLE_SUCCESS, found, is(true));
+
+    jmxRegistry.close();
+  }
+
+  @Test
+  public void taggedEventCounterExposesTagsAsJmxKeyProperties() throws Exception {
+    MetricRegistry dropwizardRegistry = new MetricRegistry();
+    JmxReporter reporter = JmxReporter.forRegistry(dropwizardRegistry)
+        .inDomain("metrics")
+        .createsObjectNamesWith(new TaggedObjectNameFactory())
+        .build();
+    JmxMeterRegistry jmxRegistry = new JmxMeterRegistry(
+        JmxConfig.DEFAULT, Clock.SYSTEM,
+        MetricService.taggedNameMapper(), dropwizardRegistry, reporter);
+    MetricService metricService = new MetricService(jmxRegistry);
+
+    metricService.recordEvent("alter_table", "failure", "other");
+
+    MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+    Set<ObjectName> beans = mbs.queryNames(
+        new ObjectName("metrics:name=" + MetricConstants.LISTENER_EVENT + ",*"), null);
+    assertThat("expected exactly one event MBean", beans.size(), is(1));
+    ObjectName bean = beans.iterator().next();
+    assertThat(bean.getKeyProperty("operation"), is("alter_table"));
+    assertThat(bean.getKeyProperty("result"), is("failure"));
+    assertThat(bean.getKeyProperty("outcome"), is("other"));
 
     jmxRegistry.close();
   }

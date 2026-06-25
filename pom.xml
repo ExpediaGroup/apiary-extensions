@@ -10,7 +10,7 @@
   <groupId>com.expediagroup.apiary</groupId>
   <artifactId>apiary-extensions-parent</artifactId>
   <description>Various extensions to Apiary that provide additional, optional functionality</description>
-  <version>8.1.19-SNAPSHOT</version>
+  <version>8.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apiary Extensions</name>
   <inceptionYear>2018</inceptionYear>
@@ -28,7 +28,7 @@
     <hadoop.version>2.7.1</hadoop.version>
     <hive.version>2.3.7</hive.version>
     <iceberg.version>1.0.0</iceberg.version>
-    <io.micrometer.version>1.9.9</io.micrometer.version>
+    <io.micrometer.version>1.14.14</io.micrometer.version>
     <!-- micrometer-registry-jmx pulls in metrics-jmx 4.x; pin it here to prevent Maven
          nearest-wins from resolving an incompatible version. The shade plugin in
          apiary-gluesync-listener relocates com.codahale.metrics to the shaded namespace to

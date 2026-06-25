@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,29 @@ public class MetricConstants {
   public static final String LISTENER_TABLE_SUCCESS = "glue_listener_table_success";
   public static final String LISTENER_PARTITION_FAILURE = "glue_listener_partition_failure";
   public static final String LISTENER_PARTITION_SUCCESS = "glue_listener_partition_success";
+
+  public static final String LISTENER_EVENT = "glue_listener_event";
+  public static final String LISTENER_TABLE_RENAME_DURATION = "glue_listener_table_rename_duration";
+
+  public static final String TAG_OPERATION = "operation";
+  public static final String TAG_RESULT    = "result";
+  public static final String TAG_OUTCOME   = "outcome";
+
+  public static final String RESULT_SUCCESS = "success";
+  public static final String RESULT_FAILURE = "failure";
+  public static final String RESULT_IGNORED = "ignored";
+
+  public static final String OUTCOME_CREATED = "created";
+  public static final String OUTCOME_UPDATED = "updated";
+
+  public static final String CREATE_DATABASE = "create_database";
+  public static final String DROP_DATABASE   = "drop_database";
+  public static final String CREATE_TABLE    = "create_table";
+  public static final String DROP_TABLE      = "drop_table";
+  public static final String ALTER_TABLE     = "alter_table";
+  public static final String ADD_PARTITION   = "add_partition";
+  public static final String DROP_PARTITION  = "drop_partition";
+  public static final String ALTER_PARTITION = "alter_partition";
 
   public static final List<String> LISTENER_METRICS = Arrays.asList(
       LISTENER_DATABASE_FAILURE,
