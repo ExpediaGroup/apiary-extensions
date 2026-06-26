@@ -302,7 +302,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   }
 
   private boolean isTableRename(Table oldTable, Table newTable) {
-    return !oldTable.getTableName().equals(newTable.getTableName());
+    return !oldTable.getTableName().equalsIgnoreCase(newTable.getTableName());
   }
 
   @Override

@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -497,6 +498,29 @@ public class ApiaryGlueSyncTest {
     assertThat(createTableRequest.getTableInput().getLastAccessTime(), is(new Date(lastAccessTime)));
     assertThat(toList(createTableRequest.getTableInput().getPartitionKeys()), is(asList(partNames)));
     assertThat(toList(createTableRequest.getTableInput().getStorageDescriptor().getColumns()), is(asList(colNames)));
+  }
+
+  @Test
+  public void onAlterHiveTable_CaseOnlyRenameSkipsRenameOperation() throws MetaException {
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table oldTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    oldTable.setTableName("some_table");
+    when(event.getOldTable()).thenReturn(oldTable);
+
+    Table newTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    newTable.setTableName("Some_Table");
+    when(event.getNewTable()).thenReturn(newTable);
+
+    glueSync.onAlterTable(event);
+
+    // case-only difference must not trigger the rename path (create + copy + delete)
+    verify(glueClient, never()).createTable(any());
+    verify(glueClient, never()).deleteTable(any());
+    verify(glueClient, never()).batchCreatePartition(any());
+    // normal update path must be followed instead
+    verify(glueClient).updateTable(any());
   }
 
   @Test
