@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
@@ -62,6 +64,29 @@ public class GlueMetadataStringCleanerTest {
     Column partitionColumn = result.getPartitionKeys().get(0);
     assertTrue(partitionColumn.getComment().length() == 254);
     assertTrue(partitionColumn.getComment().startsWith("A"));
+  }
+
+  @Test
+  public void testTableInputDescriptionNonUnicodeCharsRemoved() {
+    TableInput tableInput = new TableInput();
+    tableInput.setStorageDescriptor(new StorageDescriptor().withColumns(Collections.emptyList()));
+    tableInput.setPartitionKeys(Collections.emptyList());
+    tableInput.setDescription("\uD999valid description");
+
+    TableInput result = glueMetadataStringCleaner.cleanTable(tableInput);
+
+    assertEquals("valid description", result.getDescription());
+  }
+
+  @Test
+  public void testTableInputDescriptionNullUnchanged() {
+    TableInput tableInput = new TableInput();
+    tableInput.setStorageDescriptor(new StorageDescriptor().withColumns(Collections.emptyList()));
+    tableInput.setPartitionKeys(Collections.emptyList());
+
+    TableInput result = glueMetadataStringCleaner.cleanTable(tableInput);
+
+    assertNull(result.getDescription());
   }
 
   @Test
