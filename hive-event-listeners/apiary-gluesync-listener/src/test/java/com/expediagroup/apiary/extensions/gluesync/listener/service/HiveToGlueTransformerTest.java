@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.expediagroup.apiary.extensions.gluesync.listener.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,9 +28,11 @@ import java.util.Map;
 
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.Test;
 
 import com.amazonaws.services.glue.model.PartitionInput;
+import com.amazonaws.services.glue.model.TableInput;
 
 public class HiveToGlueTransformerTest {
   private final HiveToGlueTransformer transformer = new HiveToGlueTransformer(null);
@@ -101,6 +104,67 @@ public class HiveToGlueTransformerTest {
     partition.getSd().setLocation("s3a://test-bucket/path"); // Test normalization
 
     return partition;
+  }
+
+  @Test
+  public void testTransformTablePopulatesDescriptionFromCommentParam() {
+    Table table = createMinimalHiveTable();
+    table.getParameters().put("comment", "my table description");
+
+    TableInput result = transformer.transformTable(table);
+
+    assertEquals("my table description", result.getDescription());
+  }
+
+  @Test
+  public void testTransformTableDescriptionIsNullWhenNoCommentParam() {
+    Table table = createMinimalHiveTable();
+
+    TableInput result = transformer.transformTable(table);
+
+    assertNull(result.getDescription());
+  }
+
+  @Test
+  public void testTransformTableDescriptionIsNullWhenParamsExistButNoComment() {
+    Table table = createMinimalHiveTable();
+    table.getParameters().put("other.param", "some value");
+
+    TableInput result = transformer.transformTable(table);
+
+    assertNull(result.getDescription());
+  }
+
+  private Table createMinimalHiveTable() {
+    Table table = new Table();
+    table.setTableName("test_table");
+    table.setDbName("test_db");
+    table.setOwner("test_owner");
+    table.setTableType("EXTERNAL_TABLE");
+    table.setParameters(new HashMap<>());
+
+    org.apache.hadoop.hive.metastore.api.StorageDescriptor sd = new org.apache.hadoop.hive.metastore.api.StorageDescriptor();
+    sd.setCols(Collections.emptyList());
+    sd.setBucketCols(Collections.emptyList());
+    sd.setCompressed(false);
+    sd.setInputFormat("org.apache.hadoop.mapred.TextInputFormat");
+    sd.setLocation("s3://test-bucket/path");
+    sd.setNumBuckets(0);
+    sd.setOutputFormat("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat");
+    sd.setParameters(Collections.emptyMap());
+
+    org.apache.hadoop.hive.metastore.api.SerDeInfo serdeInfo = new org.apache.hadoop.hive.metastore.api.SerDeInfo();
+    serdeInfo.setName("test-serde");
+    serdeInfo.setSerializationLib("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe");
+    serdeInfo.setParameters(Collections.emptyMap());
+    sd.setSerdeInfo(serdeInfo);
+
+    sd.setSortCols(Collections.emptyList());
+    sd.setStoredAsSubDirectories(false);
+    table.setSd(sd);
+    table.setPartitionKeys(Collections.emptyList());
+
+    return table;
   }
 
   /**

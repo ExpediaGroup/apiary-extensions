@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
@@ -65,6 +67,41 @@ public class GlueMetadataStringCleanerTest {
   }
 
   @Test
+  public void testTableInputDescriptionNonUnicodeCharsRemoved() {
+    TableInput tableInput = new TableInput();
+    tableInput.setStorageDescriptor(new StorageDescriptor().withColumns(Collections.emptyList()));
+    tableInput.setPartitionKeys(Collections.emptyList());
+    tableInput.setDescription("\uD999valid description");
+
+    TableInput result = glueMetadataStringCleaner.cleanTable(tableInput);
+
+    assertEquals("valid description", result.getDescription());
+  }
+
+  @Test
+  public void testTableInputDescriptionTruncatedTo2048Chars() {
+    TableInput tableInput = new TableInput();
+    tableInput.setStorageDescriptor(new StorageDescriptor().withColumns(Collections.emptyList()));
+    tableInput.setPartitionKeys(Collections.emptyList());
+    tableInput.setDescription(generateCharString(3000));
+
+    TableInput result = glueMetadataStringCleaner.cleanTable(tableInput);
+
+    assertEquals(2048, result.getDescription().length());
+  }
+
+  @Test
+  public void testTableInputDescriptionNullUnchanged() {
+    TableInput tableInput = new TableInput();
+    tableInput.setStorageDescriptor(new StorageDescriptor().withColumns(Collections.emptyList()));
+    tableInput.setPartitionKeys(Collections.emptyList());
+
+    TableInput result = glueMetadataStringCleaner.cleanTable(tableInput);
+
+    assertNull(result.getDescription());
+  }
+
+  @Test
   public void testPartitionInput() {
     PartitionInput partitionInput = new PartitionInput();
     partitionInput.setStorageDescriptor(new StorageDescriptor().withColumns(incorrectColumn));
@@ -86,7 +123,7 @@ public class GlueMetadataStringCleanerTest {
 
   private String generateCharString(int length) {
     StringBuilder sb = new StringBuilder(length);
-    for (int i = 0; i < 300; i++) {
+    for (int i = 0; i < length; i++) {
       sb.append("A");
     }
     return sb.toString();

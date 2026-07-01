@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,15 @@ import com.amazonaws.services.glue.model.TableInput;
  */
 public class GlueMetadataStringCleaner {
 
+  private static final int MAX_COLUMN_COMMENT_LENGTH = 254;
+  private static final int MAX_DESCRIPTION_LENGTH = 2048;
+
   public TableInput cleanTable(TableInput input) {
     // Clean SerDes
     cleanColumns(input.getStorageDescriptor().getColumns());
     // Clean Partition Keys
     cleanColumns(input.getPartitionKeys());
+    input.setDescription(cleanDescription(input.getDescription()));
     return input;
   }
 
@@ -47,20 +51,28 @@ public class GlueMetadataStringCleaner {
     return input;
   }
 
+  /**
+   * Cleans a Glue TableInput description to satisfy API constraints:
+   * <ul>
+   *   <li>Unicode characters only</li>
+   *   <li>Maximum 2048 characters</li>
+   * </ul>
+   */
+  private String cleanDescription(String description) {
+    return truncateToMaxAllowedChars(removeNonUnicodeChars(description), MAX_DESCRIPTION_LENGTH);
+  }
+
   private void cleanColumns(List<Column> columns) {
     for (Column column : columns) {
-      column.setComment(this.truncateToMaxAllowedChars(this.removeNonUnicodeChars(column.getComment())));
+      column.setComment(this.truncateToMaxAllowedChars(this.removeNonUnicodeChars(column.getComment()), MAX_COLUMN_COMMENT_LENGTH));
     }
   }
 
-  public String truncateToMaxAllowedChars(String input) {
+  public String truncateToMaxAllowedChars(String input, int maxLength) {
     if (input == null) {
       return null;
     }
-    if (input.length() > 254) {
-      return input.substring(0, 254);
-    }
-    return input;
+    return input.length() > maxLength ? input.substring(0, maxLength) : input;
   }
 
   public String removeNonUnicodeChars(String input) {

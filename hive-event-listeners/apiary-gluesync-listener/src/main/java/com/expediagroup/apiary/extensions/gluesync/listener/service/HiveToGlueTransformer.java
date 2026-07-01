@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,11 +93,15 @@ public class HiveToGlueTransformer {
         .withSortColumns(sortOrders)
         .withStoredAsSubDirectories(storageDescriptor.isStoredAsSubDirectories());
 
+    Map<String, String> tableParams = table.getParameters();
+    String description = (tableParams != null) ? tableParams.get("comment") : null;
+
     return new TableInput()
         .withName(table.getTableName())
+        .withDescription(description)
         .withLastAccessTime(date)
         .withOwner(table.getOwner())
-        .withParameters(addClassification(table.getParameters(), storageDescriptor.getInputFormat()))
+        .withParameters(addClassification(tableParams, storageDescriptor.getInputFormat()))
         .withPartitionKeys(partitionKeys)
         .withRetention(table.getRetention())
         .withStorageDescriptor(sd)
