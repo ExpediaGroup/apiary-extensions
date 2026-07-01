@@ -79,6 +79,18 @@ public class GlueMetadataStringCleanerTest {
   }
 
   @Test
+  public void testTableInputDescriptionTruncatedTo2048Chars() {
+    TableInput tableInput = new TableInput();
+    tableInput.setStorageDescriptor(new StorageDescriptor().withColumns(Collections.emptyList()));
+    tableInput.setPartitionKeys(Collections.emptyList());
+    tableInput.setDescription("A".repeat(3000));
+
+    TableInput result = glueMetadataStringCleaner.cleanTable(tableInput);
+
+    assertEquals(2048, result.getDescription().length());
+  }
+
+  @Test
   public void testTableInputDescriptionNullUnchanged() {
     TableInput tableInput = new TableInput();
     tableInput.setStorageDescriptor(new StorageDescriptor().withColumns(Collections.emptyList()));

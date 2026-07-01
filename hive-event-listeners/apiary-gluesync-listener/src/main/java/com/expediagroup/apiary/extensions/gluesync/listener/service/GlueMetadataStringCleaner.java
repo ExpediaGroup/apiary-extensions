@@ -35,7 +35,7 @@ public class GlueMetadataStringCleaner {
     // Clean Partition Keys
     cleanColumns(input.getPartitionKeys());
     // Clean Description
-    input.setDescription(removeNonUnicodeChars(input.getDescription()));
+    input.setDescription(cleanDescription(input.getDescription()));
     return input;
   }
 
@@ -49,6 +49,10 @@ public class GlueMetadataStringCleaner {
     return input;
   }
 
+  private String cleanDescription(String description) {
+    return truncateToMaxAllowedChars(removeNonUnicodeChars(description), 2048);
+  }
+
   private void cleanColumns(List<Column> columns) {
     for (Column column : columns) {
       column.setComment(this.truncateToMaxAllowedChars(this.removeNonUnicodeChars(column.getComment())));
@@ -56,13 +60,14 @@ public class GlueMetadataStringCleaner {
   }
 
   public String truncateToMaxAllowedChars(String input) {
+    return truncateToMaxAllowedChars(input, 254);
+  }
+
+  private String truncateToMaxAllowedChars(String input, int maxLength) {
     if (input == null) {
       return null;
     }
-    if (input.length() > 254) {
-      return input.substring(0, 254);
-    }
-    return input;
+    return input.length() > maxLength ? input.substring(0, maxLength) : input;
   }
 
   public String removeNonUnicodeChars(String input) {

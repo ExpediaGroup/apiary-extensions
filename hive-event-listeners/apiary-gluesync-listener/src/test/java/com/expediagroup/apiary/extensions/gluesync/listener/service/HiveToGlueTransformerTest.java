@@ -125,6 +125,16 @@ public class HiveToGlueTransformerTest {
     assertNull(result.getDescription());
   }
 
+  @Test
+  public void testTransformTableDescriptionIsNullWhenParamsExistButNoComment() {
+    Table table = createMinimalHiveTable();
+    table.getParameters().put("other.param", "some value");
+
+    TableInput result = transformer.transformTable(table);
+
+    assertNull(result.getDescription());
+  }
+
   private Table createMinimalHiveTable() {
     Table table = new Table();
     table.setTableName("test_table");
