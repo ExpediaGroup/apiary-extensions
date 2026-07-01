@@ -83,7 +83,7 @@ public class GlueMetadataStringCleanerTest {
     TableInput tableInput = new TableInput();
     tableInput.setStorageDescriptor(new StorageDescriptor().withColumns(Collections.emptyList()));
     tableInput.setPartitionKeys(Collections.emptyList());
-    tableInput.setDescription("A".repeat(3000));
+    tableInput.setDescription(generateCharString(3000));
 
     TableInput result = glueMetadataStringCleaner.cleanTable(tableInput);
 
@@ -123,7 +123,7 @@ public class GlueMetadataStringCleanerTest {
 
   private String generateCharString(int length) {
     StringBuilder sb = new StringBuilder(length);
-    for (int i = 0; i < 300; i++) {
+    for (int i = 0; i < length; i++) {
       sb.append("A");
     }
     return sb.toString();
