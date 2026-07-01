@@ -29,6 +29,9 @@ import com.amazonaws.services.glue.model.TableInput;
  */
 public class GlueMetadataStringCleaner {
 
+  private static final int MAX_COLUMN_COMMENT_LENGTH = 254;
+  private static final int MAX_DESCRIPTION_LENGTH = 2048;
+
   public TableInput cleanTable(TableInput input) {
     // Clean SerDes
     cleanColumns(input.getStorageDescriptor().getColumns());
@@ -56,20 +59,16 @@ public class GlueMetadataStringCleaner {
    * </ul>
    */
   private String cleanDescription(String description) {
-    return truncateToMaxAllowedChars(removeNonUnicodeChars(description), 2048);
+    return truncateToMaxAllowedChars(removeNonUnicodeChars(description), MAX_DESCRIPTION_LENGTH);
   }
 
   private void cleanColumns(List<Column> columns) {
     for (Column column : columns) {
-      column.setComment(this.truncateToMaxAllowedChars(this.removeNonUnicodeChars(column.getComment())));
+      column.setComment(this.truncateToMaxAllowedChars(this.removeNonUnicodeChars(column.getComment()), MAX_COLUMN_COMMENT_LENGTH));
     }
   }
 
-  public String truncateToMaxAllowedChars(String input) {
-    return truncateToMaxAllowedChars(input, 254);
-  }
-
-  private String truncateToMaxAllowedChars(String input, int maxLength) {
+  public String truncateToMaxAllowedChars(String input, int maxLength) {
     if (input == null) {
       return null;
     }

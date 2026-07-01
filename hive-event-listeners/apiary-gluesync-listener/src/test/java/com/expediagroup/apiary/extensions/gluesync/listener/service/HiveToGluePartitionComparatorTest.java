@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class HiveToGluePartitionComparatorTest {
           c.setName(fs.getName());
           c.setType(fs.getType());
           String cleanedComment = cleaner.removeNonUnicodeChars(fs.getComment());
-          cleanedComment = cleaner.truncateToMaxAllowedChars(cleanedComment);
+          cleanedComment = cleaner.truncateToMaxAllowedChars(cleanedComment, 254);
           c.setComment(cleanedComment);
           cols.add(c);
         }
