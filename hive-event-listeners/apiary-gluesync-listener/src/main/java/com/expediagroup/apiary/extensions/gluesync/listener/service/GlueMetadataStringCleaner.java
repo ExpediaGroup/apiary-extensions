@@ -34,7 +34,6 @@ public class GlueMetadataStringCleaner {
     cleanColumns(input.getStorageDescriptor().getColumns());
     // Clean Partition Keys
     cleanColumns(input.getPartitionKeys());
-    // Clean Description
     input.setDescription(cleanDescription(input.getDescription()));
     return input;
   }
@@ -49,6 +48,13 @@ public class GlueMetadataStringCleaner {
     return input;
   }
 
+  /**
+   * Cleans a Glue TableInput description to satisfy API constraints:
+   * <ul>
+   *   <li>Unicode characters only</li>
+   *   <li>Maximum 2048 characters</li>
+   * </ul>
+   */
   private String cleanDescription(String description) {
     return truncateToMaxAllowedChars(removeNonUnicodeChars(description), 2048);
   }
