@@ -88,6 +88,7 @@ import com.amazonaws.services.glue.model.EntityNotFoundException;
 import com.amazonaws.services.glue.model.GetDatabaseRequest;
 import com.amazonaws.services.glue.model.GetDatabaseResult;
 import com.amazonaws.services.glue.model.GetPartitionsResult;
+import com.amazonaws.services.glue.model.GetTableResult;
 import com.amazonaws.services.glue.model.InvalidInputException;
 import com.amazonaws.services.glue.model.OperationTimeoutException;
 import com.amazonaws.services.glue.model.PartitionInput;
@@ -471,6 +472,7 @@ public class ApiaryGlueSyncTest {
 
     when(glueClient.getPartitions(any())).thenReturn(new GetPartitionsResult().withPartitions(
         new com.amazonaws.services.glue.model.Partition().withValues("part1Value", "part2Value")));
+    when(glueClient.getTable(any())).thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table()));
 
     glueSync.onAlterTable(event);
 
@@ -703,6 +705,7 @@ public class ApiaryGlueSyncTest {
     DropTableEvent event = mock(DropTableEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getTable()).thenReturn(simpleHiveTable(simpleSchema(), simplePartitioning()));
+    when(glueClient.getTable(any())).thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table()));
 
     glueSync.onDropTable(event);
 
@@ -718,6 +721,7 @@ public class ApiaryGlueSyncTest {
     DropTableEvent event = mock(DropTableEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getTable()).thenReturn(simpleHiveTable(simpleSchema(), simplePartitioning()));
+    when(glueClient.getTable(any())).thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table()));
     when(glueClient.deleteTable(any())).thenThrow(new EntityNotFoundException(""));
 
     glueSync.onDropTable(event);

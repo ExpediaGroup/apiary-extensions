@@ -15,6 +15,10 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener.service;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.DeleteTableRequest;
+import com.amazonaws.services.glue.model.EntityNotFoundException;
+import com.amazonaws.services.glue.model.GetTableRequest;
 import com.amazonaws.services.glue.model.InvalidInputException;
 import com.amazonaws.services.glue.model.TableInput;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
@@ -29,6 +35,8 @@ import com.amazonaws.services.glue.model.ValidationException;
 
 public class GlueTableService {
   private static final Logger log = LoggerFactory.getLogger(GlueTableService.class);
+  // HMS parameters checked before a delete to detect if the table slot was overwritten by a concurrent operation
+  private static final String[] IDENTITY_PARAMS = { "transient_lastDdlTime", "metadata_location" };
   public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
 
   private final AWSGlue glueClient;
@@ -91,5 +99,51 @@ public class GlueTableService {
         .withDatabaseName(transformer.glueDbName(table));
     glueClient.deleteTable(deleteTableRequest);
     log.debug(table + " table deleted from glue catalog");
+  }
+
+  /**
+   * Deletes the Glue table only if {@link #IDENTITY_PARAMS} match the current Glue state, guarding
+   * against a race condition in multi-partition Kafka deployments where a concurrent rename can
+   * overwrite the table slot before a stale drop event is processed. Safe in direct-HMS deployments
+   * because HMS does not update {@code transient_lastDdlTime} on DROP, so the event value always
+   * matches the last-synced Glue value.
+   *
+   * <p>Caveat: if a prior sync failed (e.g. transient Glue error), the params will diverge and the
+   * delete will be skipped, leaving an orphan in Glue. An orphan is intentionally preferred over
+   * incorrectly deleting a table that has since been overwritten by a rename.
+   */
+  public void deleteIfUnchanged(Table table) {
+    Map<String, String> hmsParams = table.getParameters() != null ? table.getParameters() : Collections.emptyMap();
+    com.amazonaws.services.glue.model.Table glueTable;
+    try {
+      glueTable = glueClient
+          .getTable(new GetTableRequest()
+              .withDatabaseName(transformer.glueDbName(table))
+              .withName(table.getTableName()))
+          .getTable();
+    } catch (EntityNotFoundException e) {
+      log.info("{}.{} table not found in glue catalog, nothing to delete", table.getDbName(), table.getTableName());
+      return;
+    }
+    Map<String, String> glueParams = glueTable.getParameters() != null ? glueTable.getParameters() : Collections.emptyMap();
+
+    for (String key : IDENTITY_PARAMS) {
+      if (paramChanged(key, hmsParams, glueParams, table)) {
+        return;
+      }
+    }
+
+    delete(table);
+  }
+
+  private boolean paramChanged(String key, Map<String, String> hmsParams, Map<String, String> glueParams, Table table) {
+    String hmsValue = hmsParams.get(key);
+    String glueValue = glueParams.get(key);
+    if (!Objects.equals(hmsValue, glueValue)) {
+      log.warn("Skipping delete of {}.{}: {} changed (expected={}, found={})",
+          table.getDbName(), table.getTableName(), key, hmsValue, glueValue);
+      return true;
+    }
+    return false;
   }
 }
