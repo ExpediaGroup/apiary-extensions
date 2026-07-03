@@ -48,7 +48,6 @@ import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricServic
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueDatabaseService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GluePartitionService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueTableService;
-import com.expediagroup.apiary.extensions.gluesync.listener.service.IsIcebergTablePredicate;
 
 public class ApiaryGlueSync extends MetaStoreEventListener {
 
@@ -68,7 +67,6 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   private final GlueDatabaseService glueDatabaseService;
   private final GlueTableService glueTableService;
   private final GluePartitionService gluePartitionService;
-  private final IsIcebergTablePredicate isIcebergPredicate;
   private final MetricService metricService;
   private final boolean throwExceptions;
 
@@ -83,7 +81,6 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
     this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
     this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix);
-    this.isIcebergPredicate = new IsIcebergTablePredicate();
     this.metricService = new MetricService();
     this.throwExceptions = throwExceptions;
     log.debug("ApiaryGlueSync created");
@@ -109,7 +106,6 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
     this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix, defaultSkipArchive);
     this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix);
-    this.isIcebergPredicate = new IsIcebergTablePredicate();
     this.metricService = metricService;
     this.throwExceptions = throwExceptions;
     log.debug("ApiaryGlueSync created");
@@ -214,9 +210,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     Table oldTable = event.getOldTable();
     Table newTable = event.getNewTable();
     try {
-      // Only Iceberg rename is supported by Glue, for Hive tables we need to delete
-      // table and create again
-      if (isTableRename(oldTable, newTable) && !isIcebergPredicate.test(oldTable.getParameters())) {
+      if (isTableRename(oldTable, newTable)) {
         doRenameOperation(oldTable, newTable);
         return;
       }
