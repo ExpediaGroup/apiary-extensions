@@ -186,7 +186,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     }
     Table table = event.getTable();
     try {
-      glueTableService.delete(table);
+      glueTableService.deleteIfUnchanged(table);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
       metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "deleted");
     } catch (EntityNotFoundException e) {
@@ -293,7 +293,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     long startTime = System.currentTimeMillis();
     glueTableService.create(newTable);
     gluePartitionService.copyPartitions(newTable, gluePartitionService.getPartitions(oldTable));
-    glueTableService.delete(oldTable);
+    glueTableService.deleteIfUnchanged(oldTable);
     metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
     metricService.recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "renamed");
     long duration = System.currentTimeMillis() - startTime;
