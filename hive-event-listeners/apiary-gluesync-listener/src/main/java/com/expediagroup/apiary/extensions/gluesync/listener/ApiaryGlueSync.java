@@ -285,7 +285,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   private void doRenameOperation(Table oldTable, Table newTable) {
     log.info("{} glue table rename detected to {}", oldTable.getTableName(), newTable.getTableName());
     long startTime = System.currentTimeMillis();
-    glueTableService.create(newTable);
+    createOrUpdateTable(newTable);
     gluePartitionService.copyPartitions(newTable, gluePartitionService.getPartitions(oldTable));
     glueTableService.deleteIfUnchanged(oldTable);
     metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
