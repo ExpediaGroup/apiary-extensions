@@ -15,6 +15,8 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener.service;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -62,8 +64,9 @@ public class GlueTableServiceTest {
   public void deleteIfUnchanged_deletesWhenAllPropertiesMatch() {
     when(glueClient.getTable(any(GetTableRequest.class))).thenReturn(glueTableResult(LOCATION, LAST_DDL_TIME, null));
 
-    service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
+    GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
 
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.DELETED));
     verify(glueClient).deleteTable(any(DeleteTableRequest.class));
   }
 
@@ -71,8 +74,9 @@ public class GlueTableServiceTest {
   public void deleteIfUnchanged_skipsWhenLastDdlTimeChanged() {
     when(glueClient.getTable(any(GetTableRequest.class))).thenReturn(glueTableResult(LOCATION, "1751385999", null));
 
-    service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
+    GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
 
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.SKIPPED));
     verify(glueClient, never()).deleteTable(any(DeleteTableRequest.class));
   }
 
@@ -82,8 +86,9 @@ public class GlueTableServiceTest {
     when(glueClient.getTable(any(GetTableRequest.class)))
         .thenReturn(glueTableResult(LOCATION, LAST_DDL_TIME, "s3://bucket/test_table/metadata/v1.metadata.json"));
 
-    service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
+    GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
 
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.SKIPPED));
     verify(glueClient, never()).deleteTable(any(DeleteTableRequest.class));
   }
 
@@ -92,8 +97,10 @@ public class GlueTableServiceTest {
     when(glueClient.getTable(any(GetTableRequest.class)))
         .thenReturn(glueTableResult(LOCATION, LAST_DDL_TIME, "s3://bucket/test_table/metadata/v2.metadata.json"));
 
-    service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, "s3://bucket/test_table/metadata/v1.metadata.json"));
+    GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(
+        hmsTable(LOCATION, LAST_DDL_TIME, "s3://bucket/test_table/metadata/v1.metadata.json"));
 
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.SKIPPED));
     verify(glueClient, never()).deleteTable(any(DeleteTableRequest.class));
   }
 
@@ -101,18 +108,31 @@ public class GlueTableServiceTest {
   public void deleteIfUnchanged_skipsWhenHmsHasMetadataLocationButGlueDoesNot() {
     when(glueClient.getTable(any(GetTableRequest.class))).thenReturn(glueTableResult(LOCATION, LAST_DDL_TIME, null));
 
-    service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, "s3://bucket/test_table/metadata/v1.metadata.json"));
+    GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(
+        hmsTable(LOCATION, LAST_DDL_TIME, "s3://bucket/test_table/metadata/v1.metadata.json"));
 
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.SKIPPED));
     verify(glueClient, never()).deleteTable(any(DeleteTableRequest.class));
   }
 
   @Test
-  public void deleteIfUnchanged_skipsWhenTableNotFoundInGlue() {
+  public void deleteIfUnchanged_notFoundWhenTableAbsentDuringGet() {
     when(glueClient.getTable(any(GetTableRequest.class))).thenThrow(new EntityNotFoundException("not found"));
 
-    service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
+    GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
 
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.NOT_FOUND));
     verify(glueClient, never()).deleteTable(any(DeleteTableRequest.class));
+  }
+
+  @Test
+  public void deleteIfUnchanged_notFoundWhenTableDeletedBetweenGuardAndDelete() {
+    when(glueClient.getTable(any(GetTableRequest.class))).thenReturn(glueTableResult(LOCATION, LAST_DDL_TIME, null));
+    when(glueClient.deleteTable(any(DeleteTableRequest.class))).thenThrow(new EntityNotFoundException("not found"));
+
+    GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
+
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.NOT_FOUND));
   }
 
   @Test
@@ -121,8 +141,9 @@ public class GlueTableServiceTest {
 
     Table table = hmsTable(LOCATION, null, null);
     table.setParameters(null);
-    service.deleteIfUnchanged(table);
+    GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(table);
 
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.DELETED));
     verify(glueClient).deleteTable(any(DeleteTableRequest.class));
   }
 
@@ -132,8 +153,9 @@ public class GlueTableServiceTest {
 
     Table table = hmsTable(LOCATION, null, null);
     table.setParameters(null);
-    service.deleteIfUnchanged(table);
+    GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(table);
 
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.SKIPPED));
     verify(glueClient, never()).deleteTable(any(DeleteTableRequest.class));
   }
 
@@ -141,8 +163,9 @@ public class GlueTableServiceTest {
   public void deleteIfUnchanged_skipsWhenGlueParamsNullButHmsHasParams() {
     when(glueClient.getTable(any(GetTableRequest.class))).thenReturn(glueTableResultNullParams());
 
-    service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
+    GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
 
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.SKIPPED));
     verify(glueClient, never()).deleteTable(any(DeleteTableRequest.class));
   }
 

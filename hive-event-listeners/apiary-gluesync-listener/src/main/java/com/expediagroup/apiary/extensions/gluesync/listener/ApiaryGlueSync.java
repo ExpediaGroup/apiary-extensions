@@ -186,15 +186,9 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     }
     Table table = event.getTable();
     try {
-      glueTableService.deleteIfUnchanged(table);
+      GlueTableService.DeleteOutcome outcome = glueTableService.deleteIfUnchanged(table);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-      metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "deleted");
-    } catch (EntityNotFoundException e) {
-      log.info(table + " table doesn't exist in glue catalog");
-      metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "not_found");
-      if (throwExceptions) {
-        throw wrap(e);
-      }
+      metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, outcome.metricOutcome());
     } catch (Exception e) {
       log.error("Failed drop table {}.{} in glue", table.getDbName(), table.getTableName(), e);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_FAILURE);
@@ -293,10 +287,10 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     long startTime = System.currentTimeMillis();
     glueTableService.create(newTable);
     gluePartitionService.copyPartitions(newTable, gluePartitionService.getPartitions(oldTable));
-    glueTableService.deleteIfUnchanged(oldTable);
-    metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    metricService.recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "renamed");
+    GlueTableService.DeleteOutcome outcome = glueTableService.deleteIfUnchanged(oldTable);
     long duration = System.currentTimeMillis() - startTime;
+    metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    metricService.recordEvent(MetricConstants.RENAME_TABLE, MetricConstants.RESULT_SUCCESS, outcome.metricOutcome());
     metricService.recordDuration(MetricConstants.LISTENER_TABLE_RENAME_DURATION, duration);
     log.info("{} glue table rename to {} finished in {}ms", oldTable.getTableName(), newTable.getTableName(), duration);
   }

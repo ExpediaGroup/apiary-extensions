@@ -38,14 +38,18 @@ public class MetricConstants {
   public static final String RESULT_FAILURE = "failure";
   public static final String RESULT_IGNORED = "ignored";
 
-  public static final String OUTCOME_CREATED = "created";
-  public static final String OUTCOME_UPDATED = "updated";
+  public static final String OUTCOME_CREATED       = "created";
+  public static final String OUTCOME_UPDATED       = "updated";
+  public static final String OUTCOME_DELETED       = "deleted";
+  public static final String OUTCOME_NOT_FOUND     = "not_found";
+  public static final String OUTCOME_DELETE_SKIPPED = "delete_skipped";
 
   public static final String CREATE_DATABASE = "create_database";
   public static final String DROP_DATABASE   = "drop_database";
   public static final String CREATE_TABLE    = "create_table";
   public static final String DROP_TABLE      = "drop_table";
   public static final String ALTER_TABLE     = "alter_table";
+  public static final String RENAME_TABLE    = "rename_table";
   public static final String ADD_PARTITION   = "add_partition";
   public static final String DROP_PARTITION  = "drop_partition";
   public static final String ALTER_PARTITION = "alter_partition";
