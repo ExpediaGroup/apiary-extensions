@@ -482,7 +482,7 @@ public class ApiaryGlueSyncTest {
     BatchCreatePartitionRequest batchCreatePartitionRequest = batchCreatePartitionRequestCaptor.getValue();
     verify(glueClient).deleteTable(deleteTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "renamed");
+    verify(metricService).recordEvent(MetricConstants.RENAME_TABLE, MetricConstants.RESULT_SUCCESS, "deleted");
     verify(metricService).recordDuration(eq(MetricConstants.LISTENER_TABLE_RENAME_DURATION), anyLong());
     DeleteTableRequest deleteTableRequest = deleteTableRequestCaptor.getValue();
 
@@ -721,14 +721,61 @@ public class ApiaryGlueSyncTest {
     DropTableEvent event = mock(DropTableEvent.class);
     when(event.getStatus()).thenReturn(true);
     when(event.getTable()).thenReturn(simpleHiveTable(simpleSchema(), simplePartitioning()));
-    when(glueClient.getTable(any())).thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table()));
-    when(glueClient.deleteTable(any())).thenThrow(new EntityNotFoundException(""));
+    when(glueClient.getTable(any())).thenThrow(new EntityNotFoundException(""));
 
     glueSync.onDropTable(event);
 
-    verify(glueClient).deleteTable(any());
+    verify(glueClient, never()).deleteTable(any());
+    verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
     verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "not_found");
     verifyNoMoreInteractions(metricService);
+  }
+
+  @Test
+  public void onDropTable_skipsDeleteWhenGuardFires() throws MetaException {
+    DropTableEvent event = mock(DropTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    Table hmsTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    hmsTable.putToParameters("transient_lastDdlTime", "100");
+    when(event.getTable()).thenReturn(hmsTable);
+    when(glueClient.getTable(any())).thenReturn(
+        new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table()
+            .withParameters(ImmutableMap.of("transient_lastDdlTime", "999"))));
+
+    glueSync.onDropTable(event);
+
+    verify(glueClient, never()).deleteTable(any());
+    verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "delete_skipped");
+    verifyNoMoreInteractions(metricService);
+  }
+
+  @Test
+  public void onAlterHiveTable_RenameTable_skipsOldTableDeleteWhenGuardFires() throws MetaException {
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+
+    Table oldTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    oldTable.setTableName("table2");
+    oldTable.putToParameters("transient_lastDdlTime", "100");
+    when(event.getOldTable()).thenReturn(oldTable);
+
+    Table newTable = simpleHiveTable(simpleSchema(), simplePartitioning());
+    newTable.setTableName("table2_new");
+    when(event.getNewTable()).thenReturn(newTable);
+
+    when(glueClient.getPartitions(any())).thenReturn(new GetPartitionsResult().withPartitions(Collections.emptyList()));
+    // Glue has a different DDL time — guard fires, old table slot not deleted
+    when(glueClient.getTable(any())).thenReturn(
+        new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table()
+            .withParameters(ImmutableMap.of("transient_lastDdlTime", "999"))));
+
+    glueSync.onAlterTable(event);
+
+    verify(glueClient, never()).deleteTable(any());
+    verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    verify(metricService).recordEvent(MetricConstants.RENAME_TABLE, MetricConstants.RESULT_SUCCESS, "delete_skipped");
+    verify(metricService).recordDuration(eq(MetricConstants.LISTENER_TABLE_RENAME_DURATION), anyLong());
   }
 
   @Test

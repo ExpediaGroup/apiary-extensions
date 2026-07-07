@@ -46,6 +46,7 @@ public class MetricConstants {
   public static final String CREATE_TABLE    = "create_table";
   public static final String DROP_TABLE      = "drop_table";
   public static final String ALTER_TABLE     = "alter_table";
+  public static final String RENAME_TABLE    = "rename_table";
   public static final String ADD_PARTITION   = "add_partition";
   public static final String DROP_PARTITION  = "drop_partition";
   public static final String ALTER_PARTITION = "alter_partition";

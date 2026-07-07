@@ -34,6 +34,35 @@ import com.amazonaws.services.glue.model.UpdateTableRequest;
 import com.amazonaws.services.glue.model.ValidationException;
 
 public class GlueTableService {
+
+  /**
+   * Outcome of a {@link #deleteIfUnchanged} call, used by callers to record the appropriate metric.
+   * <ul>
+   *   <li>{@code DELETED} — the Glue table was deleted.</li>
+   *   <li>{@code SKIPPED} — the delete was suppressed because identity params diverged, indicating
+   *       the Glue slot was overwritten by a concurrent operation.</li>
+   *   <li>{@code NOT_FOUND} — the table did not exist in Glue when checked; nothing to delete.</li>
+   *   <li>{@code DELETED_CONCURRENTLY} — the table existed at guard-check time but was deleted by a
+   *       concurrent operation before the delete call completed (TOCTOU race).</li>
+   * </ul>
+   */
+  public enum DeleteOutcome {
+    DELETED("deleted"),
+    SKIPPED("delete_skipped"),
+    NOT_FOUND("not_found"),
+    DELETED_CONCURRENTLY("concurrent_delete");
+
+    private final String metricOutcome;
+
+    DeleteOutcome(String metricOutcome) {
+      this.metricOutcome = metricOutcome;
+    }
+
+    public String metricOutcome() {
+      return metricOutcome;
+    }
+  }
+
   private static final Logger log = LoggerFactory.getLogger(GlueTableService.class);
   // HMS parameters checked before a delete to detect if the table slot was overwritten by a concurrent operation
   private static final String[] IDENTITY_PARAMS = { "transient_lastDdlTime", "metadata_location" };
@@ -112,7 +141,7 @@ public class GlueTableService {
    * delete will be skipped, leaving an orphan in Glue. An orphan is intentionally preferred over
    * incorrectly deleting a table that has since been overwritten by a rename.
    */
-  public void deleteIfUnchanged(Table table) {
+  public DeleteOutcome deleteIfUnchanged(Table table) {
     Map<String, String> hmsParams = table.getParameters() != null ? table.getParameters() : Collections.emptyMap();
     com.amazonaws.services.glue.model.Table glueTable;
     try {
@@ -123,17 +152,24 @@ public class GlueTableService {
           .getTable();
     } catch (EntityNotFoundException e) {
       log.info("{}.{} table not found in glue catalog, nothing to delete", table.getDbName(), table.getTableName());
-      return;
+      return DeleteOutcome.NOT_FOUND;
     }
     Map<String, String> glueParams = glueTable.getParameters() != null ? glueTable.getParameters() : Collections.emptyMap();
 
     for (String key : IDENTITY_PARAMS) {
       if (paramChanged(key, hmsParams, glueParams, table)) {
-        return;
+        return DeleteOutcome.SKIPPED;
       }
     }
 
-    delete(table);
+    try {
+      delete(table);
+    } catch (EntityNotFoundException e) {
+      log.info("{}.{} table deleted from glue catalog between guard check and delete",
+          table.getDbName(), table.getTableName());
+      return DeleteOutcome.DELETED_CONCURRENTLY;
+    }
+    return DeleteOutcome.DELETED;
   }
 
   private boolean paramChanged(String key, Map<String, String> hmsParams, Map<String, String> glueParams, Table table) {
