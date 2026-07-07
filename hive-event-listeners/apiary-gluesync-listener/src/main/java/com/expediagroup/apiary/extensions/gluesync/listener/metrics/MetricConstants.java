@@ -38,11 +38,8 @@ public class MetricConstants {
   public static final String RESULT_FAILURE = "failure";
   public static final String RESULT_IGNORED = "ignored";
 
-  public static final String OUTCOME_CREATED       = "created";
-  public static final String OUTCOME_UPDATED       = "updated";
-  public static final String OUTCOME_DELETED       = "deleted";
-  public static final String OUTCOME_NOT_FOUND     = "not_found";
-  public static final String OUTCOME_DELETE_SKIPPED = "delete_skipped";
+  public static final String OUTCOME_CREATED = "created";
+  public static final String OUTCOME_UPDATED = "updated";
 
   public static final String CREATE_DATABASE = "create_database";
   public static final String DROP_DATABASE   = "drop_database";

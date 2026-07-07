@@ -482,7 +482,7 @@ public class ApiaryGlueSyncTest {
     BatchCreatePartitionRequest batchCreatePartitionRequest = batchCreatePartitionRequestCaptor.getValue();
     verify(glueClient).deleteTable(deleteTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.RENAME_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_DELETED);
+    verify(metricService).recordEvent(MetricConstants.RENAME_TABLE, MetricConstants.RESULT_SUCCESS, "deleted");
     verify(metricService).recordDuration(eq(MetricConstants.LISTENER_TABLE_RENAME_DURATION), anyLong());
     DeleteTableRequest deleteTableRequest = deleteTableRequestCaptor.getValue();
 
@@ -711,7 +711,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient).deleteTable(deleteTableRequestCaptor.capture());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_DELETED);
+    verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "deleted");
     assertThat(deleteTableRequestCaptor.getValue().getDatabaseName(), is(gluePrefix + dbName));
     assertThat(deleteTableRequestCaptor.getValue().getName(), is(tableName));
   }
@@ -727,7 +727,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient, never()).deleteTable(any());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_NOT_FOUND);
+    verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "not_found");
     verifyNoMoreInteractions(metricService);
   }
 
@@ -746,7 +746,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient, never()).deleteTable(any());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_DELETE_SKIPPED);
+    verify(metricService).recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, "delete_skipped");
     verifyNoMoreInteractions(metricService);
   }
 
@@ -774,7 +774,7 @@ public class ApiaryGlueSyncTest {
 
     verify(glueClient, never()).deleteTable(any());
     verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.RENAME_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_DELETE_SKIPPED);
+    verify(metricService).recordEvent(MetricConstants.RENAME_TABLE, MetricConstants.RESULT_SUCCESS, "delete_skipped");
     verify(metricService).recordDuration(eq(MetricConstants.LISTENER_TABLE_RENAME_DURATION), anyLong());
   }
 

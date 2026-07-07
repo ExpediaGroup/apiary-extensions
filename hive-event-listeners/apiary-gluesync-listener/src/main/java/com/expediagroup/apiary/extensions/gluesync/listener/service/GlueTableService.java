@@ -41,13 +41,16 @@ public class GlueTableService {
    *   <li>{@code DELETED} — the Glue table was deleted.</li>
    *   <li>{@code SKIPPED} — the delete was suppressed because identity params diverged, indicating
    *       the Glue slot was overwritten by a concurrent operation.</li>
-   *   <li>{@code NOT_FOUND} — the table did not exist in Glue; nothing to delete.</li>
+   *   <li>{@code NOT_FOUND} — the table did not exist in Glue when checked; nothing to delete.</li>
+   *   <li>{@code DELETED_CONCURRENTLY} — the table existed at guard-check time but was deleted by a
+   *       concurrent operation before the delete call completed (TOCTOU race).</li>
    * </ul>
    */
   public enum DeleteOutcome {
     DELETED("deleted"),
     SKIPPED("delete_skipped"),
-    NOT_FOUND("not_found");
+    NOT_FOUND("not_found"),
+    DELETED_CONCURRENTLY("concurrent_delete");
 
     private final String metricOutcome;
 
@@ -164,7 +167,7 @@ public class GlueTableService {
     } catch (EntityNotFoundException e) {
       log.info("{}.{} table deleted from glue catalog between guard check and delete",
           table.getDbName(), table.getTableName());
-      return DeleteOutcome.NOT_FOUND;
+      return DeleteOutcome.DELETED_CONCURRENTLY;
     }
     return DeleteOutcome.DELETED;
   }

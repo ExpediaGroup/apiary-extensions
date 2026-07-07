@@ -126,13 +126,13 @@ public class GlueTableServiceTest {
   }
 
   @Test
-  public void deleteIfUnchanged_notFoundWhenTableDeletedBetweenGuardAndDelete() {
+  public void deleteIfUnchanged_deletedConcurrentlyWhenTableDeletedBetweenGuardAndDelete() {
     when(glueClient.getTable(any(GetTableRequest.class))).thenReturn(glueTableResult(LOCATION, LAST_DDL_TIME, null));
     when(glueClient.deleteTable(any(DeleteTableRequest.class))).thenThrow(new EntityNotFoundException("not found"));
 
     GlueTableService.DeleteOutcome outcome = service.deleteIfUnchanged(hmsTable(LOCATION, LAST_DDL_TIME, null));
 
-    assertThat(outcome, is(GlueTableService.DeleteOutcome.NOT_FOUND));
+    assertThat(outcome, is(GlueTableService.DeleteOutcome.DELETED_CONCURRENTLY));
   }
 
   @Test
