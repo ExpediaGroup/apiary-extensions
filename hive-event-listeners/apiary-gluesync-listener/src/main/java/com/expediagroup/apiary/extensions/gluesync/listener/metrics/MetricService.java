@@ -15,11 +15,8 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener.metrics;
 
-import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.GLUE_CLIENT_CALL_DURATION;
-import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.GLUE_CLIENT_ERROR_TOTAL;
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.GLUE_RETRY_ATTEMPT;
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.LISTENER_EVENT;
-import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_ERROR_CODE;
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_EXCEPTION;
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OPERATION;
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OUTCOME;
@@ -53,8 +50,6 @@ public class MetricService {
   private final MeterRegistry registry;
   private final Map<String, Counter> metrics;
   private final Map<String, Counter> events = new ConcurrentHashMap<>();
-  private final Map<String, Timer> callDurations = new ConcurrentHashMap<>();
-  private final Map<String, Counter> clientErrors = new ConcurrentHashMap<>();
   private final Map<String, Counter> retryAttempts = new ConcurrentHashMap<>();
 
   public MetricService(MeterRegistry registry) {
@@ -143,30 +138,6 @@ public class MetricService {
           .increment();
     } catch (Exception e) {
       log.warn("Unable to record event {} {} {}", operation, result, outcome, e);
-    }
-  }
-
-  public void recordGlueCallDuration(String operation, String result, long durationMs) {
-    try {
-      callDurations.computeIfAbsent(operation + "|" + result, k ->
-          Timer.builder(GLUE_CLIENT_CALL_DURATION)
-              .tags(TAG_OPERATION, operation, TAG_RESULT, result)
-              .register(registry))
-          .record(durationMs, TimeUnit.MILLISECONDS);
-    } catch (Exception e) {
-      log.warn("Unable to record Glue call duration {} {} {}ms", operation, result, durationMs, e);
-    }
-  }
-
-  public void recordGlueClientError(String operation, String errorCode) {
-    try {
-      clientErrors.computeIfAbsent(operation + "|" + errorCode, k ->
-          Counter.builder(GLUE_CLIENT_ERROR_TOTAL)
-              .tags(TAG_OPERATION, operation, TAG_ERROR_CODE, errorCode)
-              .register(registry))
-          .increment();
-    } catch (Exception e) {
-      log.warn("Unable to record Glue client error {} {}", operation, errorCode, e);
     }
   }
 

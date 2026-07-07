@@ -92,32 +92,6 @@ public class MetricServiceTest {
   }
 
   @Test
-  public void recordGlueCallDurationRegistersTaggedTimer() {
-    MeterRegistry registry = new SimpleMeterRegistry();
-    MetricService metricService = new MetricService(registry);
-
-    metricService.recordGlueCallDuration("get_table", "success", 42L);
-
-    assertThat(registry.get(MetricConstants.GLUE_CLIENT_CALL_DURATION)
-        .tags(MetricConstants.TAG_OPERATION, "get_table", MetricConstants.TAG_RESULT, "success")
-        .timer().count(), is(1L));
-  }
-
-  @Test
-  public void recordGlueClientErrorRegistersTaggedCounter() {
-    MeterRegistry registry = new SimpleMeterRegistry();
-    MetricService metricService = new MetricService(registry);
-
-    metricService.recordGlueClientError("update_table", "ConcurrentModificationException");
-    metricService.recordGlueClientError("update_table", "ConcurrentModificationException");
-
-    assertThat(registry.get(MetricConstants.GLUE_CLIENT_ERROR_TOTAL)
-        .tags(MetricConstants.TAG_OPERATION, "update_table",
-            MetricConstants.TAG_ERROR_CODE, "ConcurrentModificationException")
-        .counter().count(), is(2.0));
-  }
-
-  @Test
   public void recordGlueRetryAttemptRegistersTaggedCounter() {
     MeterRegistry registry = new SimpleMeterRegistry();
     MetricService metricService = new MetricService(registry);

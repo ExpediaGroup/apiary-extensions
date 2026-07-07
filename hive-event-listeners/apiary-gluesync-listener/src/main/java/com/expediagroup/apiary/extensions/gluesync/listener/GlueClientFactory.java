@@ -63,9 +63,6 @@ public class GlueClientFactory {
         .withRegion(region)
         .withClientConfiguration(config);
 
-    if (metricService != null) {
-      builder.withRequestHandlers(new GlueMetricRequestHandler(metricService));
-    }
     return builder.build();
   }
 
