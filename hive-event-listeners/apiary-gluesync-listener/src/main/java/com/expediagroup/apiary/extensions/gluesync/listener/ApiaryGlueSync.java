@@ -93,9 +93,6 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     log.debug("ApiaryGlueSync created");
   }
 
-  /**
-   * Just for testing.
-   */
   public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService,
       boolean throwExceptions) {
     this(config, glueClient, gluePrefix, metricService, throwExceptions, null);

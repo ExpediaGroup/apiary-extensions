@@ -41,8 +41,8 @@ public class GlueClientFactoryTest {
   }
 
   @Test
-  public void defaultMaxAttemptsIsThree() {
-    assertThat(GlueClientFactory.maxAttempts(), is(GlueClientFactory.DEFAULT_MAX_ATTEMPTS));
+  public void defaultMaxRetriesIsThree() {
+    assertThat(GlueClientFactory.maxRetries(), is(GlueClientFactory.DEFAULT_MAX_RETRIES));
   }
 
   @Test

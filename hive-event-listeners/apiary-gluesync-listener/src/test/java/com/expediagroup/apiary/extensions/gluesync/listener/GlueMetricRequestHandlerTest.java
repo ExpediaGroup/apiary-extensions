@@ -28,6 +28,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.DefaultRequest;
 import com.amazonaws.Request;
+import com.amazonaws.handlers.HandlerAfterAttemptContext;
+import com.amazonaws.handlers.HandlerBeforeAttemptContext;
 import com.amazonaws.services.glue.model.GetTableRequest;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
 
@@ -50,8 +52,8 @@ public class GlueMetricRequestHandlerTest {
   @Test
   public void successRecordsDurationWithSuccessTag() {
     Request<GetTableRequest> request = buildRequest(new GetTableRequest());
-    handler.beforeRequest(request);
-    handler.afterResponse(request, null);
+    handler.beforeAttempt(before(request));
+    handler.afterAttempt(after(request, null));
 
     assertThat(registry.get(MetricConstants.GLUE_CLIENT_CALL_DURATION)
         .tags(MetricConstants.TAG_OPERATION, "get_table", MetricConstants.TAG_RESULT, MetricConstants.RESULT_SUCCESS)
@@ -64,8 +66,8 @@ public class GlueMetricRequestHandlerTest {
     AmazonServiceException exception = new AmazonServiceException("conflict");
     exception.setErrorCode("ConcurrentModificationException");
 
-    handler.beforeRequest(request);
-    handler.afterError(request, null, exception);
+    handler.beforeAttempt(before(request));
+    handler.afterAttempt(after(request, exception));
 
     assertThat(registry.get(MetricConstants.GLUE_CLIENT_CALL_DURATION)
         .tags(MetricConstants.TAG_OPERATION, "update_table", MetricConstants.TAG_RESULT, MetricConstants.RESULT_FAILURE)
@@ -80,8 +82,8 @@ public class GlueMetricRequestHandlerTest {
   @Test
   public void nonServiceExceptionUsesSimpleClassName() {
     Request<GetTableRequest> request = buildRequest(new GetTableRequest());
-    handler.beforeRequest(request);
-    handler.afterError(request, null, new RuntimeException("oops"));
+    handler.beforeAttempt(before(request));
+    handler.afterAttempt(after(request, new RuntimeException("oops")));
 
     assertThat(registry.get(MetricConstants.GLUE_CLIENT_ERROR_TOTAL)
         .tags(MetricConstants.TAG_OPERATION, "get_table",
@@ -92,8 +94,8 @@ public class GlueMetricRequestHandlerTest {
   @Test
   public void missingStartTimeRecordsDurationOfZero() {
     Request<GetTableRequest> request = buildRequest(new GetTableRequest());
-    // do NOT call beforeRequest — START_TIME not set
-    handler.afterResponse(request, null);
+    // do NOT call beforeAttempt — START_TIME not set
+    handler.afterAttempt(after(request, null));
 
     assertThat(registry.get(MetricConstants.GLUE_CLIENT_CALL_DURATION)
         .tags(MetricConstants.TAG_OPERATION, "get_table", MetricConstants.TAG_RESULT, MetricConstants.RESULT_SUCCESS)
@@ -101,7 +103,14 @@ public class GlueMetricRequestHandlerTest {
   }
 
   private <T extends com.amazonaws.AmazonWebServiceRequest> Request<T> buildRequest(T originalRequest) {
-    DefaultRequest<T> request = new DefaultRequest<>(originalRequest, "AWSGlue");
-    return request;
+    return new DefaultRequest<>(originalRequest, "AWSGlue");
+  }
+
+  private HandlerBeforeAttemptContext before(Request<?> request) {
+    return HandlerBeforeAttemptContext.builder().withRequest(request).build();
+  }
+
+  private HandlerAfterAttemptContext after(Request<?> request, Exception exception) {
+    return HandlerAfterAttemptContext.builder().withRequest(request).withException(exception).build();
   }
 }

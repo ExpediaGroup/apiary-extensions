@@ -18,7 +18,8 @@ package com.expediagroup.apiary.extensions.gluesync.listener;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.Request;
-import com.amazonaws.Response;
+import com.amazonaws.handlers.HandlerAfterAttemptContext;
+import com.amazonaws.handlers.HandlerBeforeAttemptContext;
 import com.amazonaws.handlers.HandlerContextKey;
 import com.amazonaws.handlers.RequestHandler2;
 
@@ -28,7 +29,8 @@ import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricServic
 /**
  * AWS SDK v1 RequestHandler2 that records Glue client metrics via Micrometer.
  *
- * Fires per HTTP attempt (including retries), giving accurate latency and retry amplification visibility:
+ * Uses beforeAttempt/afterAttempt hooks, which fire once per HTTP attempt including retries,
+ * giving accurate per-call latency and retry amplification visibility:
  *   glue_client_call_duration{operation, result}
  *   glue_client_error_total{operation, error_code}
  */
@@ -43,20 +45,22 @@ public class GlueMetricRequestHandler extends RequestHandler2 {
   }
 
   @Override
-  public void beforeRequest(Request<?> request) {
-    request.addHandlerContext(START_TIME, System.currentTimeMillis());
+  public void beforeAttempt(HandlerBeforeAttemptContext context) {
+    context.getRequest().addHandlerContext(START_TIME, System.currentTimeMillis());
   }
 
   @Override
-  public void afterResponse(Request<?> request, Response<?> response) {
-    metricService.recordGlueCallDuration(operationName(request), MetricConstants.RESULT_SUCCESS, elapsed(request));
-  }
-
-  @Override
-  public void afterError(Request<?> request, Response<?> response, Exception e) {
+  public void afterAttempt(HandlerAfterAttemptContext context) {
+    Request<?> request = context.getRequest();
     String operation = operationName(request);
-    metricService.recordGlueCallDuration(operation, MetricConstants.RESULT_FAILURE, elapsed(request));
-    metricService.recordGlueClientError(operation, errorCode(e));
+    long durationMs = elapsed(request);
+    Exception exception = context.getException();
+    if (exception == null) {
+      metricService.recordGlueCallDuration(operation, MetricConstants.RESULT_SUCCESS, durationMs);
+    } else {
+      metricService.recordGlueCallDuration(operation, MetricConstants.RESULT_FAILURE, durationMs);
+      metricService.recordGlueClientError(operation, errorCode(exception));
+    }
   }
 
   private long elapsed(Request<?> request) {

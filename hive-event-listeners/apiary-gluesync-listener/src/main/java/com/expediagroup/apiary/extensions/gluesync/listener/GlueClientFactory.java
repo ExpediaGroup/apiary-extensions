@@ -15,6 +15,8 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener;
 
+import static com.amazonaws.retry.PredefinedRetryPolicies.DEFAULT_RETRY_CONDITION;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,11 +30,11 @@ import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricService;
 
 /**
- * Builds the AWSGlue client with optional exponential-backoff retries and Micrometer metrics.
+ * Builds the AWSGlue client with optional CME retry policy and Micrometer metrics.
  *
- * Retries are disabled by default to avoid blocking HMS threads. Enable for Dronefly (CLI) via:
+ * CME retries are disabled by default to avoid blocking HMS threads. Enable for Dronefly (CLI) via:
  *   GLUE_RETRY_ENABLED=true
- *   GLUE_RETRY_MAX_ATTEMPTS=3   (optional, default 3)
+ *   GLUE_RETRY_MAX_RETRIES=3   (optional, default 3 retries = 4 total calls)
  */
 public class GlueClientFactory {
 
@@ -40,7 +42,7 @@ public class GlueClientFactory {
 
   static final String ENV_RETRY_ENABLED = "GLUE_RETRY_ENABLED";
   static final String ENV_RETRY_MAX_ATTEMPTS = "GLUE_RETRY_MAX_ATTEMPTS";
-  static final int DEFAULT_MAX_ATTEMPTS = 3;
+  static final int DEFAULT_MAX_RETRIES = 3;
 
   private GlueClientFactory() {}
 
@@ -50,11 +52,11 @@ public class GlueClientFactory {
 
   public static AWSGlue buildClient(String region, ClientConfiguration config, MetricService metricService) {
     if (retryEnabled()) {
-      int maxAttempts = maxAttempts();
-      log.info("Glue client retries enabled: max {} attempts per call", maxAttempts);
-      config.setRetryPolicy(buildRetryPolicy(maxAttempts, metricService));
+      int maxRetries = maxRetries();
+      log.info("Glue client custom retry policy active: max {} retries per call (covers throttles, 5xx, and CME)", maxRetries);
+      config.setRetryPolicy(buildRetryPolicy(maxRetries, metricService));
     } else {
-      log.info("Glue client retries disabled (set {}=true to enable)", ENV_RETRY_ENABLED);
+      log.info("Glue client custom retry policy not active; SDK default retries (throttles/5xx) still apply. Set {}=true to also retry CME.", ENV_RETRY_ENABLED);
     }
 
     AWSGlueClientBuilder builder = AWSGlueClientBuilder.standard()
@@ -71,7 +73,7 @@ public class GlueClientFactory {
     return "true".equalsIgnoreCase(System.getenv(ENV_RETRY_ENABLED));
   }
 
-  static int maxAttempts() {
+  static int maxRetries() {
     String val = System.getenv(ENV_RETRY_MAX_ATTEMPTS);
     if (val != null) {
       try {
@@ -80,16 +82,16 @@ public class GlueClientFactory {
           return n;
         }
       } catch (NumberFormatException ignored) {
-        log.warn("Invalid value for {}: '{}', using default {}", ENV_RETRY_MAX_ATTEMPTS, val, DEFAULT_MAX_ATTEMPTS);
+        log.warn("Invalid value for {}: '{}', using default {}", ENV_RETRY_MAX_ATTEMPTS, val, DEFAULT_MAX_RETRIES);
       }
     }
-    return DEFAULT_MAX_ATTEMPTS;
+    return DEFAULT_MAX_RETRIES;
   }
 
-  static RetryPolicy buildRetryPolicy(int maxAttempts, MetricService metricService) {
+  static RetryPolicy buildRetryPolicy(int maxRetries, MetricService metricService) {
     RetryPolicy.RetryCondition condition = (request, exception, retriesAttempted) -> {
-      if (PredefinedRetryPolicies.DEFAULT_RETRY_CONDITION.shouldRetry(request, exception, retriesAttempted)) {
-        recordRetry(metricService, exception.getClass().getSimpleName());
+      if (DEFAULT_RETRY_CONDITION.shouldRetry(request, exception, retriesAttempted)) {
+        recordRetry(metricService, exceptionTag(exception));
         return true;
       }
       if (exception instanceof AmazonServiceException) {
@@ -101,7 +103,15 @@ public class GlueClientFactory {
       }
       return false;
     };
-    return new RetryPolicy(condition, PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY, maxAttempts, true);
+    return new RetryPolicy(condition, PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY, maxRetries, true);
+  }
+
+  private static String exceptionTag(Exception e) {
+    if (e instanceof AmazonServiceException) {
+      String code = ((AmazonServiceException) e).getErrorCode();
+      return code != null ? code : e.getClass().getSimpleName();
+    }
+    return e.getClass().getSimpleName();
   }
 
   private static void recordRetry(MetricService metricService, String exceptionType) {
