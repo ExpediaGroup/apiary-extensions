@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryAlterTableEvent;
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEvent;
 import com.expediagroup.apiary.extensions.events.metastore.event.ApiaryListenerEventFactory;
 import com.expediagroup.apiary.extensions.events.metastore.io.MetaStoreEventSerDe;
@@ -51,7 +50,6 @@ import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.Kafka
 import com.expediagroup.apiary.extensions.events.metastore.kafka.messaging.KafkaMessageSender;
 
 public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
-
   private static final Logger log = LoggerFactory.getLogger(KafkaMetaStoreEventListener.class);
 
   private final MetaStoreEventSerDe eventSerDe;
@@ -60,7 +58,7 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
 
   public KafkaMetaStoreEventListener(Configuration config) {
     this(config, new ApiaryListenerEventFactory(), serDeForClassName(stringProperty(config, SERDE_CLASS)),
-        new KafkaMessageSender(config));
+      new KafkaMessageSender(config));
   }
 
   @VisibleForTesting
@@ -76,19 +74,12 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
   }
 
   private KafkaMessage withPayload(ApiaryListenerEvent event) {
-    String database = event.getDatabaseName();
-    String table = event.getTableName();
-    // Ensuring ALTER_TABLE events will use old table name for partition hashing
-    if (event instanceof ApiaryAlterTableEvent) {
-      database = ((ApiaryAlterTableEvent) event).getOldTable().getDbName();
-      table = ((ApiaryAlterTableEvent) event).getOldTable().getTableName();
-    }
     return KafkaMessage
-        .builder()
-        .database(database)
-        .table(table)
-        .payload(eventSerDe.marshal(event))
-        .build();
+      .builder()
+      .database(event.getDatabaseName())
+      .table(event.getTableName())
+      .payload(eventSerDe.marshal(event))
+      .build();
   }
 
   @Override
@@ -187,4 +178,5 @@ public class KafkaMetaStoreEventListener extends MetaStoreEventListener {
 
   @Override
   public void onDropFunction(DropFunctionEvent fnEvent) {}
+
 }

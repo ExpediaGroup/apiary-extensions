@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.AddIndexEvent;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterIndexEvent;
@@ -93,12 +92,8 @@ public class MskMetaStoreEventListenerTest {
   public void onAlterTable() {
     AlterTableEvent event = mock(AlterTableEvent.class);
     ApiaryAlterTableEvent apiaryEvent = mock(ApiaryAlterTableEvent.class);
-    Table oldTable = mock(Table.class);
-    when(apiaryEvent.getOldTable()).thenReturn(oldTable);
     when(apiaryEvent.getDatabaseName()).thenReturn(DATABASE);
     when(apiaryEvent.getTableName()).thenReturn(TABLE);
-    when(oldTable.getDbName()).thenReturn(DATABASE);
-    when(oldTable.getTableName()).thenReturn(TABLE);
     when(apiaryListenerEventFactory.create(event)).thenReturn(apiaryEvent);
     listener.onAlterTable(event);
     verify(mskMessageSender).send(any(KafkaMessage.class));
@@ -221,4 +216,5 @@ public class MskMetaStoreEventListenerTest {
     verify(mskMessageSender, never()).send(any(KafkaMessage.class));
     verify(eventSerDe, never()).marshal(any(ApiaryListenerEvent.class));
   }
+
 }
