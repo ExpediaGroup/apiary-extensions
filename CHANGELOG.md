@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 8.2.1 - TBD
+### Reverted
+- Revert `Change kafka listener hashing for ALTER_TABLE events (#133)`. `ALTER_TABLE` events now hash on the current table name again. The reverted change caused ordering discrepancies in the event flow.
+
 ## 8.2.0 - TBD
 ### Added
 - `apiary-gluesync-listener`: per-event observability via a new `glue_listener_event` Micrometer counter, tagged with `operation` (e.g. `create_table`), `result` (`success`, `failure`, `ignored`), and `outcome` (e.g. `created`, `updated`, `deleted`, `not_found`, `renamed`, exception class name). Covers all 8 HMS event handlers. A `glue_listener_table_rename_duration` timer is also recorded on every table rename.
@@ -11,8 +15,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - `apiary-gluesync-listener`: fallback Glue operations (update-after-`AlreadyExistsException`, create-after-`EntityNotFoundException`) that previously escaped their catch blocks unhandled are now consistently caught, logged, and metered by the outer exception handler.
 ### Changed
 - Bump Micrometer from `1.9.9` to `1.14.14`.
-### Reverted
-- Revert `Change kafka listener hashing for ALTER_TABLE events (#133)`. `ALTER_TABLE` events now hash on the current table name again. The reverted change caused ordering discrepancies in the event flow.
 
 ## 8.1.18 - 2026-06-09
 ### Fixed
