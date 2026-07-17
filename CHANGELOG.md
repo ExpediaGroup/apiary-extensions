@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - `apiary-gluesync-listener`: fallback Glue operations (update-after-`AlreadyExistsException`, create-after-`EntityNotFoundException`) that previously escaped their catch blocks unhandled are now consistently caught, logged, and metered by the outer exception handler.
 ### Changed
 - Bump Micrometer from `1.9.9` to `1.14.14`.
+### Reverted
+- Revert `Change kafka listener hashing for ALTER_TABLE events (#133)`. `ALTER_TABLE` events now hash on the current table name again. The reverted change caused ordering discrepancies in the event flow.
 
 ## 8.1.18 - 2026-06-09
 ### Fixed
