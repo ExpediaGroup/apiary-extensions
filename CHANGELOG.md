@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 8.2.1 - 2026-07-17
+## 8.2.4 - 2026-07-17
 ### Reverted
 - Revert `Change kafka listener hashing for ALTER_TABLE events (#133)`. `ALTER_TABLE` events now hash on the current table name again. The reverted change caused ordering discrepancies in the event flow.
 
