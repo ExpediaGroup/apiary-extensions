@@ -886,6 +886,18 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
+  public void toOutcome_entityNotFoundException_returnsSpecificOutcome() throws MetaException {
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(simpleHiveTable(simpleSchema(), simplePartitioning()));
+    when(glueClient.createTable(any())).thenThrow(new EntityNotFoundException("table not found"));
+
+    glueSync.onCreateTable(event);
+
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_FAILURE, "EntityNotFoundException");
+  }
+
+  @Test
   public void toOutcome_unknownException_returnsOther() throws MetaException {
     CreateTableEvent event = mock(CreateTableEvent.class);
     when(event.getStatus()).thenReturn(true);
