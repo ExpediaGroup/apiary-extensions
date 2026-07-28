@@ -61,6 +61,11 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
   private static final List<String> KNOWN_EXCEPTION_NAMES = Arrays.asList(
       "OperationTimeoutException",
       "InvalidInputException",
+      "EntityNotFoundException",
+      "AlreadyExistsException",
+      "ConcurrentModificationException",
+      "ResourceNumberLimitExceededException",
+      "GlueEncryptionException",
       "AmazonServiceException"
   );
 
