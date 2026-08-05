@@ -34,7 +34,7 @@ import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricServic
  *
  * CME retries are disabled by default to avoid blocking HMS threads. Enable for Dronefly (CLI) via:
  *   GLUE_RETRY_ENABLED=true
- *   GLUE_RETRY_MAX_RETRIES=3   (optional, default 3 retries = 4 total calls)
+ *   GLUE_RETRY_MAX_ATTEMPTS=3   (optional, default 3 retries = 4 total calls)
  */
 public class GlueClientFactory {
 
@@ -78,6 +78,7 @@ public class GlueClientFactory {
         if (n > 0) {
           return n;
         }
+        log.warn("Invalid value for {}: '{}', using default {}", ENV_RETRY_MAX_ATTEMPTS, val, DEFAULT_MAX_RETRIES);
       } catch (NumberFormatException ignored) {
         log.warn("Invalid value for {}: '{}', using default {}", ENV_RETRY_MAX_ATTEMPTS, val, DEFAULT_MAX_RETRIES);
       }
