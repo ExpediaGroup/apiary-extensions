@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.expediagroup.apiary.extensions.gluesync.cli;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyShort;
@@ -39,6 +40,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
@@ -134,6 +137,8 @@ public class GlueSyncCliTest {
     options.addOption(new Option(null, "continueOnError", false, "Continue processing on errors"));
     options.addOption(new Option(null, "keep-glue-partitions", false, "Keep existing Glue partitions"));
     options.addOption(new Option(null, "sync-types", true, "Choose what table type to sync."));
+    options.addOption(new Option(null, "partition-values", true, "Comma separated partition values to sync."));
+    options.addOption(new Option(null, "partition-name", true, "Partition name (key=value/key=value) to sync."));
 
     return options;
   }
@@ -666,5 +671,205 @@ public class GlueSyncCliTest {
     // Assert - database should be skipped: no table sync or partition sync
     verify(mockApiaryGlueSync, never()).onCreateTable(any(CreateTableEvent.class));
     verify(mockGluePartitionService, never()).synchronizePartitions(any(), any(), anyBoolean(), anyBoolean());
+  }
+
+  @Test
+  public void testSyncAllWithPartitionValuesSyncsOnlyThatPartition() throws Exception {
+    // Arrange
+    String[] args = { "--database-name-regex", "test_db1", "--table-name-regex", "test_table1",
+                      "--partition-values", "2023,01" };
+    CommandLine cmd = new DefaultParser().parse(createOptions(), args);
+
+    Database mockDatabase = new Database();
+    mockDatabase.setName("test_db1");
+
+    Table mockTable = new Table();
+    mockTable.setDbName("test_db1");
+    mockTable.setTableName("test_table1");
+    mockTable.setParameters(new HashMap<>());
+
+    Partition mockPartition = new Partition();
+    mockPartition.setValues(Arrays.asList("2023", "01"));
+
+    when(mockMetastoreClient.getAllDatabases()).thenReturn(Arrays.asList("test_db1"));
+    when(mockMetastoreClient.getAllTables("test_db1")).thenReturn(Arrays.asList("test_table1"));
+    when(mockMetastoreClient.getDatabase(anyString())).thenReturn(mockDatabase);
+    when(mockMetastoreClient.getTable(anyString(), anyString())).thenReturn(mockTable);
+    when(mockMetastoreClient.getPartition("test_db1", "test_table1", Arrays.asList("2023", "01")))
+        .thenReturn(mockPartition);
+
+    // Act
+    glueSyncCli.syncAll(cmd);
+
+    // Assert - only the single-partition sync path is used, table/full-partition sync is skipped
+    verify(mockApiaryGlueSync, never()).onCreateTable(any(CreateTableEvent.class));
+    verify(mockGluePartitionService, never()).synchronizePartitions(any(), any(), anyBoolean(), anyBoolean());
+    verify(mockGluePartitionService, times(1)).synchronizePartition(eq(mockTable), eq(Arrays.asList("2023", "01")),
+        eq(mockPartition), eq(true));
+  }
+
+  @Test
+  public void testSyncAllWithPartitionValuesAndMissingHivePartition() throws Exception {
+    // Arrange - partition no longer exists in Hive; service should still be
+    // invoked so it can decide whether to delete the Glue side
+    String[] args = { "--database-name-regex", "test_db1", "--table-name-regex", "test_table1",
+                      "--partition-values", "2023,01" };
+    CommandLine cmd = new DefaultParser().parse(createOptions(), args);
+
+    Database mockDatabase = new Database();
+    mockDatabase.setName("test_db1");
+
+    Table mockTable = new Table();
+    mockTable.setDbName("test_db1");
+    mockTable.setTableName("test_table1");
+    mockTable.setParameters(new HashMap<>());
+
+    when(mockMetastoreClient.getAllDatabases()).thenReturn(Arrays.asList("test_db1"));
+    when(mockMetastoreClient.getAllTables("test_db1")).thenReturn(Arrays.asList("test_table1"));
+    when(mockMetastoreClient.getDatabase(anyString())).thenReturn(mockDatabase);
+    when(mockMetastoreClient.getTable(anyString(), anyString())).thenReturn(mockTable);
+    when(mockMetastoreClient.getPartition("test_db1", "test_table1", Arrays.asList("2023", "01")))
+        .thenThrow(new NoSuchObjectException("no such partition"));
+
+    // Act
+    glueSyncCli.syncAll(cmd);
+
+    // Assert
+    verify(mockGluePartitionService, times(1)).synchronizePartition(eq(mockTable), eq(Arrays.asList("2023", "01")),
+        eq(null), eq(true));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSyncAllWithPartitionValuesRequiresSingleTableMatch() throws Exception {
+    // Arrange - regex matches more than one table, which is ambiguous for a
+    // single-partition sync
+    String[] args = { "--database-name-regex", "test_db.*", "--table-name-regex", "test_table.*",
+                      "--partition-values", "2023,01" };
+    CommandLine cmd = new DefaultParser().parse(createOptions(), args);
+
+    when(mockMetastoreClient.getAllDatabases()).thenReturn(Arrays.asList("test_db1"));
+    when(mockMetastoreClient.getAllTables("test_db1")).thenReturn(Arrays.asList("test_table1", "test_table2"));
+
+    // Act - should throw before any table is synced
+    glueSyncCli.syncAll(cmd);
+  }
+
+  @Test
+  public void testSyncAllWithPartitionNameSyncsOnlyThatPartition() throws Exception {
+    // Arrange - partition-name uses the same key=value/key=value format as
+    // Hive's "SHOW PARTITIONS" and is resolved into ordered values using the
+    // table's partition keys
+    String[] args = { "--database-name-regex", "stg_customer_segmentation", "--table-name-regex", "sync_runs",
+                      "--partition-name", "sync_id=2235348/sync_run_id=493558413" };
+    CommandLine cmd = new DefaultParser().parse(createOptions(), args);
+
+    Database mockDatabase = new Database();
+    mockDatabase.setName("stg_customer_segmentation");
+
+    Table mockTable = new Table();
+    mockTable.setDbName("stg_customer_segmentation");
+    mockTable.setTableName("sync_runs");
+    mockTable.setParameters(new HashMap<>());
+    mockTable.setPartitionKeys(Arrays.asList(
+        new FieldSchema("sync_id", "string", null),
+        new FieldSchema("sync_run_id", "string", null)));
+
+    Partition mockPartition = new Partition();
+    mockPartition.setValues(Arrays.asList("2235348", "493558413"));
+
+    when(mockMetastoreClient.getAllDatabases()).thenReturn(Arrays.asList("stg_customer_segmentation"));
+    when(mockMetastoreClient.getAllTables("stg_customer_segmentation")).thenReturn(Arrays.asList("sync_runs"));
+    when(mockMetastoreClient.getDatabase(anyString())).thenReturn(mockDatabase);
+    when(mockMetastoreClient.getTable(anyString(), anyString())).thenReturn(mockTable);
+    when(mockMetastoreClient.getPartition("stg_customer_segmentation", "sync_runs",
+        Arrays.asList("2235348", "493558413"))).thenReturn(mockPartition);
+
+    // Act
+    glueSyncCli.syncAll(cmd);
+
+    // Assert
+    verify(mockGluePartitionService, times(1)).synchronizePartition(eq(mockTable),
+        eq(Arrays.asList("2235348", "493558413")), eq(mockPartition), eq(true));
+  }
+
+  @Test
+  public void testSyncAllWithPartitionNameOutOfOrderStillResolvesCorrectly() throws Exception {
+    // Arrange - keys given out of order relative to the table's partition key
+    // order should still resolve to the correctly ordered values
+    String[] args = { "--database-name-regex", "test_db1", "--table-name-regex", "test_table1",
+                      "--partition-name", "month=01/year=2023" };
+    CommandLine cmd = new DefaultParser().parse(createOptions(), args);
+
+    Database mockDatabase = new Database();
+    mockDatabase.setName("test_db1");
+
+    Table mockTable = new Table();
+    mockTable.setDbName("test_db1");
+    mockTable.setTableName("test_table1");
+    mockTable.setParameters(new HashMap<>());
+    mockTable.setPartitionKeys(Arrays.asList(
+        new FieldSchema("year", "string", null),
+        new FieldSchema("month", "string", null)));
+
+    when(mockMetastoreClient.getAllDatabases()).thenReturn(Arrays.asList("test_db1"));
+    when(mockMetastoreClient.getAllTables("test_db1")).thenReturn(Arrays.asList("test_table1"));
+    when(mockMetastoreClient.getDatabase(anyString())).thenReturn(mockDatabase);
+    when(mockMetastoreClient.getTable(anyString(), anyString())).thenReturn(mockTable);
+    when(mockMetastoreClient.getPartition("test_db1", "test_table1", Arrays.asList("2023", "01")))
+        .thenThrow(new NoSuchObjectException("no such partition"));
+
+    // Act
+    glueSyncCli.syncAll(cmd);
+
+    // Assert - resolved values are ["2023", "01"] (year, month order), not the
+    // literal order given in the partition-name string
+    verify(mockMetastoreClient, times(1)).getPartition("test_db1", "test_table1", Arrays.asList("2023", "01"));
+    verify(mockGluePartitionService, times(1)).synchronizePartition(eq(mockTable), eq(Arrays.asList("2023", "01")),
+        eq(null), eq(true));
+  }
+
+  @Test
+  public void testSyncAllWithPartitionNameMismatchedKeysThrows() throws Exception {
+    // Arrange - partition-name references a key that isn't one of the table's
+    // partition keys. syncTable's IllegalArgumentException propagates up through
+    // syncAll's per-table error handling (continueOnError is not set), which wraps
+    // it in a RuntimeException.
+    String[] args = { "--database-name-regex", "test_db1", "--table-name-regex", "test_table1",
+                      "--partition-name", "day=15" };
+    CommandLine cmd = new DefaultParser().parse(createOptions(), args);
+
+    Database mockDatabase = new Database();
+    mockDatabase.setName("test_db1");
+
+    Table mockTable = new Table();
+    mockTable.setDbName("test_db1");
+    mockTable.setTableName("test_table1");
+    mockTable.setParameters(new HashMap<>());
+    mockTable.setPartitionKeys(Arrays.asList(new FieldSchema("year", "string", null)));
+
+    when(mockMetastoreClient.getAllDatabases()).thenReturn(Arrays.asList("test_db1"));
+    when(mockMetastoreClient.getAllTables("test_db1")).thenReturn(Arrays.asList("test_table1"));
+    when(mockMetastoreClient.getDatabase(anyString())).thenReturn(mockDatabase);
+    when(mockMetastoreClient.getTable(anyString(), anyString())).thenReturn(mockTable);
+
+    // Act - should throw since "day" isn't a partition key of the table
+    try {
+      glueSyncCli.syncAll(cmd);
+      fail("Expected a RuntimeException caused by an IllegalArgumentException");
+    } catch (RuntimeException e) {
+      assertTrue(e.getCause() instanceof IllegalArgumentException);
+      assertTrue(e.getCause().getMessage().contains("day"));
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSyncAllWithBothPartitionValuesAndPartitionNameThrows() throws Exception {
+    // Arrange - the two options are mutually exclusive
+    String[] args = { "--database-name-regex", "test_db1", "--table-name-regex", "test_table1",
+                      "--partition-values", "2023,01", "--partition-name", "year=2023/month=01" };
+    CommandLine cmd = new DefaultParser().parse(createOptions(), args);
+
+    // Act - should throw before touching the metastore
+    glueSyncCli.syncAll(cmd);
   }
 }

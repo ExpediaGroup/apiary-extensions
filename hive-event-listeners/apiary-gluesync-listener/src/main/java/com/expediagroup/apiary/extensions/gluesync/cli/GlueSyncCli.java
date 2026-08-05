@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.expediagroup.apiary.extensions.gluesync.cli;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
@@ -114,26 +117,50 @@ public class GlueSyncCli {
     String syncTypesFlag = cmd.getOptionValue("sync-types");
     List<String> syncTypes = syncTypesFlag == null ? null : Arrays.asList(syncTypesFlag.split(","));
 
-    logger.debug("Additional parameters: continueOnError={}, deleteGluePartitions={}, syncTypes={}",
-        continueOnError, deleteGluePartitions, syncTypesFlag);
+    String partitionValuesFlag = cmd.getOptionValue("partition-values");
+    List<String> partitionValues = partitionValuesFlag == null ? null : Arrays.asList(partitionValuesFlag.split(","));
 
-    boolean hadError = false;
+    String partitionName = cmd.getOptionValue("partition-name");
+
+    if (partitionValues != null && partitionName != null) {
+      throw new IllegalArgumentException("--partition-values and --partition-name are mutually exclusive");
+    }
+    boolean singlePartitionSync = partitionValues != null || partitionName != null;
+
+    logger.debug(
+        "Additional parameters: continueOnError={}, deleteGluePartitions={}, syncTypes={}, partitionValues={}, partitionName={}",
+        continueOnError, deleteGluePartitions, syncTypesFlag, partitionValuesFlag, partitionName);
+
+    List<String[]> matchedTables = new ArrayList<>();
     for (String dbName : metastoreClient.getAllDatabases()) {
       if (dbName.matches(dbRegex)) {
         logger.debug("Processing database: {}", dbName);
         for (String tableName : metastoreClient.getAllTables(dbName)) {
           if (tableName.matches(tableRegex)) {
-            try {
-              logger.info("Syncing table: {} in database: {}", tableName, dbName);
-              syncTable(dbName, tableName, deleteGluePartitions, syncTypes, verbose);
-            } catch (Exception e) {
-              hadError = true;
-              logger.error("Error syncing table: {} in database: {}: {}", tableName, dbName, e.getMessage());
-              if (!continueOnError) {
-                throw new RuntimeException("Error during sync operation", e);
-              }
-            }
+            matchedTables.add(new String[] { dbName, tableName });
           }
+        }
+      }
+    }
+
+    if (singlePartitionSync && matchedTables.size() != 1) {
+      throw new IllegalArgumentException(
+          "--partition-values/--partition-name require database-name-regex/table-name-regex to match exactly one table, "
+              + "but matched " + matchedTables.size());
+    }
+
+    boolean hadError = false;
+    for (String[] dbAndTable : matchedTables) {
+      String dbName = dbAndTable[0];
+      String tableName = dbAndTable[1];
+      try {
+        logger.info("Syncing table: {} in database: {}", tableName, dbName);
+        syncTable(dbName, tableName, deleteGluePartitions, syncTypes, verbose, partitionValues, partitionName);
+      } catch (Exception e) {
+        hadError = true;
+        logger.error("Error syncing table: {} in database: {}: {}", tableName, dbName, e.getMessage());
+        if (!continueOnError) {
+          throw new RuntimeException("Error during sync operation", e);
         }
       }
     }
@@ -145,7 +172,7 @@ public class GlueSyncCli {
   }
 
   private void syncTable(String dbName, String tableName, boolean deleteGluePartitions, List<String> syncTypes,
-      boolean verbose) throws TException {
+      boolean verbose, List<String> partitionValues, String partitionName) throws TException {
     Database database = metastoreClient.getDatabase(dbName);
 
     if (!glueDatabaseService.exists(database)) {
@@ -163,6 +190,15 @@ public class GlueSyncCli {
       }
     }
 
+    if (partitionName != null) {
+      partitionValues = resolvePartitionValues(table, partitionName);
+    }
+
+    if (partitionValues != null) {
+      syncPartition(dbName, tableName, table, partitionValues, deleteGluePartitions);
+      return;
+    }
+
     CreateTableEvent createTableEvent = new CreateTableEvent(table, true, null);
     apiaryGlueSync.onCreateTable(createTableEvent);
 
@@ -173,6 +209,46 @@ public class GlueSyncCli {
     }
 
     logger.info("Successfully synced database: {} and table: {} to Glue", dbName, tableName);
+  }
+
+  /**
+   * Parses a partition name in the same {@code key=value/key=value} format used by Hive's
+   * {@code SHOW PARTITIONS}, and returns the values ordered to match the table's partition keys.
+   */
+  private List<String> resolvePartitionValues(Table table, String partitionName) {
+    LinkedHashMap<String, String> providedValuesByKey = new LinkedHashMap<>();
+    for (String segment : partitionName.split("/")) {
+      String[] keyValue = segment.split("=", 2);
+      if (keyValue.length != 2) {
+        throw new IllegalArgumentException(
+            "Invalid --partition-name segment '" + segment + "', expected format key=value");
+      }
+      providedValuesByKey.put(keyValue[0], keyValue[1]);
+    }
+
+    List<String> expectedKeys = table.getPartitionKeys().stream().map(FieldSchema::getName).collect(Collectors.toList());
+    if (!providedValuesByKey.keySet().equals(new java.util.LinkedHashSet<>(expectedKeys))) {
+      throw new IllegalArgumentException(
+          "--partition-name keys " + providedValuesByKey.keySet() + " do not match partition keys " + expectedKeys
+              + " of table " + table.getDbName() + "." + table.getTableName());
+    }
+
+    return expectedKeys.stream().map(providedValuesByKey::get).collect(Collectors.toList());
+  }
+
+  private void syncPartition(String dbName, String tableName, Table table, List<String> partitionValues,
+      boolean deleteGluePartitions) throws TException {
+    Partition hivePartition = null;
+    try {
+      hivePartition = metastoreClient.getPartition(dbName, tableName, partitionValues);
+    } catch (NoSuchObjectException e) {
+      logger.info("Partition {} not found in Hive metastore for table {}.{}", partitionValues, dbName, tableName);
+    }
+
+    gluePartitionService.synchronizePartition(table, partitionValues, hivePartition, deleteGluePartitions);
+
+    logger.info("Successfully synced partition {} of database: {} and table: {} to Glue", partitionValues, dbName,
+        tableName);
   }
 
   private List<Partition> getPartitions(Table table) throws MetaException, TException {

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,13 @@ public class GlueSyncCliParser {
         "If true, will keep glue partitions even if there is no corresponding hive partition. If false will delete them (default: false)"));
     options.addOption(new Option(null, "sync-types", true,
         "List of table types to sync. If non specified it will be sync all table types. Example: sync-types=MANAGED_TABLE,EXTERNAL_TABLE. Possible types: VIRTUAL_VIEW,MANAGED_TABLE,EXTERNAL_TABLE"));
+    options.addOption(new Option(null, "partition-values", true,
+        "Comma separated partition values identifying a single partition to sync, e.g. partition-values=2024,01,15. "
+            + "Requires database-name-regex/table-name-regex to match exactly one table. Mutually exclusive with partition-name."));
+    options.addOption(new Option(null, "partition-name", true,
+        "Partition name identifying a single partition to sync, in the same key=value/key=value format as "
+            + "'SHOW PARTITIONS', e.g. partition-name=sync_id=2235348/sync_run_id=493558413. "
+            + "Requires database-name-regex/table-name-regex to match exactly one table. Mutually exclusive with partition-values."));
 
     CommandLineParser parser = new DefaultParser();
     return parser;

@@ -34,6 +34,8 @@ import com.amazonaws.services.glue.model.BatchUpdatePartitionRequest;
 import com.amazonaws.services.glue.model.BatchUpdatePartitionRequestEntry;
 import com.amazonaws.services.glue.model.CreatePartitionRequest;
 import com.amazonaws.services.glue.model.DeletePartitionRequest;
+import com.amazonaws.services.glue.model.EntityNotFoundException;
+import com.amazonaws.services.glue.model.GetPartitionRequest;
 import com.amazonaws.services.glue.model.GetPartitionsRequest;
 import com.amazonaws.services.glue.model.InvalidInputException;
 import com.amazonaws.services.glue.model.Partition;
@@ -138,6 +140,61 @@ public class GluePartitionService {
         .withTableName(table.getTableName());
     glueClient.deletePartition(deletePartitionRequest);
     log.debug("{} partition deleted from glue catalog", partition);
+  }
+
+  /**
+   * Synchronizes a single Hive partition (identified by {@code partitionValues}) to Glue.
+   * <p>
+   * If {@code hivePartition} is {@code null} (i.e. the partition no longer exists in the Hive
+   * metastore), the corresponding Glue partition is deleted when {@code deletePartitions} is
+   * {@code true}; otherwise it is created or updated in Glue to match Hive. Unlike
+   * {@link #synchronizePartitions}, this only ever touches the single requested partition - no
+   * other partitions of the table are affected.
+   */
+  public void synchronizePartition(Table table, List<String> partitionValues,
+      org.apache.hadoop.hive.metastore.api.Partition hivePartition, boolean deletePartitions) {
+    Partition gluePartition = getPartition(table, partitionValues);
+
+    if (hivePartition == null) {
+      if (gluePartition != null && deletePartitions) {
+        delete(table, partitionValues);
+        log.info("Partition {} deleted from glue catalog (not present in Hive)", partitionValues);
+      } else {
+        log.info("Partition {} not present in Hive metastore, skipping (deletePartitions={})", partitionValues,
+            deletePartitions);
+      }
+      return;
+    }
+
+    if (gluePartition == null) {
+      create(table, hivePartition);
+      log.info("Partition {} created in glue catalog", partitionValues);
+    } else if (!partitionComparator.equals(hivePartition, gluePartition)) {
+      update(table, hivePartition);
+      log.info("Partition {} updated in glue catalog", partitionValues);
+    } else {
+      log.info("Partition {} already up to date in glue catalog", partitionValues);
+    }
+  }
+
+  private Partition getPartition(Table table, List<String> partitionValues) {
+    GetPartitionRequest getPartitionRequest = new GetPartitionRequest()
+        .withDatabaseName(transformer.glueDbName(table))
+        .withTableName(table.getTableName())
+        .withPartitionValues(partitionValues);
+    try {
+      return glueClient.getPartition(getPartitionRequest).getPartition();
+    } catch (EntityNotFoundException e) {
+      return null;
+    }
+  }
+
+  private void delete(Table table, List<String> partitionValues) {
+    DeletePartitionRequest deletePartitionRequest = new DeletePartitionRequest()
+        .withPartitionValues(partitionValues)
+        .withDatabaseName(transformer.glueDbName(table))
+        .withTableName(table.getTableName());
+    glueClient.deletePartition(deletePartitionRequest);
   }
 
   private PartitionInput cleanUpPartition(PartitionInput partition) {

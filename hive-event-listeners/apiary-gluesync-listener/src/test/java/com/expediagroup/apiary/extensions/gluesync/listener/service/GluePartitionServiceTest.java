@@ -44,6 +44,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
+import com.amazonaws.services.glue.model.CreatePartitionRequest;
+import com.amazonaws.services.glue.model.DeletePartitionRequest;
+import com.amazonaws.services.glue.model.EntityNotFoundException;
+import com.amazonaws.services.glue.model.GetPartitionRequest;
+import com.amazonaws.services.glue.model.GetPartitionResult;
+import com.amazonaws.services.glue.model.UpdatePartitionRequest;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GluePartitionServiceTest {
@@ -409,5 +415,69 @@ public class GluePartitionServiceTest {
     params.put(GluePartitionService.APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM, "false");
     table.setParameters(params);
     assertThat(svc.shouldSkipArchive(table), is(false));
+  }
+
+  @Test
+  public void synchronizePartition_createsWhenAbsentFromGlue() {
+    when(mockGlueClient.getPartition(any(GetPartitionRequest.class))).thenThrow(new EntityNotFoundException("nope"));
+    org.apache.hadoop.hive.metastore.api.Partition hivePartition = createHivePartition(0);
+
+    service.synchronizePartition(testTable, hivePartition.getValues(), hivePartition, true);
+
+    verify(mockGlueClient, times(1)).createPartition(any(CreatePartitionRequest.class));
+    verify(mockGlueClient, times(0)).updatePartition(any(UpdatePartitionRequest.class));
+    verify(mockGlueClient, times(0)).deletePartition(any(DeletePartitionRequest.class));
+  }
+
+  @Test
+  public void synchronizePartition_updatesWhenDifferentInGlue() {
+    org.apache.hadoop.hive.metastore.api.Partition hivePartition = createHivePartition(0);
+    com.amazonaws.services.glue.model.Partition existingGluePartition = createGluePartition(1); // different location
+
+    when(mockGlueClient.getPartition(any(GetPartitionRequest.class)))
+        .thenReturn(new GetPartitionResult().withPartition(existingGluePartition));
+
+    service.synchronizePartition(testTable, hivePartition.getValues(), hivePartition, true);
+
+    verify(mockGlueClient, times(1)).updatePartition(any(UpdatePartitionRequest.class));
+    verify(mockGlueClient, times(0)).createPartition(any(CreatePartitionRequest.class));
+    verify(mockGlueClient, times(0)).deletePartition(any(DeletePartitionRequest.class));
+  }
+
+  @Test
+  public void synchronizePartition_deletesWhenMissingFromHiveAndDeleteEnabled() {
+    com.amazonaws.services.glue.model.Partition existingGluePartition = createGluePartition(0);
+    when(mockGlueClient.getPartition(any(GetPartitionRequest.class)))
+        .thenReturn(new GetPartitionResult().withPartition(existingGluePartition));
+
+    service.synchronizePartition(testTable, existingGluePartition.getValues(), null, true);
+
+    verify(mockGlueClient, times(1)).deletePartition(any(DeletePartitionRequest.class));
+    verify(mockGlueClient, times(0)).createPartition(any(CreatePartitionRequest.class));
+    verify(mockGlueClient, times(0)).updatePartition(any(UpdatePartitionRequest.class));
+  }
+
+  @Test
+  public void synchronizePartition_skipsDeleteWhenMissingFromHiveAndDeleteDisabled() {
+    com.amazonaws.services.glue.model.Partition existingGluePartition = createGluePartition(0);
+    when(mockGlueClient.getPartition(any(GetPartitionRequest.class)))
+        .thenReturn(new GetPartitionResult().withPartition(existingGluePartition));
+
+    service.synchronizePartition(testTable, existingGluePartition.getValues(), null, false);
+
+    verify(mockGlueClient, times(0)).deletePartition(any(DeletePartitionRequest.class));
+    verify(mockGlueClient, times(0)).createPartition(any(CreatePartitionRequest.class));
+    verify(mockGlueClient, times(0)).updatePartition(any(UpdatePartitionRequest.class));
+  }
+
+  @Test
+  public void synchronizePartition_noopWhenMissingFromBoth() {
+    when(mockGlueClient.getPartition(any(GetPartitionRequest.class))).thenThrow(new EntityNotFoundException("nope"));
+
+    service.synchronizePartition(testTable, Arrays.asList("2024", "01"), null, true);
+
+    verify(mockGlueClient, times(0)).deletePartition(any(DeletePartitionRequest.class));
+    verify(mockGlueClient, times(0)).createPartition(any(CreatePartitionRequest.class));
+    verify(mockGlueClient, times(0)).updatePartition(any(UpdatePartitionRequest.class));
   }
 }
