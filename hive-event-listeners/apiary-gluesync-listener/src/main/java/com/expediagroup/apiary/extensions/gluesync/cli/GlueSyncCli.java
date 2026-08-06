@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2025 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.expediagroup.apiary.extensions.gluesync.cli;
 
 import java.util.ArrayList;
@@ -35,11 +34,12 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.glue.AWSGlue;
-import com.amazonaws.services.glue.AWSGlueClientBuilder;
 
 import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClient;
 import com.expediagroup.apiary.extensions.events.metastore.consumer.common.thrift.ThriftHiveClientFactory;
 import com.expediagroup.apiary.extensions.gluesync.listener.ApiaryGlueSync;
+import com.expediagroup.apiary.extensions.gluesync.listener.GlueClientFactory;
+import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueDatabaseService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GluePartitionService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueTableService;
@@ -64,19 +64,17 @@ public class GlueSyncCli {
   private IsIcebergTablePredicate isIcebergTablePredicate;
 
   public GlueSyncCli() {
+    MetricService metricService = new MetricService();
     ClientConfiguration clientConfig = new ClientConfiguration();
     clientConfig.setRequestTimeout(600000);
-    AWSGlue glueClient = AWSGlueClientBuilder.standard()
-        .withRegion(System.getenv("AWS_REGION"))
-        .withClientConfiguration(clientConfig)
-        .build();
+    String gluePrefix = System.getenv("GLUE_PREFIX");
+    AWSGlue glueClient = GlueClientFactory.buildClient(System.getenv("AWS_REGION"), clientConfig, metricService);
     this.thriftHiveClientFactory = new ThriftHiveClientFactory();
     thriftHiveClient = thriftHiveClientFactory.newInstance(THRIFT_CONNECTION_URI, THRIFT_CONNECTION_TIMEOUT);
     metastoreClient = thriftHiveClient.getMetaStoreClient();
     Configuration config = new Configuration();
-    this.apiaryGlueSync = new ApiaryGlueSync(config, true);
+    this.apiaryGlueSync = new ApiaryGlueSync(config, glueClient, gluePrefix, metricService, true);
     this.isIcebergTablePredicate = new IsIcebergTablePredicate();
-    String gluePrefix = System.getenv("GLUE_PREFIX");
     this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
     this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
   }

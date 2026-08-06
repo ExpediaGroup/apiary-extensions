@@ -30,9 +30,12 @@ public class MetricConstants {
   public static final String LISTENER_EVENT = "glue_listener_event";
   public static final String LISTENER_TABLE_RENAME_DURATION = "glue_listener_table_rename_duration";
 
+  public static final String GLUE_RETRY_ATTEMPT = "glue_listener_retry_attempt";
+
   public static final String TAG_OPERATION = "operation";
   public static final String TAG_RESULT    = "result";
   public static final String TAG_OUTCOME   = "outcome";
+  public static final String TAG_EXCEPTION = "exception_type";
 
   public static final String RESULT_SUCCESS = "success";
   public static final String RESULT_FAILURE = "failure";

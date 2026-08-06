@@ -15,7 +15,9 @@
  */
 package com.expediagroup.apiary.extensions.gluesync.listener.metrics;
 
+import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.GLUE_RETRY_ATTEMPT;
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.LISTENER_EVENT;
+import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_EXCEPTION;
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OPERATION;
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_OUTCOME;
 import static com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants.TAG_RESULT;
@@ -48,6 +50,7 @@ public class MetricService {
   private final MeterRegistry registry;
   private final Map<String, Counter> metrics;
   private final Map<String, Counter> events = new ConcurrentHashMap<>();
+  private final Map<String, Counter> retryAttempts = new ConcurrentHashMap<>();
 
   public MetricService(MeterRegistry registry) {
     this.registry = registry;
@@ -135,6 +138,18 @@ public class MetricService {
           .increment();
     } catch (Exception e) {
       log.warn("Unable to record event {} {} {}", operation, result, outcome, e);
+    }
+  }
+
+  public void recordGlueRetryAttempt(String exceptionType) {
+    try {
+      retryAttempts.computeIfAbsent(exceptionType, k ->
+          Counter.builder(GLUE_RETRY_ATTEMPT)
+              .tags(TAG_EXCEPTION, exceptionType)
+              .register(registry))
+          .increment();
+    } catch (Exception e) {
+      log.warn("Unable to record Glue retry attempt {}", exceptionType, e);
     }
   }
 }

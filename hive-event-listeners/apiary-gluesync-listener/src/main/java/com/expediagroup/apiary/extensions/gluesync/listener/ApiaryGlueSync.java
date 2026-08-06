@@ -39,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.glue.AWSGlue;
-import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.AlreadyExistsException;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
 
@@ -83,20 +82,17 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
 
   public ApiaryGlueSync(Configuration config, boolean throwExceptions) {
     super(config);
-    this.glueClient = AWSGlueClientBuilder.standard().withRegion(System.getenv("AWS_REGION")).build();
+    this.metricService = new MetricService();
+    this.glueClient = GlueClientFactory.buildClient(System.getenv("AWS_REGION"), metricService);
     String gluePrefix = System.getenv("GLUE_PREFIX");
     this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
     this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix);
     this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix);
     this.isIcebergPredicate = new IsIcebergTablePredicate();
-    this.metricService = new MetricService();
     this.throwExceptions = throwExceptions;
     log.debug("ApiaryGlueSync created");
   }
 
-  /**
-   * Just for testing.
-   */
   public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService,
       boolean throwExceptions) {
     this(config, glueClient, gluePrefix, metricService, throwExceptions, null);

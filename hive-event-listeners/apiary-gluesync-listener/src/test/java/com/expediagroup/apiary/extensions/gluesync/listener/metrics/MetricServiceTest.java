@@ -92,6 +92,18 @@ public class MetricServiceTest {
   }
 
   @Test
+  public void recordGlueRetryAttemptRegistersTaggedCounter() {
+    MeterRegistry registry = new SimpleMeterRegistry();
+    MetricService metricService = new MetricService(registry);
+
+    metricService.recordGlueRetryAttempt("ConcurrentModificationException");
+
+    assertThat(registry.get(MetricConstants.GLUE_RETRY_ATTEMPT)
+        .tags(MetricConstants.TAG_EXCEPTION, "ConcurrentModificationException")
+        .counter().count(), is(1.0));
+  }
+
+  @Test
   public void taggedEventCounterExposesTagsAsJmxKeyProperties() throws Exception {
     MetricRegistry dropwizardRegistry = new MetricRegistry();
     JmxReporter reporter = JmxReporter.forRegistry(dropwizardRegistry)
