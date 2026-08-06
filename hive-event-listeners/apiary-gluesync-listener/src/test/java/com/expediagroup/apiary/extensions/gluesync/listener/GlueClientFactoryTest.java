@@ -18,6 +18,9 @@ package com.expediagroup.apiary.extensions.gluesync.listener;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -98,5 +101,34 @@ public class GlueClientFactoryTest {
   @Test
   public void retryIsDisabledByDefault() {
     assertThat(GlueClientFactory.retryEnabled(), is(false));
+  }
+
+  @Test
+  public void defaultRetryExceptionsIsConcurrentModificationException() {
+    assertThat(GlueClientFactory.retryExceptions(),
+        is(Collections.singleton(GlueClientFactory.DEFAULT_RETRY_EXCEPTION)));
+  }
+
+  @Test
+  public void configuredExceptionIsRetried() {
+    Set<String> retryExceptions = Collections.singleton("ThrottlingException");
+    RetryPolicy policy = GlueClientFactory.buildRetryPolicy(3, retryExceptions, null);
+    AmazonServiceException ex = new AmazonServiceException("throttled");
+    ex.setErrorCode("ThrottlingException");
+    ex.setStatusCode(400);
+
+    boolean shouldRetry = policy.getRetryCondition().shouldRetry(null, ex, 0);
+    assertThat(shouldRetry, is(true));
+  }
+
+  @Test
+  public void exceptionNotInConfiguredSetIsNotRetried() {
+    Set<String> retryExceptions = Collections.singleton("ThrottlingException");
+    RetryPolicy policy = GlueClientFactory.buildRetryPolicy(3, retryExceptions, null);
+    AmazonServiceException ex = new AmazonServiceException("conflict");
+    ex.setErrorCode("ConcurrentModificationException");
+
+    boolean shouldRetry = policy.getRetryCondition().shouldRetry(null, ex, 0);
+    assertThat(shouldRetry, is(false));
   }
 }

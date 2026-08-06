@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## 8.2.5 - 2026-08-05
 ### Added
-- `apiary-gluesync-listener`: optional Glue client retry with exponential backoff, via `GlueClientFactory`. Off by default (safe for HMS threads); enable for Dronefly with `GLUE_RETRY_ENABLED=true` (`GLUE_RETRY_MAX_ATTEMPTS`, default `3`). Retries `ConcurrentModificationException` in addition to the AWS SDK's default transient error retries, recording each attempt via a new `glue_listener_retry_attempt` Micrometer counter tagged by `exception_type`.
+- `apiary-gluesync-listener`: optional Glue client retry with exponential backoff, via `GlueClientFactory`. Off by default (safe for HMS threads); enable for Dronefly with `GLUE_RETRY_ENABLED=true` (`GLUE_RETRY_MAX_ATTEMPTS`, default `3`). Retries `ConcurrentModificationException` by default in addition to the AWS SDK's default transient error retries; configure which exception(s) to retry via `GLUE_RETRY_EXCEPTIONS` (comma-separated). Each retry is recorded via a new `glue_listener_retry_attempt` Micrometer counter tagged by `exception_type`.
 
 ## 8.2.4 - 2026-07-17
 ### Added
