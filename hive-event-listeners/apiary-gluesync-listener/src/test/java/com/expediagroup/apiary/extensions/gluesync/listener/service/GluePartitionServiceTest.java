@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
@@ -44,6 +45,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.BatchCreatePartitionRequest;
+import com.amazonaws.services.glue.model.BatchUpdatePartitionRequest;
+import com.amazonaws.services.glue.model.GetPartitionsRequest;
+import com.amazonaws.services.glue.model.GetPartitionsResult;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GluePartitionServiceTest {
@@ -244,6 +248,82 @@ public class GluePartitionServiceTest {
     // Should be called 4 times: 1 failure at 25, then 3 successes at 12, 12, 1
     verify(mockGlueClient, times(4))
         .batchDeletePartition(any(com.amazonaws.services.glue.model.BatchDeletePartitionRequest.class));
+  }
+
+  @Test
+  public void testSynchronizePartitions_TransientLastDdlTimeOnlyDrift_DoesNotUpdateOrCreate() {
+    // Regression test for issue #147: partitions whose only drift from Glue is a volatile
+    // transient_lastDdlTime parameter must not be classified as needing an update, or a
+    // table with many such partitions would OOM re-transforming all of them.
+    List<org.apache.hadoop.hive.metastore.api.Partition> hivePartitions = new ArrayList<>();
+    List<com.amazonaws.services.glue.model.Partition> gluePartitions = new ArrayList<>();
+    for (int i = 0; i < 20; i++) {
+      Map<String, String> hiveParams = new HashMap<>();
+      hiveParams.put("transient_lastDdlTime", String.valueOf(1700000000 + i));
+      hivePartitions.add(buildMatchedHivePartition(i, hiveParams));
+      gluePartitions.add(buildMatchedGluePartition(i, Collections.emptyMap()));
+    }
+
+    when(mockGlueClient.getPartitions(any(GetPartitionsRequest.class)))
+        .thenReturn(new GetPartitionsResult().withPartitions(gluePartitions).withNextToken(null));
+
+    service.synchronizePartitions(testTable, hivePartitions, false, false);
+
+    verify(mockGlueClient, times(0)).batchCreatePartition(any(BatchCreatePartitionRequest.class));
+    verify(mockGlueClient, times(0)).batchUpdatePartition(any(BatchUpdatePartitionRequest.class));
+  }
+
+  // Builds a Hive partition and its exactly-matching Glue counterpart (bar the given
+  // parameters), so the two only ever differ by whatever is passed in via `params`. Used to
+  // exercise the comparator's decision-making through synchronizePartitions without any
+  // unrelated field mismatches (which would otherwise NPE on primitive/boxed field
+  // comparisons in HiveToGluePartitionComparator, e.g. Boolean/Integer fields left null).
+  private org.apache.hadoop.hive.metastore.api.Partition buildMatchedHivePartition(int index,
+      Map<String, String> params) {
+    org.apache.hadoop.hive.metastore.api.Partition partition = new org.apache.hadoop.hive.metastore.api.Partition();
+    partition.setDbName("test_db");
+    partition.setTableName("test_table");
+    partition.setValues(Arrays.asList("2024", String.format("%02d", index + 1)));
+    partition.setParameters(params);
+
+    StorageDescriptor sd = new StorageDescriptor();
+    sd.setCols(Arrays.asList(
+        new FieldSchema("col1", "string", "comment1"),
+        new FieldSchema("col2", "int", "comment2")));
+    sd.setLocation("s3://test-bucket/test-path/year=2024/month=" + String.format("%02d", index + 1));
+    sd.setCompressed(false);
+    sd.setNumBuckets(0);
+    sd.setStoredAsSubDirectories(false);
+    SerDeInfo serDeInfo = new SerDeInfo();
+    serDeInfo.setSerializationLib("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe");
+    sd.setSerdeInfo(serDeInfo);
+    partition.setSd(sd);
+
+    return partition;
+  }
+
+  private com.amazonaws.services.glue.model.Partition buildMatchedGluePartition(int index,
+      Map<String, String> params) {
+    com.amazonaws.services.glue.model.Partition partition = new com.amazonaws.services.glue.model.Partition();
+    partition.setDatabaseName("test-prefix-test_db");
+    partition.setTableName("test_table");
+    partition.setValues(Arrays.asList("2024", String.format("%02d", index + 1)));
+    partition.setParameters(params);
+
+    com.amazonaws.services.glue.model.StorageDescriptor sd = new com.amazonaws.services.glue.model.StorageDescriptor();
+    sd.setColumns(Arrays.asList(
+        new com.amazonaws.services.glue.model.Column().withName("col1").withType("string").withComment("comment1"),
+        new com.amazonaws.services.glue.model.Column().withName("col2").withType("int").withComment("comment2")));
+    sd.setLocation("s3://test-bucket/test-path/year=2024/month=" + String.format("%02d", index + 1));
+    sd.setCompressed(false);
+    sd.setNumberOfBuckets(0);
+    sd.setStoredAsSubDirectories(false);
+    com.amazonaws.services.glue.model.SerDeInfo serDeInfo = new com.amazonaws.services.glue.model.SerDeInfo();
+    serDeInfo.setSerializationLibrary("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe");
+    sd.setSerdeInfo(serDeInfo);
+    partition.setStorageDescriptor(sd);
+
+    return partition;
   }
 
   // Helper methods
