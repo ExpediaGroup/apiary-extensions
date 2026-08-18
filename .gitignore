@@ -31,3 +31,7 @@ dependency-reduced-pom.xml
 
 # Maven shade plugin artifact
 dependency-reduced-pom.xml
+
+# Local-only scratch/analysis notes
+details.md
+failings.md
