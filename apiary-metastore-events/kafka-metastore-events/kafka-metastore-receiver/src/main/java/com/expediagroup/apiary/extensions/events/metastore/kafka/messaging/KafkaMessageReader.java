@@ -17,6 +17,8 @@ package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 
 import static com.expediagroup.apiary.extensions.events.metastore.common.Preconditions.checkNotEmpty;
 
@@ -28,6 +30,8 @@ import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.LongDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,9 +53,12 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
   private static final Logger log = LoggerFactory.getLogger(KafkaMessageReader.class);
   private static final Duration POLL_TIMEOUT = Duration.ofMinutes(5);
 
-  private KafkaConsumer<Long, byte[]> consumer;
+  // The record key is never read: events are decoded from the record value alone. The key type is
+  // therefore Object, so that a reader configured with a non-default key deserializer (see
+  // KafkaMessageReaderBuilder#withKeyDeserializer) remains correctly typed.
+  private KafkaConsumer<Object, byte[]> consumer;
   private MetaStoreEventSerDe eventSerDe;
-  private Iterator<ConsumerRecord<Long, byte[]>> records;
+  private Iterator<ConsumerRecord<Object, byte[]>> records;
   private KafkaClientMetrics kafkaClientMetrics;
 
   private KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, Properties consumerProperties, MeterRegistry meterRegistry) {
@@ -59,7 +66,7 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
   }
 
   @VisibleForTesting
-  KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, KafkaConsumer<Long, byte[]> consumer, MeterRegistry meterRegistry) {
+  KafkaMessageReader(String topicName, MetaStoreEventSerDe eventSerDe, KafkaConsumer<Object, byte[]> consumer, MeterRegistry meterRegistry) {
     this.eventSerDe = eventSerDe;
     this.consumer = consumer;
     this.consumer.subscribe(Collections.singletonList(topicName));
@@ -72,7 +79,7 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
   @Override
   public ApiaryListenerEvent next() {
     readRecordsIfNeeded();
-    ConsumerRecord<Long, byte[]> next = records.next();
+    ConsumerRecord<Object, byte[]> next = records.next();
     return eventSerDe.unmarshal(next.value());
   }
 
@@ -111,6 +118,7 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
     private MetaStoreEventSerDe metaStoreEventSerDe = new JsonMetaStoreEventSerDe();
     private Properties consumerProperties = new Properties();
     private MeterRegistry meterRegistry;
+    private String keyDeserializer = LongDeserializer.class.getName();
 
     private KafkaMessageReaderBuilder(String bootstrapServers, String topicName, String applicationName) {
       this.bootstrapServers = bootstrapServers;
@@ -141,15 +149,40 @@ public class KafkaMessageReader implements Iterator<ApiaryListenerEvent>, Closea
       return this;
     }
 
+    /**
+     * Overrides the deserializer used for the Kafka record key.
+     * <p>
+     * Defaults to {@link LongDeserializer}, which matches the key written by the Apiary Hive
+     * Metastore listener. Topics populated by a different producer may key their records with
+     * another type; reading those with the default deserializer fails with a
+     * {@code SerializationException}. The record key is never used to decode the event, so any
+     * deserializer that can read the key is safe here.
+     * <p>
+     * This cannot be set through {@link #withConsumerProperties(Properties)}: values supplied there
+     * do not override the defaults applied by the builder.
+     *
+     * @param keyDeserializer fully qualified class name of the key deserializer
+     * @return this builder
+     */
+    public KafkaMessageReaderBuilder withKeyDeserializer(String keyDeserializer) {
+      this.keyDeserializer = checkNotEmpty(keyDeserializer, "Key deserializer is not set");
+      return this;
+    }
+
     public KafkaMessageReader build() {
+      MeterRegistry registry = meterRegistry != null ? meterRegistry : configuredRegistry();
+      return new KafkaMessageReader(topicName, metaStoreEventSerDe, buildConsumerProperties(), registry);
+    }
+
+    @VisibleForTesting
+    Properties buildConsumerProperties() {
       Properties props = new Properties();
       props.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
       props.put(GROUP_ID_CONFIG, groupId);
-      props.put("key.deserializer", "org.apache.kafka.common.serialization.LongDeserializer");
-      props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+      props.put(KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializer);
+      props.put(VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
       consumerProperties.forEach((key, value) -> props.merge(key, value, (v1, v2) -> v1));
-      MeterRegistry registry = meterRegistry != null ? meterRegistry : configuredRegistry();
-      return new KafkaMessageReader(topicName, metaStoreEventSerDe, props, registry);
+      return props;
     }
 
     // DO NOT extract to a shared utility. MetricService in apiary-gluesync-listener has a
