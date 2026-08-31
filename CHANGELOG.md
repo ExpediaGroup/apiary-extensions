@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 8.2.5 - 2026-08-31
+### Added
+- `kafka-metastore-receiver`: `KafkaMessageReaderBuilder.withKeyDeserializer(String)` to configure the record key deserializer. The default remains `LongDeserializer`, matching the key written by the Apiary Hive Metastore listener, but topics populated by another producer can now be read without a `SerializationException`. The key deserializer could not previously be set, because properties passed to `withConsumerProperties` do not override the builder's own defaults.
+
 ## 8.2.4 - 2026-07-17
 ### Added
 - `apiary-gluesync-listener`: per-event observability via a new `glue_listener_event` Micrometer counter, tagged with `operation` (e.g. `create_table`), `result` (`success`, `failure`, `ignored`), and `outcome` (e.g. `created`, `updated`, `deleted`, `not_found`, `renamed`, exception class name). Covers all 8 HMS event handlers. A `glue_listener_table_rename_duration` timer is also recorded on every table rename.

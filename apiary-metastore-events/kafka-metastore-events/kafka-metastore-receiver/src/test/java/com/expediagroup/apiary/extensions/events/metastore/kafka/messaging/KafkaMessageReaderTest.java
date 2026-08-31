@@ -15,6 +15,10 @@
  */
 package com.expediagroup.apiary.extensions.events.metastore.kafka.messaging;
 
+import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -26,11 +30,15 @@ import static com.expediagroup.apiary.extensions.events.metastore.kafka.messagin
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.LongDeserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,19 +64,19 @@ public class KafkaMessageReaderTest {
   private static final String TOPIC_NAME = "topic";
 
   private @Mock MetaStoreEventSerDe serDe;
-  private @Mock KafkaConsumer<Long, byte[]> consumer;
-  private @Mock ConsumerRecord<Long, byte[]> message;
+  private @Mock KafkaConsumer<Object, byte[]> consumer;
+  private @Mock ConsumerRecord<Object, byte[]> message;
   private @Mock ApiaryListenerEvent event;
 
-  private ConsumerRecords<Long, byte[]> messages;
+  private ConsumerRecords<Object, byte[]> messages;
   private KafkaMessageReader reader;
   private SimpleMeterRegistry meterRegistry;
 
   @Before
   public void init() {
     meterRegistry = new SimpleMeterRegistry();
-    List<ConsumerRecord<Long, byte[]>> messageList = ImmutableList.of(message);
-    Map<TopicPartition, List<ConsumerRecord<Long, byte[]>>> messageMap = ImmutableMap
+    List<ConsumerRecord<Object, byte[]>> messageList = ImmutableList.of(message);
+    Map<TopicPartition, List<ConsumerRecord<Object, byte[]>>> messageMap = ImmutableMap
         .of(new TopicPartition(TOPIC_NAME, PARTITION), messageList);
     messages = new ConsumerRecords<>(messageMap);
     when(consumer.poll(any(Duration.class))).thenReturn(messages);
@@ -148,6 +156,66 @@ public class KafkaMessageReaderTest {
   public void emptyApplicationNAme() {
     KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, "")
         .build();
+  }
+
+  @Test
+  public void defaultKeyDeserializerIsLong() {
+    Properties props = KafkaMessageReaderBuilder
+        .builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, APPLICATION_NAME)
+        .buildConsumerProperties();
+
+    assertThat(props.get(KEY_DESERIALIZER_CLASS_CONFIG)).isEqualTo(LongDeserializer.class.getName());
+    assertThat(props.get(VALUE_DESERIALIZER_CLASS_CONFIG)).isEqualTo(ByteArrayDeserializer.class.getName());
+  }
+
+  @Test
+  public void withKeyDeserializerOverridesDefault() {
+    Properties props = KafkaMessageReaderBuilder
+        .builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, APPLICATION_NAME)
+        .withKeyDeserializer(StringDeserializer.class.getName())
+        .buildConsumerProperties();
+
+    assertThat(props.get(KEY_DESERIALIZER_CLASS_CONFIG)).isEqualTo(StringDeserializer.class.getName());
+    assertThat(props.get(VALUE_DESERIALIZER_CLASS_CONFIG)).isEqualTo(ByteArrayDeserializer.class.getName());
+  }
+
+  @Test
+  public void consumerPropertiesDoNotOverrideKeyDeserializer() {
+    Properties consumerProperties = new Properties();
+    consumerProperties.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+
+    Properties props = KafkaMessageReaderBuilder
+        .builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, APPLICATION_NAME)
+        .withConsumerProperties(consumerProperties)
+        .buildConsumerProperties();
+
+    assertThat(props.get(KEY_DESERIALIZER_CLASS_CONFIG)).isEqualTo(LongDeserializer.class.getName());
+  }
+
+  @Test
+  public void consumerPropertiesWithoutCollisionArePreserved() {
+    Properties consumerProperties = new Properties();
+    consumerProperties.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+    Properties props = KafkaMessageReaderBuilder
+        .builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, APPLICATION_NAME)
+        .withConsumerProperties(consumerProperties)
+        .buildConsumerProperties();
+
+    assertThat(props.get(AUTO_OFFSET_RESET_CONFIG)).isEqualTo("earliest");
+    assertThat(props.get(GROUP_ID_CONFIG)).isEqualTo("apiary-kafka-metastore-receiver-" + APPLICATION_NAME);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void nullKeyDeserializer() {
+    KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, APPLICATION_NAME)
+        .withKeyDeserializer(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void emptyKeyDeserializer() {
+    KafkaMessageReaderBuilder.builder(BOOTSTRAP_SERVERS_STRING, TOPIC_NAME, APPLICATION_NAME)
+        .withKeyDeserializer("");
   }
 
 }
