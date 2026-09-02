@@ -330,8 +330,6 @@ public class GluePartitionServiceTest {
     return partition;
   }
 
-  // Helper methods
-
   private AmazonServiceException exception413() {
     AmazonServiceException exception413 = new AmazonServiceException("Request entity too large");
     exception413.setStatusCode(413);
