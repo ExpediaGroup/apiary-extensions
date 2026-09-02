@@ -179,14 +179,14 @@ public class HiveToGluePartitionComparator {
    * or DDL touches without reflecting a real schema/data change.
    */
   private boolean filteredParametersNotEqual(Map<String, String> hiveParams, Map<String, String> glueParams) {
-    Map<String, String> filteredHive = emptyOnNull(hiveParams);
-    Map<String, String> filteredGlue = emptyOnNull(glueParams);
+    Map<String, String> filteredHive = newEmptyOnNull(hiveParams);
+    Map<String, String> filteredGlue = newEmptyOnNull(glueParams);
     filteredHive.keySet().removeAll(VOLATILE_PARAMETER_KEYS);
     filteredGlue.keySet().removeAll(VOLATILE_PARAMETER_KEYS);
     return !Objects.equals(filteredHive, filteredGlue);
   }
 
-  private Map<String, String> emptyOnNull(Map<String, String> params) {
+  private Map<String, String> newEmptyOnNull(Map<String, String> params) {
     return new HashMap<>(params == null ? Collections.emptyMap() : params);
   }
 
