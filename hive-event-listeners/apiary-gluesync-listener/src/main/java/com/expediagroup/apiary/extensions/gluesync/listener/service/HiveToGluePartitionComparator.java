@@ -24,6 +24,15 @@ import com.amazonaws.services.glue.model.SerDeInfo;
 import com.amazonaws.services.glue.model.StorageDescriptor;
 
 public class HiveToGluePartitionComparator {
+  /**
+   * transient_lastDdlTime is set by Hive on DDL/write operations (create, alter, and
+   * effectively on insert via auto-gathered stats), not on reads. It can be present in Hive
+   * but absent from Glue's copy of a partition that was created or synced through a
+   * different path, without any real schema/data drift — confirmed via a real Hive/Glue
+   * partition comparison — so it's excluded from parameter equality checks.
+   */
+  private static final Set<String> VOLATILE_PARAMETER_KEYS = Collections.singleton("transient_lastDdlTime");
+
   private final GlueMetadataStringCleaner cleaner = new GlueMetadataStringCleaner();
   private final S3PrefixNormalizer s3PrefixNormalizer = new S3PrefixNormalizer();
 
@@ -53,15 +62,12 @@ public class HiveToGluePartitionComparator {
         return false;
     }
 
-    // Compare parameters (null-safe, ignore order)
-    if (!Objects.equals(hivePartition.getParameters(), gluePartition.getParameters()))
+    // Compare parameters (null-safe, ignore order, ignore volatile keys)
+    if (filteredParametersNotEqual(hivePartition.getParameters(), gluePartition.getParameters()))
       return false;
 
-    // Compare lastAccessTime (convert to Date as in transformer)
-    Integer hiveLastAccess = hivePartition.getLastAccessTime();
-    Date hiveDate = (hiveLastAccess == 0) ? null : new Date(hiveLastAccess);
-    if (!Objects.equals(hiveDate, gluePartition.getLastAccessTime()))
-      return false;
+    // lastAccessTime is not schema/data-relevant and changes on ordinary Hive reads, so it
+    // is intentionally excluded from this comparison.
 
     // Compare StorageDescriptor
     org.apache.hadoop.hive.metastore.api.StorageDescriptor hiveSd = hivePartition.getSd();
@@ -108,7 +114,7 @@ public class HiveToGluePartitionComparator {
       return false;
 
     // Parameters
-    if (!Objects.equals(hiveSd.getParameters(), glueSd.getParameters()))
+    if (filteredParametersNotEqual(hiveSd.getParameters(), glueSd.getParameters()))
       return false;
 
     // SerDeInfo
@@ -159,11 +165,23 @@ public class HiveToGluePartitionComparator {
       return false;
     if (!Objects.equals(hiveSerde.getName(), glueSerde.getName()))
       return false;
-    if (!Objects.equals(hiveSerde.getParameters(), glueSerde.getParameters()))
+    if (filteredParametersNotEqual(hiveSerde.getParameters(), glueSerde.getParameters()))
       return false;
     if (!Objects.equals(hiveSerde.getSerializationLib(), glueSerde.getSerializationLibrary()))
       return false;
     return true;
+  }
+
+  /**
+   * Compare parameter maps ignoring known-volatile Hive keys that change on ordinary reads
+   * or DDL touches without reflecting a real schema/data change.
+   */
+  private boolean filteredParametersNotEqual(Map<String, String> hiveParams, Map<String, String> glueParams) {
+    Map<String, String> filteredHive = new HashMap<>(hiveParams == null ? Collections.emptyMap() : hiveParams);
+    Map<String, String> filteredGlue = new HashMap<>(glueParams == null ? Collections.emptyMap() : glueParams);
+    filteredHive.keySet().removeAll(VOLATILE_PARAMETER_KEYS);
+    filteredGlue.keySet().removeAll(VOLATILE_PARAMETER_KEYS);
+    return !Objects.equals(filteredHive, filteredGlue);
   }
 
   private boolean sortOrdersEquals(List<org.apache.hadoop.hive.metastore.api.Order> hiveOrders,

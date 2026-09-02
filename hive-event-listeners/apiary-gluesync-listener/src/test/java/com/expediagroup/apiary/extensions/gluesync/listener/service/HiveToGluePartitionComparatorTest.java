@@ -76,15 +76,16 @@ public class HiveToGluePartitionComparatorTest {
   }
 
   @Test
-  public void testLastAccessTimeMismatch() {
+  public void testLastAccessTimeMismatchIsIgnored() {
     Partition hivePartition = createCompleteHivePartition();
     hivePartition.setLastAccessTime(123456789);
 
     com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
-    // Force a different timestamp to test inequality
+    // lastAccessTime changes on ordinary Hive reads and is not schema/data-relevant,
+    // so it must not affect equality.
     gluePartition.setLastAccessTime(new Date(987654321L));
 
-    assertFalse("Different timestamps should not match",
+    assertTrue("lastAccessTime is not compared and should not affect equality",
         comparator.equals(hivePartition, gluePartition));
   }
 
@@ -92,12 +93,132 @@ public class HiveToGluePartitionComparatorTest {
   public void testParameterMismatch() {
     Partition hivePartition = createCompleteHivePartition();
     com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
-    // Add an extra parameter to force inequality
+    // Add an extra, non-volatile parameter to force inequality
     Map<String, String> modifiedParams = new HashMap<>(gluePartition.getParameters());
-    modifiedParams.put("extra_key", "extra_value");
+    modifiedParams.put("business_key", "business_value");
     gluePartition.setParameters(modifiedParams);
 
-    assertFalse("Different parameters should not match",
+    assertFalse("Different non-volatile parameters should not match",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testTransientLastDdlTimePartitionParameterDoesNotForceUpdate() {
+    Partition hivePartition = createCompleteHivePartition();
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+
+    // Simulate Hive having a fresh transient_lastDdlTime that Glue doesn't have yet
+    Map<String, String> hiveParams = new HashMap<>(hivePartition.getParameters());
+    hiveParams.put("transient_lastDdlTime", "1700000000");
+    hivePartition.setParameters(hiveParams);
+
+    assertTrue("transient_lastDdlTime alone should not force an update",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testStatsOnlyPartitionParametersStillForceUpdate() {
+    // Stats fields (numRows, rawDataSize, totalSize, numFiles, COLUMN_STATS_ACCURATE) are
+    // intentionally not excluded: unlike transient_lastDdlTime, drift in these fields has not
+    // been confirmed against a real Hive/Glue partition, so they still gate an update.
+    Partition hivePartition = createCompleteHivePartition();
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+
+    Map<String, String> hiveParams = new HashMap<>(hivePartition.getParameters());
+    hiveParams.put("numRows", "12345");
+    hiveParams.put("rawDataSize", "67890");
+    hiveParams.put("totalSize", "111213");
+    hiveParams.put("numFiles", "3");
+    hiveParams.put("COLUMN_STATS_ACCURATE", "{\"BASIC_STATS\":\"true\"}");
+    hivePartition.setParameters(hiveParams);
+
+    assertFalse("Stats-only partition parameter drift should still force an update",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testTransientLastDdlTimeStorageDescriptorParameterDoesNotForceUpdate() {
+    Partition hivePartition = createCompleteHivePartition();
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+
+    Map<String, String> sdParams = new HashMap<>(hivePartition.getSd().getParameters());
+    sdParams.put("transient_lastDdlTime", "1700000000");
+    hivePartition.getSd().setParameters(sdParams);
+
+    assertTrue("transient_lastDdlTime in storage descriptor parameters alone should not force an update",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testStatsOnlyStorageDescriptorParametersStillForceUpdate() {
+    Partition hivePartition = createCompleteHivePartition();
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+
+    Map<String, String> sdParams = new HashMap<>(hivePartition.getSd().getParameters());
+    sdParams.put("numRows", "999");
+    hivePartition.getSd().setParameters(sdParams);
+
+    assertFalse("Stats-only storage descriptor parameter drift should still force an update",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testTransientLastDdlTimeSerdeParameterDoesNotForceUpdate() {
+    Partition hivePartition = createCompleteHivePartition();
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+
+    Map<String, String> serdeParams = new HashMap<>(hivePartition.getSd().getSerdeInfo().getParameters());
+    serdeParams.put("transient_lastDdlTime", "1700000000");
+    hivePartition.getSd().getSerdeInfo().setParameters(serdeParams);
+
+    assertTrue("transient_lastDdlTime in serde parameters alone should not force an update",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testStatsOnlySerdeParametersStillForceUpdate() {
+    Partition hivePartition = createCompleteHivePartition();
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+
+    Map<String, String> serdeParams = new HashMap<>(hivePartition.getSd().getSerdeInfo().getParameters());
+    serdeParams.put("totalSize", "222");
+    hivePartition.getSd().getSerdeInfo().setParameters(serdeParams);
+
+    assertFalse("Stats-only serde parameter drift should still force an update",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testNullPartitionParametersAreTreatedAsEmpty() {
+    Partition hivePartition = createCompleteHivePartition();
+    hivePartition.setParameters(null);
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+    gluePartition.setParameters(null);
+
+    assertTrue("Null parameters on both sides should be treated as equal (empty)",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testNullHiveParametersVsNonEmptyGlueParametersStillForceUpdate() {
+    Partition hivePartition = createCompleteHivePartition();
+    hivePartition.setParameters(null);
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+    gluePartition.setParameters(Collections.singletonMap("business_key", "business_value"));
+
+    assertFalse("Null Hive parameters vs non-empty Glue parameters should still force an update",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testLastAccessTimeDriftDoesNotForceUpdate() {
+    Partition hivePartition = createCompleteHivePartition();
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+
+    // Simulate a Hive read bumping lastAccessTime after the last sync to Glue
+    hivePartition.setLastAccessTime(987654321);
+
+    assertTrue("lastAccessTime drift alone should not force an update",
         comparator.equals(hivePartition, gluePartition));
   }
 
