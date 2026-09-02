@@ -66,8 +66,10 @@ public class HiveToGluePartitionComparator {
     if (filteredParametersNotEqual(hivePartition.getParameters(), gluePartition.getParameters()))
       return false;
 
-    // lastAccessTime is not schema/data-relevant and changes on ordinary Hive reads, so it
-    // is intentionally excluded from this comparison.
+    /**
+     * lastAccessTime is not schema/data-relevant and changes on ordinary Hive reads, so it
+     * is intentionally excluded from this comparison.
+     */
 
     // Compare StorageDescriptor
     org.apache.hadoop.hive.metastore.api.StorageDescriptor hiveSd = hivePartition.getSd();

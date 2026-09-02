@@ -252,9 +252,11 @@ public class GluePartitionServiceTest {
 
   @Test
   public void testSynchronizePartitions_TransientLastDdlTimeOnlyDrift_DoesNotUpdateOrCreate() {
-    // Regression test for issue #147: partitions whose only drift from Glue is a volatile
-    // transient_lastDdlTime parameter must not be classified as needing an update, or a
-    // table with many such partitions would OOM re-transforming all of them.
+    /**
+     * Regression test for issue #147: partitions whose only drift from Glue is a volatile
+     * transient_lastDdlTime parameter must not be classified as needing an update, or a
+     * table with many such partitions would OOM re-transforming all of them.
+     */
     List<org.apache.hadoop.hive.metastore.api.Partition> hivePartitions = new ArrayList<>();
     List<com.amazonaws.services.glue.model.Partition> gluePartitions = new ArrayList<>();
     for (int i = 0; i < 20; i++) {
@@ -273,11 +275,13 @@ public class GluePartitionServiceTest {
     verify(mockGlueClient, times(0)).batchUpdatePartition(any(BatchUpdatePartitionRequest.class));
   }
 
-  // Builds a Hive partition and its exactly-matching Glue counterpart (bar the given
-  // parameters), so the two only ever differ by whatever is passed in via `params`. Used to
-  // exercise the comparator's decision-making through synchronizePartitions without any
-  // unrelated field mismatches (which would otherwise NPE on primitive/boxed field
-  // comparisons in HiveToGluePartitionComparator, e.g. Boolean/Integer fields left null).
+  /**
+   * Builds a Hive partition and its exactly-matching Glue counterpart (bar the given
+   * parameters), so the two only ever differ by whatever is passed in via `params`. Used to
+   * exercise the comparator's decision-making through synchronizePartitions without any
+   * unrelated field mismatches (which would otherwise NPE on primitive/boxed field
+   * comparisons in HiveToGluePartitionComparator, e.g. Boolean/Integer fields left null).
+   */
   private org.apache.hadoop.hive.metastore.api.Partition buildMatchedHivePartition(int index,
       Map<String, String> params) {
     org.apache.hadoop.hive.metastore.api.Partition partition = new org.apache.hadoop.hive.metastore.api.Partition();

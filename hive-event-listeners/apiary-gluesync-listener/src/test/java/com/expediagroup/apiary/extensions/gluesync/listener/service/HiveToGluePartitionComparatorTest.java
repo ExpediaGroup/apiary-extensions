@@ -81,8 +81,10 @@ public class HiveToGluePartitionComparatorTest {
     hivePartition.setLastAccessTime(123456789);
 
     com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
-    // lastAccessTime changes on ordinary Hive reads and is not schema/data-relevant,
-    // so it must not affect equality.
+    /**
+     * lastAccessTime changes on ordinary Hive reads and is not schema/data-relevant,
+     * so it must not affect equality.
+     */
     gluePartition.setLastAccessTime(new Date(987654321L));
 
     assertTrue("lastAccessTime is not compared and should not affect equality",
@@ -118,9 +120,11 @@ public class HiveToGluePartitionComparatorTest {
 
   @Test
   public void testStatsOnlyPartitionParametersStillForceUpdate() {
-    // Stats fields (numRows, rawDataSize, totalSize, numFiles, COLUMN_STATS_ACCURATE) are
-    // intentionally not excluded: unlike transient_lastDdlTime, drift in these fields has not
-    // been confirmed against a real Hive/Glue partition, so they still gate an update.
+    /**
+     * Stats fields (numRows, rawDataSize, totalSize, numFiles, COLUMN_STATS_ACCURATE) are
+     * intentionally not excluded: unlike transient_lastDdlTime, drift in these fields has not
+     * been confirmed against a real Hive/Glue partition, so they still gate an update.
+     */
     Partition hivePartition = createCompleteHivePartition();
     com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
 
