@@ -179,11 +179,15 @@ public class HiveToGluePartitionComparator {
    * or DDL touches without reflecting a real schema/data change.
    */
   private boolean filteredParametersNotEqual(Map<String, String> hiveParams, Map<String, String> glueParams) {
-    Map<String, String> filteredHive = new HashMap<>(hiveParams == null ? Collections.emptyMap() : hiveParams);
-    Map<String, String> filteredGlue = new HashMap<>(glueParams == null ? Collections.emptyMap() : glueParams);
+    Map<String, String> filteredHive = emptyOnNull(hiveParams);
+    Map<String, String> filteredGlue = emptyOnNull(glueParams);
     filteredHive.keySet().removeAll(VOLATILE_PARAMETER_KEYS);
     filteredGlue.keySet().removeAll(VOLATILE_PARAMETER_KEYS);
     return !Objects.equals(filteredHive, filteredGlue);
+  }
+
+  private Map<String, String> emptyOnNull(Map<String, String> params) {
+    return new HashMap<>(params == null ? Collections.emptyMap() : params);
   }
 
   private boolean sortOrdersEquals(List<org.apache.hadoop.hive.metastore.api.Order> hiveOrders,
