@@ -67,9 +67,17 @@ public class HiveToGluePartitionComparator {
       return false;
 
     /**
-     * lastAccessTime is not schema/data-relevant and changes on ordinary Hive reads, so it
-     * is intentionally excluded from this comparison.
+     * Compare lastAccessTime, treating Hive's 0 and Glue's Date(0) as equivalent to "unset"
+     * (null) on both sides, since they represent the same logical state via different
+     * sentinel values.
      */
+    int hiveLastAccess = hivePartition.getLastAccessTime();
+    Date hiveDate = (hiveLastAccess == 0) ? null : new Date(hiveLastAccess);
+    Date glueDate = gluePartition.getLastAccessTime();
+    if (glueDate != null && glueDate.getTime() == 0)
+      glueDate = null;
+    if (!Objects.equals(hiveDate, glueDate))
+      return false;
 
     // Compare StorageDescriptor
     org.apache.hadoop.hive.metastore.api.StorageDescriptor hiveSd = hivePartition.getSd();

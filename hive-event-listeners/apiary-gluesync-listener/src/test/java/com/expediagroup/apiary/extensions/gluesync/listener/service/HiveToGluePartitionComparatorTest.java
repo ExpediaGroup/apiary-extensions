@@ -76,18 +76,18 @@ public class HiveToGluePartitionComparatorTest {
   }
 
   @Test
-  public void testLastAccessTimeMismatchIsIgnored() {
+  public void testLastAccessTimeMismatchForcesUpdate() {
     Partition hivePartition = createCompleteHivePartition();
     hivePartition.setLastAccessTime(123456789);
 
     com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
     /**
-     * lastAccessTime changes on ordinary Hive reads and is not schema/data-relevant,
-     * so it must not affect equality.
+     * lastAccessTime is normalized (Hive's 0 and Glue's Date(0) both mean "unset"), but a
+     * real, differing non-zero value on each side is genuine drift and must not be ignored.
      */
     gluePartition.setLastAccessTime(new Date(987654321L));
 
-    assertTrue("lastAccessTime is not compared and should not affect equality",
+    assertFalse("Different non-zero lastAccessTime values should not match",
         comparator.equals(hivePartition, gluePartition));
   }
 
@@ -215,14 +215,91 @@ public class HiveToGluePartitionComparatorTest {
   }
 
   @Test
-  public void testLastAccessTimeDriftDoesNotForceUpdate() {
+  public void testLastAccessTimeDriftForcesUpdate() {
     Partition hivePartition = createCompleteHivePartition();
     com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
 
     // Simulate a Hive read bumping lastAccessTime after the last sync to Glue
     hivePartition.setLastAccessTime(987654321);
 
-    assertTrue("lastAccessTime drift alone should not force an update",
+    assertFalse("lastAccessTime drift to a different non-zero value should force an update",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testLastAccessTimeHiveZeroGlueNullTreatedAsUnset() {
+    Partition hivePartition = createCompleteHivePartition();
+    hivePartition.setLastAccessTime(0);
+
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+    gluePartition.setLastAccessTime(null);
+
+    assertTrue("Hive 0 and Glue null should both be treated as unset",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testLastAccessTimeHiveZeroGlueEpochTreatedAsUnset() {
+    Partition hivePartition = createCompleteHivePartition();
+    hivePartition.setLastAccessTime(0);
+
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+    gluePartition.setLastAccessTime(new Date(0));
+
+    assertTrue("Hive 0 and Glue Date(0) should both be treated as unset",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testLastAccessTimeBothNullTreatedAsUnset() {
+    /**
+     * Hive's Partition.lastAccessTime is a Thrift-generated primitive int, so it can never
+     * actually be null -- 0 is Hive's own "unset" sentinel. This case is therefore the
+     * closest representable analogue of "Hive null vs Glue null", and is behaviourally
+     * identical to the Hive-0/Glue-null case above.
+     */
+    Partition hivePartition = createCompleteHivePartition();
+    hivePartition.setLastAccessTime(0);
+
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+    gluePartition.setLastAccessTime(null);
+
+    assertTrue("Both sides unset should be treated as equal",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testLastAccessTimeSameNonZeroValueMatches() {
+    Partition hivePartition = createCompleteHivePartition();
+    hivePartition.setLastAccessTime(1700000000);
+
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+
+    assertTrue("Identical non-zero lastAccessTime values on both sides should match",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testLastAccessTimeHiveSetGlueUnsetForcesMismatch() {
+    Partition hivePartition = createCompleteHivePartition();
+    hivePartition.setLastAccessTime(1700000000);
+
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+    gluePartition.setLastAccessTime(null);
+
+    assertFalse("Hive set to a real value vs Glue unset should be treated as drift",
+        comparator.equals(hivePartition, gluePartition));
+  }
+
+  @Test
+  public void testLastAccessTimeDifferentNonZeroValuesForceMismatch() {
+    Partition hivePartition = createCompleteHivePartition();
+    hivePartition.setLastAccessTime(1700000000);
+
+    com.amazonaws.services.glue.model.Partition gluePartition = buildGluePartitionFromHive(hivePartition);
+    gluePartition.setLastAccessTime(new Date(1800000000L));
+
+    assertFalse("Different non-zero lastAccessTime values on each side should be treated as drift",
         comparator.equals(hivePartition, gluePartition));
   }
 
