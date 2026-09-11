@@ -929,23 +929,47 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
-  public void onAlterIcebergTable_RenameTableSkipsRenameOperation() throws MetaException {
+  public void onAlterIcebergTable_RenameTable() throws MetaException {
     AlterTableEvent event = mock(AlterTableEvent.class);
     when(event.getStatus()).thenReturn(true);
     Table oldTable = simpleIcebergTable(dbName, tableName, simpleIcebergSchema(), simpleIcebergPartitionSpec(), null);
     Table newTable = simpleIcebergTable(dbName, "table_renamed", simpleIcebergSchema(), simpleIcebergPartitionSpec(), null);
     when(event.getOldTable()).thenReturn(oldTable);
     when(event.getNewTable()).thenReturn(newTable);
+    when(glueClient.getPartitions(any())).thenReturn(new GetPartitionsResult().withPartitions());
+    when(glueClient.getTable(any())).thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table()));
+
+    glueSync.onAlterTable(event);
+
+    verify(glueClient).createTable(createTableRequestCaptor.capture());
+    assertThat(createTableRequestCaptor.getValue().getTableInput().getName(), is("table_renamed"));
+    verify(glueClient).deleteTable(deleteTableRequestCaptor.capture());
+    assertThat(deleteTableRequestCaptor.getValue().getName(), is(tableName));
+    verify(glueClient, never()).updateTable(any());
+    verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "renamed");
+  }
+
+  @Test
+  public void onAlterIcebergTable_RenameTable_idempotentWhenNewTableAlreadyExists() throws MetaException {
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    Table oldTable = simpleIcebergTable(dbName, tableName, simpleIcebergSchema(), simpleIcebergPartitionSpec(), null);
+    Table newTable = simpleIcebergTable(dbName, "table_renamed", simpleIcebergSchema(), simpleIcebergPartitionSpec(), null);
+    when(event.getOldTable()).thenReturn(oldTable);
+    when(event.getNewTable()).thenReturn(newTable);
+    when(glueClient.getPartitions(any())).thenReturn(new GetPartitionsResult().withPartitions());
+    when(glueClient.getTable(any())).thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table()));
+    when(glueClient.createTable(any())).thenThrow(new AlreadyExistsException("already exists"));
 
     glueSync.onAlterTable(event);
 
     verify(glueClient).updateTable(updateTableRequestCaptor.capture());
-    verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
-    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
     assertThat(updateTableRequestCaptor.getValue().getTableInput().getName(), is("table_renamed"));
-    // rename operation (copy+delete) must not be triggered for Iceberg tables
-    verify(glueClient, times(0)).deleteTable(any());
-    verify(glueClient, times(0)).batchCreatePartition(any());
+    verify(glueClient).deleteTable(deleteTableRequestCaptor.capture());
+    assertThat(deleteTableRequestCaptor.getValue().getName(), is(tableName));
+    verify(metricService).incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, "renamed");
   }
 
   @Test
