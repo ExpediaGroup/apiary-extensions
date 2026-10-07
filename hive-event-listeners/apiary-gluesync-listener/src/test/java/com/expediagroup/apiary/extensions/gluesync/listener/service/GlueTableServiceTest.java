@@ -43,6 +43,7 @@ import com.amazonaws.services.glue.model.DeleteTableRequest;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
 import com.amazonaws.services.glue.model.GetTableRequest;
 import com.amazonaws.services.glue.model.GetTableResult;
+import com.amazonaws.services.glue.model.OperationTimeoutException;
 import com.amazonaws.services.glue.model.UpdateTableRequest;
 import com.amazonaws.services.glue.model.UpdateTableResult;
 
@@ -258,6 +259,32 @@ public class GlueTableServiceTest {
     verify(glueClient, times(4)).updateTable(captor.capture());
     verify(glueClient, times(3)).getTable(any(GetTableRequest.class));
     assertThat(captor.getValue().getVersionId(), is(nullValue()));
+  }
+
+  @Test
+  public void update_degradesToUnconditionalUpdate_whenGetTableFailsWithServiceError() {
+    when(gluePartitionService.isSendVersionId()).thenReturn(true);
+    when(glueClient.getTable(any(GetTableRequest.class))).thenThrow(new OperationTimeoutException("throttled"));
+    ArgumentCaptor<UpdateTableRequest> captor = ArgumentCaptor.forClass(UpdateTableRequest.class);
+
+    GlueTableService.UpdateOutcome outcome = service.update(hmsTable(LOCATION, LAST_DDL_TIME, null));
+
+    assertThat(outcome, is(GlueTableService.UpdateOutcome.VERSION_UNAVAILABLE_FALLBACK));
+    verify(glueClient).getTable(any(GetTableRequest.class));
+    verify(glueClient).updateTable(captor.capture());
+    assertThat(captor.getValue().getVersionId(), is(nullValue()));
+  }
+
+  @Test(expected = EntityNotFoundException.class)
+  public void update_propagatesEntityNotFound_whenTableMissing_soCallerCanCreate() {
+    when(gluePartitionService.isSendVersionId()).thenReturn(true);
+    when(glueClient.getTable(any(GetTableRequest.class))).thenThrow(new EntityNotFoundException("not found"));
+
+    try {
+      service.update(hmsTable(LOCATION, LAST_DDL_TIME, null));
+    } finally {
+      verify(glueClient, never()).updateTable(any(UpdateTableRequest.class));
+    }
   }
 
   private GetTableResult glueTableResultWithVersion(String versionId) {

@@ -23,6 +23,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.DeleteTableRequest;
@@ -70,11 +71,15 @@ public class GlueTableService {
    *   <li>{@code VERSION_CONFLICT_FALLBACK} — optimistic-locking retries were exhausted, so the
    *       update was retried unconditionally (without a versionId); the sync still succeeded but
    *       that UpdateTable event does not carry a versionId.</li>
+   *   <li>{@code VERSION_UNAVAILABLE_FALLBACK} — the current versionId could not be read, so the
+   *       update was done unconditionally (without a versionId); the sync still succeeded but that
+   *       UpdateTable event does not carry a versionId.</li>
    * </ul>
    */
   public enum UpdateOutcome {
     UPDATED("updated"),
-    VERSION_CONFLICT_FALLBACK("version_conflict_fallback");
+    VERSION_CONFLICT_FALLBACK("version_conflict_fallback"),
+    VERSION_UNAVAILABLE_FALLBACK("version_unavailable_fallback");
 
     private final String metricOutcome;
 
@@ -151,12 +156,16 @@ public class GlueTableService {
    */
   private UpdateOutcome updateWithOptimisticLock(UpdateTableRequest updateTableRequest, Table table) {
     log.debug("Updating {}.{} in glue with optimistic locking (versionId)", table.getDbName(), table.getTableName());
+    // Set when an attempt could not read the current versionId and so updated unconditionally.
+    boolean[] versionUnavailable = { false };
     boolean applied = OptimisticUpdateRetry.retryOnConflict(
         MAX_VERSION_ID_ATTEMPTS,
         attemptNo -> log.warn("Concurrent modification updating {}.{} in glue (attempt {}/{}); refreshing versionId",
             table.getDbName(), table.getTableName(), attemptNo, MAX_VERSION_ID_ATTEMPTS),
         () -> {
-          updateTableRequest.setVersionId(currentVersionId(table));
+          String versionId = readVersionId(table);
+          versionUnavailable[0] = versionId == null;
+          updateTableRequest.setVersionId(versionId);
           doUpdate(updateTableRequest, table);
         },
         () -> {
@@ -166,7 +175,10 @@ public class GlueTableService {
           updateTableRequest.setVersionId(null);
           doUpdate(updateTableRequest, table);
         });
-    return applied ? UpdateOutcome.UPDATED : UpdateOutcome.VERSION_CONFLICT_FALLBACK;
+    if (!applied) {
+      return UpdateOutcome.VERSION_CONFLICT_FALLBACK;
+    }
+    return versionUnavailable[0] ? UpdateOutcome.VERSION_UNAVAILABLE_FALLBACK : UpdateOutcome.UPDATED;
   }
 
   /**
@@ -198,13 +210,28 @@ public class GlueTableService {
     }
   }
 
-  private String currentVersionId(Table table) {
-    return glueClient
-        .getTable(new GetTableRequest()
-            .withDatabaseName(transformer.glueDbName(table))
-            .withName(table.getTableName()))
-        .getTable()
-        .getVersionId();
+  /**
+   * Reads the current Glue {@code VersionId} for the table. Returns {@code null} if it cannot be
+   * read (any AWS failure other than the table not existing), so the caller can degrade to an
+   * unconditional update rather than failing the sync for a best-effort versionId. An
+   * {@link EntityNotFoundException} is allowed to propagate so the caller can create the missing
+   * table.
+   */
+  private String readVersionId(Table table) {
+    try {
+      return glueClient
+          .getTable(new GetTableRequest()
+              .withDatabaseName(transformer.glueDbName(table))
+              .withName(table.getTableName()))
+          .getTable()
+          .getVersionId();
+    } catch (EntityNotFoundException e) {
+      throw e;
+    } catch (AmazonClientException e) {
+      log.warn("Could not read current Glue versionId for {}.{}; updating without it",
+          table.getDbName(), table.getTableName(), e);
+      return null;
+    }
   }
 
   private TableInput cleanUpTable(TableInput table) {
