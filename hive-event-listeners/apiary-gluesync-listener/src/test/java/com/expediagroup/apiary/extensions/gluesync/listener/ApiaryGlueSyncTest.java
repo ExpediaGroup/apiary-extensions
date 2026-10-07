@@ -18,6 +18,7 @@ package com.expediagroup.apiary.extensions.gluesync.listener;
 import static java.util.Arrays.asList;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -635,6 +636,69 @@ public class ApiaryGlueSyncTest {
     verify(glueClient).createTable(createTableRequestCaptor.capture());
     verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
     assertThat(createTableRequestCaptor.getValue().getTableInput().getName(), is(tableName));
+  }
+
+  @Test
+  public void onAlterHiveTable_withVersionIdEnabled_sendsVersionIdAndRetainsArchive() throws MetaException {
+    ApiaryGlueSync versionIdSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, false, null, true);
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    Table table = simpleHiveTable(simpleSchema(), simplePartitioning());
+    when(event.getOldTable()).thenReturn(table);
+    when(event.getNewTable()).thenReturn(table);
+    when(glueClient.getTable(any()))
+        .thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table().withVersionId("5")));
+
+    versionIdSync.onAlterTable(event);
+
+    verify(glueClient).getTable(any());
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
+    UpdateTableRequest updateTableRequest = updateTableRequestCaptor.getValue();
+    assertThat(updateTableRequest.getVersionId(), is("5"));
+    // Hive tables must retain the previous version when versionId emission is on.
+    assertThat(updateTableRequest.getSkipArchive(), is(false));
+  }
+
+  @Test
+  public void onAlterIcebergTable_withVersionIdEnabled_isUnaffected() throws MetaException {
+    ApiaryGlueSync versionIdSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, false, null, true);
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    Table table = simpleIcebergTable(dbName, tableName, simpleIcebergSchema(), simpleIcebergPartitionSpec(), null);
+    when(event.getOldTable()).thenReturn(table);
+    when(event.getNewTable()).thenReturn(table);
+
+    versionIdSync.onAlterTable(event);
+
+    // Iceberg: no versionId, no extra getTable read, archiving still skipped (default) -> no change.
+    verify(glueClient, never()).getTable(any());
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
+    UpdateTableRequest updateTableRequest = updateTableRequestCaptor.getValue();
+    assertThat(updateTableRequest.getVersionId(), is(nullValue()));
+    assertThat(updateTableRequest.getSkipArchive(), is(true));
+  }
+
+  @Test
+  public void onCreateHiveTableThatAlreadyExists_withVersionIdEnabled_sendsVersionId() throws MetaException {
+    ApiaryGlueSync versionIdSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, false, null, true);
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(simpleHiveTable(simpleSchema(), simplePartitioning()));
+    when(glueClient.createTable(any())).thenThrow(new AlreadyExistsException(""));
+    when(glueClient.getTable(any()))
+        .thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table().withVersionId("9")));
+
+    versionIdSync.onCreateTable(event);
+
+    verify(glueClient).createTable(any());
+    verify(glueClient).getTable(any());
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
+    UpdateTableRequest updateTableRequest = updateTableRequestCaptor.getValue();
+    assertThat(updateTableRequest.getVersionId(), is("9"));
+    assertThat(updateTableRequest.getSkipArchive(), is(false));
   }
 
   @Test
