@@ -35,10 +35,17 @@ public class OptimisticUpdateRetryTest {
 
   @Test
   public void succeedsOnFirstAttempt_noConflictNoFallback() {
-    boolean applied = OptimisticUpdateRetry.retryOnConflict(3, conflicts::add,
-        attempts::incrementAndGet, fallbacks::incrementAndGet);
+    String result = OptimisticUpdateRetry.retryOnConflict(3, conflicts::add,
+        () -> {
+          attempts.incrementAndGet();
+          return "attempt";
+        },
+        () -> {
+          fallbacks.incrementAndGet();
+          return "fallback";
+        });
 
-    assertThat(applied, is(true));
+    assertThat(result, is("attempt"));
     assertThat(attempts.get(), is(1));
     assertThat(conflicts.isEmpty(), is(true));
     assertThat(fallbacks.get(), is(0));
@@ -46,15 +53,19 @@ public class OptimisticUpdateRetryTest {
 
   @Test
   public void retriesThenSucceeds_recordingEachConflict() {
-    boolean applied = OptimisticUpdateRetry.retryOnConflict(3, conflicts::add,
+    String result = OptimisticUpdateRetry.retryOnConflict(3, conflicts::add,
         () -> {
           if (attempts.incrementAndGet() < 3) {
             throw new ConcurrentModificationException("conflict");
           }
+          return "attempt";
         },
-        fallbacks::incrementAndGet);
+        () -> {
+          fallbacks.incrementAndGet();
+          return "fallback";
+        });
 
-    assertThat(applied, is(true));
+    assertThat(result, is("attempt"));
     assertThat(attempts.get(), is(3));
     assertThat(conflicts, is(java.util.Arrays.asList(1, 2)));
     assertThat(fallbacks.get(), is(0));
@@ -62,14 +73,17 @@ public class OptimisticUpdateRetryTest {
 
   @Test
   public void runsFallbackOnce_whenEveryAttemptConflicts() {
-    boolean applied = OptimisticUpdateRetry.retryOnConflict(3, conflicts::add,
+    String result = OptimisticUpdateRetry.retryOnConflict(3, conflicts::add,
         () -> {
           attempts.incrementAndGet();
           throw new ConcurrentModificationException("conflict");
         },
-        fallbacks::incrementAndGet);
+        () -> {
+          fallbacks.incrementAndGet();
+          return "fallback";
+        });
 
-    assertThat(applied, is(false));
+    assertThat(result, is("fallback"));
     assertThat(attempts.get(), is(3));
     assertThat(conflicts, is(java.util.Arrays.asList(1, 2, 3)));
     assertThat(fallbacks.get(), is(1));
@@ -83,7 +97,10 @@ public class OptimisticUpdateRetryTest {
             attempts.incrementAndGet();
             throw new IllegalStateException("boom");
           },
-          fallbacks::incrementAndGet);
+          () -> {
+            fallbacks.incrementAndGet();
+            return "fallback";
+          });
       fail("expected IllegalStateException to propagate");
     } catch (IllegalStateException expected) {
       // expected
@@ -96,14 +113,17 @@ public class OptimisticUpdateRetryTest {
 
   @Test
   public void singleAttempt_fallsBackImmediatelyOnConflict() {
-    boolean applied = OptimisticUpdateRetry.retryOnConflict(1, conflicts::add,
+    String result = OptimisticUpdateRetry.retryOnConflict(1, conflicts::add,
         () -> {
           attempts.incrementAndGet();
           throw new ConcurrentModificationException("conflict");
         },
-        fallbacks::incrementAndGet);
+        () -> {
+          fallbacks.incrementAndGet();
+          return "fallback";
+        });
 
-    assertThat(applied, is(false));
+    assertThat(result, is("fallback"));
     assertThat(attempts.get(), is(1));
     assertThat(conflicts, is(java.util.Collections.singletonList(1)));
     assertThat(fallbacks.get(), is(1));
@@ -111,6 +131,6 @@ public class OptimisticUpdateRetryTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void rejectsNonPositiveMaxAttempts() {
-    OptimisticUpdateRetry.retryOnConflict(0, conflicts::add, attempts::incrementAndGet, fallbacks::incrementAndGet);
+    OptimisticUpdateRetry.retryOnConflict(0, conflicts::add, () -> "attempt", () -> "fallback");
   }
 }

@@ -16,6 +16,7 @@
 package com.expediagroup.apiary.extensions.gluesync.listener.service;
 
 import java.util.function.IntConsumer;
+import java.util.function.Supplier;
 
 import com.amazonaws.services.glue.model.ConcurrentModificationException;
 
@@ -29,9 +30,9 @@ final class OptimisticUpdateRetry {
 
   /**
    * Runs {@code attempt} up to {@code maxAttempts} times, treating a
-   * {@link ConcurrentModificationException} as a retryable optimistic-locking conflict. Returns
-   * {@code true} as soon as an attempt completes without conflict. If every attempt conflicts, runs
-   * {@code fallback} exactly once and returns {@code false}.
+   * {@link ConcurrentModificationException} as a retryable optimistic-locking conflict, and returns
+   * the result of the first attempt that completes without conflict. If every attempt conflicts,
+   * runs {@code fallback} exactly once and returns its result.
    *
    * <p>Any other exception from {@code attempt} (or from {@code fallback}) propagates to the caller
    * and is not retried. {@code onConflict} is notified with the 1-based attempt number each time an
@@ -39,23 +40,22 @@ final class OptimisticUpdateRetry {
    *
    * @param maxAttempts maximum number of conflict-retryable attempts; must be at least 1
    * @param onConflict  called with the attempt number whenever an attempt conflicts
-   * @param attempt     the versioned update to try (and refresh) on each attempt
+   * @param attempt     the operation to try (and refresh) on each attempt
    * @param fallback    run once if all attempts conflict
-   * @return {@code true} if an attempt succeeded, {@code false} if the fallback was used
+   * @param <T>         the result type
+   * @return the result of the successful attempt, or of the fallback if every attempt conflicted
    */
-  static boolean retryOnConflict(int maxAttempts, IntConsumer onConflict, Runnable attempt, Runnable fallback) {
+  static <T> T retryOnConflict(int maxAttempts, IntConsumer onConflict, Supplier<T> attempt, Supplier<T> fallback) {
     if (maxAttempts < 1) {
       throw new IllegalArgumentException("maxAttempts must be at least 1, was " + maxAttempts);
     }
     for (int attemptNo = 1; attemptNo <= maxAttempts; attemptNo++) {
       try {
-        attempt.run();
-        return true;
+        return attempt.get();
       } catch (ConcurrentModificationException e) {
         onConflict.accept(attemptNo);
       }
     }
-    fallback.run();
-    return false;
+    return fallback.get();
   }
 }

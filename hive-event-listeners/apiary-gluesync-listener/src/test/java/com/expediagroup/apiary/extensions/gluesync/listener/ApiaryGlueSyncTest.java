@@ -617,6 +617,27 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
+  public void onAlterHiveTableThatDoesntExistInGlue_withVersionIdEnabled_createsTable() throws MetaException {
+    // With GLUE_SEND_VERSION_ID on, the missing-table EntityNotFoundException surfaces from the
+    // getTable version read rather than from updateTable, but must still drive a create.
+    ApiaryGlueSync versionIdSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, false, null, true);
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    Table table = simpleHiveTable(simpleSchema(), simplePartitioning());
+    when(event.getOldTable()).thenReturn(table);
+    when(event.getNewTable()).thenReturn(table);
+    when(glueClient.getTable(any())).thenThrow(new EntityNotFoundException(""));
+
+    versionIdSync.onAlterTable(event);
+
+    verify(glueClient).getTable(any());
+    verify(glueClient, never()).updateTable(any());
+    verify(glueClient).createTable(createTableRequestCaptor.capture());
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
+    assertThat(createTableRequestCaptor.getValue().getTableInput().getName(), is(tableName));
+  }
+
+  @Test
   public void onAlterPartition() throws MetaException {
     AlterPartitionEvent event = mock(AlterPartitionEvent.class);
     when(event.getStatus()).thenReturn(true);

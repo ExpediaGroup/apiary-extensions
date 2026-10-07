@@ -156,17 +156,15 @@ public class GlueTableService {
    */
   private UpdateOutcome updateWithOptimisticLock(UpdateTableRequest updateTableRequest, Table table) {
     log.debug("Updating {}.{} in glue with optimistic locking (versionId)", table.getDbName(), table.getTableName());
-    // Set when an attempt could not read the current versionId and so updated unconditionally.
-    boolean[] versionUnavailable = { false };
-    boolean applied = OptimisticUpdateRetry.retryOnConflict(
+    return OptimisticUpdateRetry.retryOnConflict(
         MAX_VERSION_ID_ATTEMPTS,
         attemptNo -> log.warn("Concurrent modification updating {}.{} in glue (attempt {}/{}); refreshing versionId",
             table.getDbName(), table.getTableName(), attemptNo, MAX_VERSION_ID_ATTEMPTS),
         () -> {
           String versionId = readVersionId(table);
-          versionUnavailable[0] = versionId == null;
           updateTableRequest.setVersionId(versionId);
           doUpdate(updateTableRequest, table);
+          return versionId == null ? UpdateOutcome.VERSION_UNAVAILABLE_FALLBACK : UpdateOutcome.UPDATED;
         },
         () -> {
           log.warn("Exhausted {} versionId conflict retries updating {}.{} in glue; "
@@ -174,11 +172,8 @@ public class GlueTableService {
               MAX_VERSION_ID_ATTEMPTS, table.getDbName(), table.getTableName());
           updateTableRequest.setVersionId(null);
           doUpdate(updateTableRequest, table);
+          return UpdateOutcome.VERSION_CONFLICT_FALLBACK;
         });
-    if (!applied) {
-      return UpdateOutcome.VERSION_CONFLICT_FALLBACK;
-    }
-    return versionUnavailable[0] ? UpdateOutcome.VERSION_UNAVAILABLE_FALLBACK : UpdateOutcome.UPDATED;
   }
 
   /**
