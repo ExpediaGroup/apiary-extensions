@@ -91,8 +91,10 @@ public class GlueTableService {
   // HMS parameters checked before a delete to detect if the table slot was overwritten by a concurrent operation
   private static final String[] IDENTITY_PARAMS = { "transient_lastDdlTime", "metadata_location" };
   public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
-  // Bounded re-fetch-and-retry on Glue optimistic-locking conflicts before falling back to an
-  // unconditional update.
+  /**
+   * Bounded re-fetch-and-retry on Glue optimistic-locking conflicts before falling back to an
+   * unconditional update.
+   */
   private static final int MAX_VERSION_ID_ATTEMPTS = 3;
 
   private final AWSGlue glueClient;
