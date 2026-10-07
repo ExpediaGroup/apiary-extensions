@@ -109,10 +109,19 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
    */
   public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService,
       boolean throwExceptions, Boolean defaultSkipArchive) {
+    this(config, glueClient, gluePrefix, metricService, throwExceptions, defaultSkipArchive, false);
+  }
+
+  /**
+   * Just for testing. Additionally allows injecting the {@code GLUE_SEND_VERSION_ID} flag that
+   * would otherwise be read from the environment.
+   */
+  public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService,
+      boolean throwExceptions, Boolean defaultSkipArchive, boolean sendVersionId) {
     super(config);
     this.glueClient = glueClient;
     this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
-    this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix, defaultSkipArchive);
+    this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix, defaultSkipArchive, sendVersionId);
     this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix);
     this.isIcebergPredicate = new IsIcebergTablePredicate();
     this.metricService = metricService;
@@ -249,15 +258,13 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       return MetricConstants.OUTCOME_CREATED;
     } catch (AlreadyExistsException e) {
       log.info("{} table already exists in glue, updating....", table.getTableName());
-      glueTableService.update(table);
-      return MetricConstants.OUTCOME_UPDATED;
+      return glueTableService.update(table).metricOutcome();
     }
   }
 
   private String updateOrCreateTable(Table table) {
     try {
-      glueTableService.update(table);
-      return MetricConstants.OUTCOME_UPDATED;
+      return glueTableService.update(table).metricOutcome();
     } catch (EntityNotFoundException e) {
       log.info("{} table doesn't exist in glue, creating....", table.getTableName());
       glueTableService.create(table);

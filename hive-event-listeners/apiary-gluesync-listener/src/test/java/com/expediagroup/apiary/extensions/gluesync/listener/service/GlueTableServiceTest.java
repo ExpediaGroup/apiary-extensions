@@ -16,9 +16,11 @@
 package com.expediagroup.apiary.extensions.gluesync.listener.service;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,14 +33,18 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.amazonaws.services.glue.AWSGlue;
+import com.amazonaws.services.glue.model.ConcurrentModificationException;
 import com.amazonaws.services.glue.model.DeleteTableRequest;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
 import com.amazonaws.services.glue.model.GetTableRequest;
 import com.amazonaws.services.glue.model.GetTableResult;
+import com.amazonaws.services.glue.model.UpdateTableRequest;
+import com.amazonaws.services.glue.model.UpdateTableResult;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GlueTableServiceTest {
@@ -167,6 +173,99 @@ public class GlueTableServiceTest {
 
     assertThat(outcome, is(GlueTableService.DeleteOutcome.SKIPPED));
     verify(glueClient, never()).deleteTable(any(DeleteTableRequest.class));
+  }
+
+  @Test
+  public void update_doesNotSendVersionId_whenFeatureDisabled() {
+    // isSendVersionId() defaults to false on the mock
+    ArgumentCaptor<UpdateTableRequest> captor = ArgumentCaptor.forClass(UpdateTableRequest.class);
+
+    GlueTableService.UpdateOutcome outcome = service.update(hmsTable(LOCATION, LAST_DDL_TIME, null));
+
+    assertThat(outcome, is(GlueTableService.UpdateOutcome.UPDATED));
+    verify(glueClient, never()).getTable(any(GetTableRequest.class));
+    verify(glueClient).updateTable(captor.capture());
+    assertThat(captor.getValue().getVersionId(), is(nullValue()));
+  }
+
+  @Test
+  public void update_sendsVersionIdFromCurrentGlueTable_whenEnabledForHiveTable() {
+    when(gluePartitionService.isSendVersionId()).thenReturn(true);
+    when(glueClient.getTable(any(GetTableRequest.class))).thenReturn(glueTableResultWithVersion("7"));
+    ArgumentCaptor<UpdateTableRequest> captor = ArgumentCaptor.forClass(UpdateTableRequest.class);
+
+    GlueTableService.UpdateOutcome outcome = service.update(hmsTable(LOCATION, LAST_DDL_TIME, null));
+
+    assertThat(outcome, is(GlueTableService.UpdateOutcome.UPDATED));
+    verify(glueClient).getTable(any(GetTableRequest.class));
+    verify(glueClient).updateTable(captor.capture());
+    assertThat(captor.getValue().getVersionId(), is("7"));
+  }
+
+  @Test
+  public void update_skipsVersionId_forIcebergTable_evenWhenEnabled() {
+    when(gluePartitionService.isSendVersionId()).thenReturn(true);
+    ArgumentCaptor<UpdateTableRequest> captor = ArgumentCaptor.forClass(UpdateTableRequest.class);
+
+    // metadata_location present => Iceberg; no getTable, no versionId
+    GlueTableService.UpdateOutcome outcome = service.update(
+        hmsTable(LOCATION, LAST_DDL_TIME, "s3://bucket/test_table/metadata/v1.metadata.json"));
+
+    assertThat(outcome, is(GlueTableService.UpdateOutcome.UPDATED));
+    verify(glueClient, never()).getTable(any(GetTableRequest.class));
+    verify(glueClient).updateTable(captor.capture());
+    assertThat(captor.getValue().getVersionId(), is(nullValue()));
+  }
+
+  @Test
+  public void update_retriesWithRefreshedVersionId_onConcurrentModification() {
+    when(gluePartitionService.isSendVersionId()).thenReturn(true);
+    when(glueClient.getTable(any(GetTableRequest.class)))
+        .thenReturn(glueTableResultWithVersion("7"))
+        .thenReturn(glueTableResultWithVersion("8"));
+    when(glueClient.updateTable(any(UpdateTableRequest.class)))
+        .thenThrow(new ConcurrentModificationException("conflict"))
+        .thenReturn(new UpdateTableResult());
+    ArgumentCaptor<UpdateTableRequest> captor = ArgumentCaptor.forClass(UpdateTableRequest.class);
+
+    GlueTableService.UpdateOutcome outcome = service.update(hmsTable(LOCATION, LAST_DDL_TIME, null));
+
+    assertThat(outcome, is(GlueTableService.UpdateOutcome.UPDATED));
+    verify(glueClient, times(2)).getTable(any(GetTableRequest.class));
+    verify(glueClient, times(2)).updateTable(captor.capture());
+    // request instance is reused; after success it holds the refreshed versionId
+    assertThat(captor.getValue().getVersionId(), is("8"));
+  }
+
+  @Test
+  public void update_fallsBackToUnconditionalUpdate_whenRetriesExhausted() {
+    when(gluePartitionService.isSendVersionId()).thenReturn(true);
+    when(glueClient.getTable(any(GetTableRequest.class))).thenReturn(glueTableResultWithVersion("7"));
+    // Glue only enforces the CAS when a versionId is supplied, so the unconditional fallback succeeds
+    when(glueClient.updateTable(any(UpdateTableRequest.class))).thenAnswer(invocation -> {
+      UpdateTableRequest request = invocation.getArgument(0);
+      if (request.getVersionId() != null) {
+        throw new ConcurrentModificationException("conflict");
+      }
+      return new UpdateTableResult();
+    });
+    ArgumentCaptor<UpdateTableRequest> captor = ArgumentCaptor.forClass(UpdateTableRequest.class);
+
+    GlueTableService.UpdateOutcome outcome = service.update(hmsTable(LOCATION, LAST_DDL_TIME, null));
+
+    assertThat(outcome, is(GlueTableService.UpdateOutcome.VERSION_CONFLICT_FALLBACK));
+    // 3 versioned attempts + 1 unconditional fallback
+    verify(glueClient, times(4)).updateTable(captor.capture());
+    verify(glueClient, times(3)).getTable(any(GetTableRequest.class));
+    assertThat(captor.getValue().getVersionId(), is(nullValue()));
+  }
+
+  private GetTableResult glueTableResultWithVersion(String versionId) {
+    return new GetTableResult().withTable(
+        new com.amazonaws.services.glue.model.Table()
+            .withName(TABLE_NAME)
+            .withDatabaseName(DB_NAME)
+            .withVersionId(versionId));
   }
 
   private Table hmsTable(String location, String lastDdlTime, String metadataLocation) {

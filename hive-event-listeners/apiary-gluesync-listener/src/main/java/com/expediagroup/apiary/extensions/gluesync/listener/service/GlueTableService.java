@@ -63,15 +63,43 @@ public class GlueTableService {
     }
   }
 
+  /**
+   * Outcome of an {@link #update} call.
+   * <ul>
+   *   <li>{@code UPDATED} — the Glue table was updated (the normal path).</li>
+   *   <li>{@code VERSION_CONFLICT_FALLBACK} — optimistic-locking retries were exhausted, so the
+   *       update was retried unconditionally (without a versionId); the sync still succeeded but
+   *       that UpdateTable event does not carry a versionId.</li>
+   * </ul>
+   */
+  public enum UpdateOutcome {
+    UPDATED("updated"),
+    VERSION_CONFLICT_FALLBACK("version_conflict_fallback");
+
+    private final String metricOutcome;
+
+    UpdateOutcome(String metricOutcome) {
+      this.metricOutcome = metricOutcome;
+    }
+
+    public String metricOutcome() {
+      return metricOutcome;
+    }
+  }
+
   private static final Logger log = LoggerFactory.getLogger(GlueTableService.class);
   // HMS parameters checked before a delete to detect if the table slot was overwritten by a concurrent operation
   private static final String[] IDENTITY_PARAMS = { "transient_lastDdlTime", "metadata_location" };
   public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
+  // Bounded re-fetch-and-retry on Glue optimistic-locking conflicts before falling back to an
+  // unconditional update.
+  private static final int MAX_VERSION_ID_ATTEMPTS = 3;
 
   private final AWSGlue glueClient;
   private final HiveToGlueTransformer transformer;
   private final GlueMetadataStringCleaner cleaner = new GlueMetadataStringCleaner();
   private final GluePartitionService gluePartitionService;
+  private final IsIcebergTablePredicate isIcebergPredicate = new IsIcebergTablePredicate();
 
   public GlueTableService(AWSGlue glueClient, GluePartitionService gluePartitionService, String gluePrefix) {
     this.glueClient = glueClient;
@@ -95,13 +123,68 @@ public class GlueTableService {
     }
   }
 
-  public void update(Table table) {
+  public UpdateOutcome update(Table table) {
     boolean skipArchive = gluePartitionService.shouldSkipArchive(table);
 
     UpdateTableRequest updateTableRequest = new UpdateTableRequest()
         .withSkipArchive(skipArchive)
         .withTableInput(transformer.transformTable(table))
         .withDatabaseName(transformer.glueDbName(table));
+
+    if (!shouldSendVersionId(table)) {
+      doUpdate(updateTableRequest, table);
+      return UpdateOutcome.UPDATED;
+    }
+    return updateWithOptimisticLock(updateTableRequest, table);
+  }
+
+  /**
+   * Updates the table while carrying Glue's optimistic-concurrency {@code versionId}, so AWS records
+   * {@code requestParameters.versionId} (the version immediately before this update) on the emitted
+   * CloudTrail event. Glue enforces the {@code versionId} as a compare-and-swap, so a concurrent
+   * writer fails the write with {@code ConcurrentModificationException}; that is retried against a
+   * freshly-read version. If the retries are exhausted, the table is updated unconditionally (no
+   * {@code versionId}) so the sync still succeeds for a contended table — that write just does not
+   * carry a {@code versionId}.
+   */
+  private UpdateOutcome updateWithOptimisticLock(UpdateTableRequest updateTableRequest, Table table) {
+    log.debug("Updating {}.{} in glue with optimistic locking (versionId)", table.getDbName(), table.getTableName());
+    boolean applied = OptimisticUpdateRetry.retryOnConflict(
+        MAX_VERSION_ID_ATTEMPTS,
+        attemptNo -> log.warn("Concurrent modification updating {}.{} in glue (attempt {}/{}); refreshing versionId",
+            table.getDbName(), table.getTableName(), attemptNo, MAX_VERSION_ID_ATTEMPTS),
+        () -> {
+          updateTableRequest.setVersionId(currentVersionId(table));
+          doUpdate(updateTableRequest, table);
+        },
+        () -> {
+          log.warn("Exhausted {} versionId conflict retries updating {}.{} in glue; "
+              + "falling back to an unconditional update without versionId",
+              MAX_VERSION_ID_ATTEMPTS, table.getDbName(), table.getTableName());
+          updateTableRequest.setVersionId(null);
+          doUpdate(updateTableRequest, table);
+        });
+    return applied ? UpdateOutcome.UPDATED : UpdateOutcome.VERSION_CONFLICT_FALLBACK;
+  }
+
+  /**
+   * Whether to set the optimistic-concurrency {@code versionId} on this table's Glue
+   * {@code UpdateTable}. Only non-Iceberg (Hive) tables need it: setting it makes AWS record
+   * {@code requestParameters.versionId} on the emitted CloudTrail {@code UpdateTable} event, which
+   * consumers of that event use to identify the pre-update table version. Iceberg tables are
+   * identified by {@code metadata_location}, so they skip the extra {@code GetTable} and the
+   * optimistic-locking overhead.
+   */
+  private boolean shouldSendVersionId(Table table) {
+    return gluePartitionService.isSendVersionId() && !isIcebergPredicate.test(table.getParameters());
+  }
+
+  /**
+   * Issues the Glue UpdateTable, retrying once with cleaned-up comments if Glue rejects the input
+   * with {@link ValidationException}/{@link InvalidInputException}. Any {@code versionId} set on
+   * the request is preserved across the retry.
+   */
+  private void doUpdate(UpdateTableRequest updateTableRequest, Table table) {
     try {
       glueClient.updateTable(updateTableRequest);
       log.debug(table + " table updated in glue catalog");
@@ -111,6 +194,15 @@ public class GlueTableService {
       glueClient.updateTable(updateTableRequest);
       log.debug(table + " table updated in glue catalog");
     }
+  }
+
+  private String currentVersionId(Table table) {
+    return glueClient
+        .getTable(new GetTableRequest()
+            .withDatabaseName(transformer.glueDbName(table))
+            .withName(table.getTableName()))
+        .getTable()
+        .getVersionId();
   }
 
   private TableInput cleanUpTable(TableInput table) {

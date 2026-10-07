@@ -410,4 +410,52 @@ public class GluePartitionServiceTest {
     table.setParameters(params);
     assertThat(svc.shouldSkipArchive(table), is(false));
   }
+
+  @Test
+  public void shouldSkipArchive_falseForHiveTableWhenSendVersionIdEnabled() {
+    GluePartitionService svc = new GluePartitionService(mockGlueClient, "test-prefix-", Boolean.TRUE, true);
+    Table table = new Table();
+    table.setParameters(new HashMap<>());
+    assertThat(svc.shouldSkipArchive(table), is(false));
+  }
+
+  @Test
+  public void shouldSkipArchive_unchangedForIcebergTableWhenSendVersionIdEnabled() {
+    GluePartitionService svc = new GluePartitionService(mockGlueClient, "test-prefix-", Boolean.TRUE, true);
+    Table table = new Table();
+    HashMap<String, String> params = new HashMap<>();
+    params.put("table_type", "ICEBERG");
+    table.setParameters(params);
+    assertThat(svc.shouldSkipArchive(table), is(true));
+  }
+
+  @Test
+  public void shouldSkipArchive_tableParamStillWinsWhenSendVersionIdEnabled() {
+    GluePartitionService svc = new GluePartitionService(mockGlueClient, "test-prefix-", Boolean.TRUE, true);
+    Table table = new Table();
+    HashMap<String, String> params = new HashMap<>();
+    params.put(GluePartitionService.APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM, "true");
+    table.setParameters(params);
+    assertThat(svc.shouldSkipArchive(table), is(true));
+  }
+
+  @Test
+  public void isSendVersionId_reflectsConstructorFlag() {
+    assertThat(new GluePartitionService(mockGlueClient, "p-", Boolean.TRUE, true).isSendVersionId(), is(true));
+    assertThat(new GluePartitionService(mockGlueClient, "p-", Boolean.TRUE, false).isSendVersionId(), is(false));
+  }
+
+  @Test
+  public void parseSendVersionId_parsesValidValues() {
+    assertThat(GluePartitionService.parseSendVersionId(null), is(false));
+    assertThat(GluePartitionService.parseSendVersionId(""), is(false));
+    assertThat(GluePartitionService.parseSendVersionId("true"), is(true));
+    assertThat(GluePartitionService.parseSendVersionId("TRUE"), is(true));
+    assertThat(GluePartitionService.parseSendVersionId("false"), is(false));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseSendVersionId_throwsOnInvalidValue() {
+    GluePartitionService.parseSendVersionId("yes");
+  }
 }

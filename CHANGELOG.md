@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 8.2.6 - 2026-10-07
+### Added
+- `apiary-gluesync-listener`: new `GLUE_SEND_VERSION_ID` environment variable (default `false`). When `true`, the listener sends the current Glue `VersionId` on `UpdateTable` requests for non-Iceberg (Hive) tables so the emitted CloudTrail event carries `requestParameters.versionId`, which lets consumers of the Glue/CloudTrail event stream identify and fetch the pre-update table version for `ALTER_TABLE` events. Glue enforces the `VersionId` as an optimistic-concurrency token, so the listener re-reads and retries on `ConcurrentModificationException` (bounded) and falls back to an unconditional update if the retries are exhausted. When the flag is on, Hive tables are forced to `skipArchive=false` so the prior version is retained (an explicit per-table `apiary.gluesync.skipArchive` property still wins); Iceberg tables are unaffected. A new `version_conflict_fallback` value can appear on the `glue_listener_event` counter's `outcome` tag.
+
 ## 8.2.5 - 2026-08-31
 ### Added
 - `kafka-metastore-receiver`: `KafkaMessageReaderBuilder.withKeyDeserializer(String)` to configure the record key deserializer. The default remains `LongDeserializer`, matching the key written by the Apiary Hive Metastore listener, but topics populated by another producer can now be read without a `SerializationException`. The key deserializer could not previously be set, because properties passed to `withConsumerProperties` do not override the builder's own defaults.
