@@ -219,11 +219,10 @@ public class GlueTableServiceTest {
   }
 
   @Test
-  public void update_retriesWithRefreshedVersionId_onConcurrentModification() {
+  public void update_fallsBackToUnconditionalUpdate_onConcurrentModification() {
     when(gluePartitionService.isSendVersionId()).thenReturn(true);
-    when(glueClient.getTable(any(GetTableRequest.class)))
-        .thenReturn(glueTableResultWithVersion("7"))
-        .thenReturn(glueTableResultWithVersion("8"));
+    when(glueClient.getTable(any(GetTableRequest.class))).thenReturn(glueTableResultWithVersion("7"));
+    // Versioned write conflicts; the unconditional fallback (no versionId) then succeeds.
     when(glueClient.updateTable(any(UpdateTableRequest.class)))
         .thenThrow(new ConcurrentModificationException("conflict"))
         .thenReturn(new UpdateTableResult());
@@ -231,33 +230,10 @@ public class GlueTableServiceTest {
 
     GlueTableService.UpdateOutcome outcome = service.update(hmsTable(LOCATION, LAST_DDL_TIME, null));
 
-    assertThat(outcome, is(GlueTableService.UpdateOutcome.UPDATED));
-    verify(glueClient, times(2)).getTable(any(GetTableRequest.class));
-    verify(glueClient, times(2)).updateTable(captor.capture());
-    // request instance is reused; after success it holds the refreshed versionId
-    assertThat(captor.getValue().getVersionId(), is("8"));
-  }
-
-  @Test
-  public void update_fallsBackToUnconditionalUpdate_whenRetriesExhausted() {
-    when(gluePartitionService.isSendVersionId()).thenReturn(true);
-    when(glueClient.getTable(any(GetTableRequest.class))).thenReturn(glueTableResultWithVersion("7"));
-    // Glue only enforces the CAS when a versionId is supplied, so the unconditional fallback succeeds
-    when(glueClient.updateTable(any(UpdateTableRequest.class))).thenAnswer(invocation -> {
-      UpdateTableRequest request = invocation.getArgument(0);
-      if (request.getVersionId() != null) {
-        throw new ConcurrentModificationException("conflict");
-      }
-      return new UpdateTableResult();
-    });
-    ArgumentCaptor<UpdateTableRequest> captor = ArgumentCaptor.forClass(UpdateTableRequest.class);
-
-    GlueTableService.UpdateOutcome outcome = service.update(hmsTable(LOCATION, LAST_DDL_TIME, null));
-
     assertThat(outcome, is(GlueTableService.UpdateOutcome.VERSION_CONFLICT_FALLBACK));
-    // 3 versioned attempts + 1 unconditional fallback
-    verify(glueClient, times(4)).updateTable(captor.capture());
-    verify(glueClient, times(3)).getTable(any(GetTableRequest.class));
+    // one versioned attempt (conflict) + one unconditional fallback; version read only once
+    verify(glueClient).getTable(any(GetTableRequest.class));
+    verify(glueClient, times(2)).updateTable(captor.capture());
     assertThat(captor.getValue().getVersionId(), is(nullValue()));
   }
 

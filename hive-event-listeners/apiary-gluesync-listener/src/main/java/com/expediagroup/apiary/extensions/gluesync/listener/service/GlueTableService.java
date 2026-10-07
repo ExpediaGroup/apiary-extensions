@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.glue.AWSGlue;
+import com.amazonaws.services.glue.model.ConcurrentModificationException;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.DeleteTableRequest;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
@@ -96,11 +97,6 @@ public class GlueTableService {
   // HMS parameters checked before a delete to detect if the table slot was overwritten by a concurrent operation
   private static final String[] IDENTITY_PARAMS = { "transient_lastDdlTime", "metadata_location" };
   public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
-  /**
-   * Bounded re-fetch-and-retry on Glue optimistic-locking conflicts before falling back to an
-   * unconditional update.
-   */
-  private static final int MAX_VERSION_ID_ATTEMPTS = 3;
 
   private final AWSGlue glueClient;
   private final HiveToGlueTransformer transformer;
@@ -146,34 +142,31 @@ public class GlueTableService {
   }
 
   /**
-   * Updates the table while carrying Glue's optimistic-concurrency {@code versionId}, so AWS records
+   * Updates the table carrying Glue's optimistic-concurrency {@code versionId}, so AWS records
    * {@code requestParameters.versionId} (the version immediately before this update) on the emitted
-   * CloudTrail event. Glue enforces the {@code versionId} as a compare-and-swap, so a concurrent
-   * writer fails the write with {@code ConcurrentModificationException}; that is retried against a
-   * freshly-read version. If the retries are exhausted, the table is updated unconditionally (no
-   * {@code versionId}) so the sync still succeeds for a contended table — that write just does not
-   * carry a {@code versionId}.
+   * CloudTrail event. The versionId is best-effort: if it cannot be read, or Glue rejects the write
+   * with {@code ConcurrentModificationException} because a concurrent writer bumped the version, the
+   * table is updated unconditionally (no {@code versionId}) so the sync still succeeds — matching
+   * the listener's last-write-wins behaviour when the feature is off. Only that write loses its
+   * {@code versionId}; the outcome records which fallback was taken.
    */
   private UpdateOutcome updateWithOptimisticLock(UpdateTableRequest updateTableRequest, Table table) {
-    log.debug("Updating {}.{} in glue with optimistic locking (versionId)", table.getDbName(), table.getTableName());
-    return OptimisticUpdateRetry.retryOnConflict(
-        MAX_VERSION_ID_ATTEMPTS,
-        attemptNo -> log.warn("Concurrent modification updating {}.{} in glue (attempt {}/{}); refreshing versionId",
-            table.getDbName(), table.getTableName(), attemptNo, MAX_VERSION_ID_ATTEMPTS),
-        () -> {
-          String versionId = readVersionId(table);
-          updateTableRequest.setVersionId(versionId);
-          doUpdate(updateTableRequest, table);
-          return versionId == null ? UpdateOutcome.VERSION_UNAVAILABLE_FALLBACK : UpdateOutcome.UPDATED;
-        },
-        () -> {
-          log.warn("Exhausted {} versionId conflict retries updating {}.{} in glue; "
-              + "falling back to an unconditional update without versionId",
-              MAX_VERSION_ID_ATTEMPTS, table.getDbName(), table.getTableName());
-          updateTableRequest.setVersionId(null);
-          doUpdate(updateTableRequest, table);
-          return UpdateOutcome.VERSION_CONFLICT_FALLBACK;
-        });
+    String versionId = readVersionId(table);
+    if (versionId == null) {
+      doUpdate(updateTableRequest, table);
+      return UpdateOutcome.VERSION_UNAVAILABLE_FALLBACK;
+    }
+    updateTableRequest.setVersionId(versionId);
+    try {
+      doUpdate(updateTableRequest, table);
+      return UpdateOutcome.UPDATED;
+    } catch (ConcurrentModificationException e) {
+      log.warn("Concurrent modification updating {}.{} in glue; updating unconditionally without versionId",
+          table.getDbName(), table.getTableName());
+      updateTableRequest.setVersionId(null);
+      doUpdate(updateTableRequest, table);
+      return UpdateOutcome.VERSION_CONFLICT_FALLBACK;
+    }
   }
 
   /**
