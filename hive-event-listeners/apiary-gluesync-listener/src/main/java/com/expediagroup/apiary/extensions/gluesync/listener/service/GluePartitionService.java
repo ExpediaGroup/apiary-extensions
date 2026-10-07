@@ -50,31 +50,22 @@ public class GluePartitionService {
   private final HiveToGlueTransformer transformer;
   private final GlueMetadataStringCleaner cleaner = new GlueMetadataStringCleaner();
   private final HiveToGluePartitionComparator partitionComparator = new HiveToGluePartitionComparator();
-  private final IsIcebergTablePredicate isIcebergPredicate = new IsIcebergTablePredicate();
   private final Boolean defaultSkipArchive;
-  private final boolean sendVersionId;
   public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
   public static final String GLUE_SKIP_ARCHIVE_ENV = "GLUE_SKIP_ARCHIVE";
-  public static final String GLUE_SEND_VERSION_ID_ENV = "GLUE_SEND_VERSION_ID";
   private static final int DEFAULT_MAX_RESULTS_SIZE = 1000; // Current max supported by Glue
   private static final int MAX_PARTITION_CREATE_BATCH_SIZE = 100;
   private static final int MAX_PARTITION_UPDATE_BATCH_SIZE = 100;
   private static final int MAX_PARTITION_DELETE_BATCH_SIZE = 25;
 
   public GluePartitionService(AWSGlue glueClient, String gluePrefix) {
-    this(glueClient, gluePrefix, parseSkipArchiveDefaultFromEnv(), parseSendVersionIdFromEnv());
+    this(glueClient, gluePrefix, parseSkipArchiveDefaultFromEnv());
   }
 
   public GluePartitionService(AWSGlue glueClient, String gluePrefix, Boolean defaultSkipArchive) {
-    this(glueClient, gluePrefix, defaultSkipArchive, false);
-  }
-
-  public GluePartitionService(AWSGlue glueClient, String gluePrefix, Boolean defaultSkipArchive,
-      boolean sendVersionId) {
     this.glueClient = glueClient;
     this.transformer = new HiveToGlueTransformer(gluePrefix);
     this.defaultSkipArchive = defaultSkipArchive;
-    this.sendVersionId = sendVersionId;
     log.debug("ApiaryGlueSync created");
   }
 
@@ -103,30 +94,6 @@ public class GluePartitionService {
     }
     throw new IllegalArgumentException(
         "Invalid value for environment variable " + GLUE_SKIP_ARCHIVE_ENV
-            + ": '" + value + "'. Expected 'true' or 'false'.");
-  }
-
-  /**
-   * Reads the {@value #GLUE_SEND_VERSION_ID_ENV} environment variable and returns its boolean
-   * value. When unset or empty, {@code false} is returned (the feature is off by default). Any
-   * value other than {@code "true"}/{@code "false"} (case-insensitive) throws at startup.
-   */
-  static boolean parseSendVersionIdFromEnv() {
-    return parseSendVersionId(System.getenv(GLUE_SEND_VERSION_ID_ENV));
-  }
-
-  static boolean parseSendVersionId(String value) {
-    if (value == null || value.isEmpty()) {
-      return false;
-    }
-    if ("true".equalsIgnoreCase(value)) {
-      return true;
-    }
-    if ("false".equalsIgnoreCase(value)) {
-      return false;
-    }
-    throw new IllegalArgumentException(
-        "Invalid value for environment variable " + GLUE_SEND_VERSION_ID_ENV
             + ": '" + value + "'. Expected 'true' or 'false'.");
   }
 
@@ -233,29 +200,10 @@ public class GluePartitionService {
         return true;
       }
     }
-    if (mustRetainPreviousVersion(table)) {
-      return false;
-    }
     if (defaultSkipArchive != null) {
       return defaultSkipArchive;
     }
     return true;
-  }
-
-  /**
-   * Whether this table's previous Glue version must be retained (i.e. archiving cannot be skipped).
-   * True only when versionId emission is enabled and the table is non-Iceberg (Hive): the versionId
-   * carried on the emitted {@code UpdateTable} event identifies the version immediately before the
-   * update, and that version must still exist for consumers of the event to fetch it via
-   * {@code GetTableVersion}. Iceberg tables are identified by {@code metadata_location} and keep the
-   * default (skip archive) to avoid table-version explosion.
-   */
-  private boolean mustRetainPreviousVersion(Table table) {
-    return sendVersionId && !isIcebergPredicate.test(table == null ? null : table.getParameters());
-  }
-
-  public boolean isSendVersionId() {
-    return sendVersionId;
   }
 
   public PartitionInput convertToPartitionInput(com.amazonaws.services.glue.model.Partition partition) {

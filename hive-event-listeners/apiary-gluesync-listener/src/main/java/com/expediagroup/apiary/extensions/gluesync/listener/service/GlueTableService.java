@@ -37,78 +37,53 @@ import com.amazonaws.services.glue.model.ValidationException;
 
 public class GlueTableService {
 
-  /**
-   * Outcome of a {@link #deleteIfUnchanged} call, used by callers to record the appropriate metric.
-   * <ul>
-   *   <li>{@code DELETED} — the Glue table was deleted.</li>
-   *   <li>{@code SKIPPED} — the delete was suppressed because identity params diverged, indicating
-   *       the Glue slot was overwritten by a concurrent operation.</li>
-   *   <li>{@code NOT_FOUND} — the table did not exist in Glue when checked; nothing to delete.</li>
-   *   <li>{@code DELETED_CONCURRENTLY} — the table existed at guard-check time but was deleted by a
-   *       concurrent operation before the delete call completed (TOCTOU race).</li>
-   * </ul>
-   */
-  public enum DeleteOutcome {
-    DELETED("deleted"),
-    SKIPPED("delete_skipped"),
-    NOT_FOUND("not_found"),
-    DELETED_CONCURRENTLY("concurrent_delete");
-
-    private final String metricOutcome;
-
-    DeleteOutcome(String metricOutcome) {
-      this.metricOutcome = metricOutcome;
-    }
-
-    public String metricOutcome() {
-      return metricOutcome;
-    }
-  }
-
-  /**
-   * Outcome of an {@link #update} call.
-   * <ul>
-   *   <li>{@code UPDATED} — the Glue table was updated (the normal path).</li>
-   *   <li>{@code VERSION_CONFLICT_FALLBACK} — optimistic-locking retries were exhausted, so the
-   *       update was retried unconditionally (without a versionId); the sync still succeeded but
-   *       that UpdateTable event does not carry a versionId.</li>
-   *   <li>{@code VERSION_UNAVAILABLE_FALLBACK} — the current versionId could not be read, so the
-   *       update was done unconditionally (without a versionId); the sync still succeeded but that
-   *       UpdateTable event does not carry a versionId.</li>
-   * </ul>
-   */
-  public enum UpdateOutcome {
-    UPDATED("updated"),
-    VERSION_CONFLICT_FALLBACK("version_conflict_fallback"),
-    VERSION_UNAVAILABLE_FALLBACK("version_unavailable_fallback");
-
-    private final String metricOutcome;
-
-    UpdateOutcome(String metricOutcome) {
-      this.metricOutcome = metricOutcome;
-    }
-
-    public String metricOutcome() {
-      return metricOutcome;
-    }
-  }
-
   private static final Logger log = LoggerFactory.getLogger(GlueTableService.class);
   // HMS parameters checked before a delete to detect if the table slot was overwritten by a concurrent operation
   private static final String[] IDENTITY_PARAMS = { "transient_lastDdlTime", "metadata_location" };
   public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
+  public static final String GLUE_SEND_VERSION_ID_ENV = "GLUE_SEND_VERSION_ID";
 
   private final AWSGlue glueClient;
   private final HiveToGlueTransformer transformer;
   private final GlueMetadataStringCleaner cleaner = new GlueMetadataStringCleaner();
   private final GluePartitionService gluePartitionService;
-  private final IsIcebergTablePredicate isIcebergPredicate = new IsIcebergTablePredicate();
+  private final boolean sendVersionId;
 
   public GlueTableService(AWSGlue glueClient, GluePartitionService gluePartitionService, String gluePrefix) {
+    this(glueClient, gluePartitionService, gluePrefix, parseSendVersionIdFromEnv());
+  }
+
+  public GlueTableService(AWSGlue glueClient, GluePartitionService gluePartitionService, String gluePrefix,
+      boolean sendVersionId) {
     this.glueClient = glueClient;
     this.transformer = new HiveToGlueTransformer(gluePrefix);
     this.gluePartitionService = gluePartitionService;
+    this.sendVersionId = sendVersionId;
     log.debug("ApiaryGlueSync created");
+  }
+
+  /**
+   * Reads the {@value #GLUE_SEND_VERSION_ID_ENV} environment variable and returns its boolean
+   * value. When unset or empty, {@code false} is returned (the feature is off by default). Any
+   * value other than {@code "true"}/{@code "false"} (case-insensitive) throws at startup.
+   */
+  static boolean parseSendVersionIdFromEnv() {
+    return parseSendVersionId(System.getenv(GLUE_SEND_VERSION_ID_ENV));
+  }
+
+  static boolean parseSendVersionId(String value) {
+    if (value == null || value.isEmpty()) {
+      return false;
+    }
+    if ("true".equalsIgnoreCase(value)) {
+      return true;
+    }
+    if ("false".equalsIgnoreCase(value)) {
+      return false;
+    }
+    throw new IllegalArgumentException(
+        "Invalid value for environment variable " + GLUE_SEND_VERSION_ID_ENV
+            + ": '" + value + "'. Expected 'true' or 'false'.");
   }
 
   public void create(Table table) {
@@ -127,14 +102,12 @@ public class GlueTableService {
   }
 
   public UpdateOutcome update(Table table) {
-    boolean skipArchive = gluePartitionService.shouldSkipArchive(table);
-
     UpdateTableRequest updateTableRequest = new UpdateTableRequest()
-        .withSkipArchive(skipArchive)
+        .withSkipArchive(gluePartitionService.shouldSkipArchive(table))
         .withTableInput(transformer.transformTable(table))
         .withDatabaseName(transformer.glueDbName(table));
 
-    if (!shouldSendVersionId(table)) {
+    if (!sendVersionId) {
       doUpdate(updateTableRequest, table);
       return UpdateOutcome.UPDATED;
     }
@@ -177,10 +150,6 @@ public class GlueTableService {
    * identified by {@code metadata_location}, so they skip the extra {@code GetTable} and the
    * optimistic-locking overhead.
    */
-  private boolean shouldSendVersionId(Table table) {
-    return gluePartitionService.isSendVersionId() && !isIcebergPredicate.test(table.getParameters());
-  }
-
   /**
    * Issues the Glue UpdateTable, retrying once with cleaned-up comments if Glue rejects the input
    * with {@link ValidationException}/{@link InvalidInputException}. Any {@code versionId} set on

@@ -45,6 +45,7 @@ import com.amazonaws.services.glue.model.EntityNotFoundException;
 
 import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants;
 import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricService;
+import com.expediagroup.apiary.extensions.gluesync.listener.service.DeleteOutcome;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueDatabaseService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GluePartitionService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueTableService;
@@ -121,8 +122,8 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     super(config);
     this.glueClient = glueClient;
     this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
-    this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix, defaultSkipArchive, sendVersionId);
-    this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix);
+    this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix, defaultSkipArchive);
+    this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix, sendVersionId);
     this.isIcebergPredicate = new IsIcebergTablePredicate();
     this.metricService = metricService;
     this.throwExceptions = throwExceptions;
@@ -200,7 +201,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     }
     Table table = event.getTable();
     try {
-      GlueTableService.DeleteOutcome outcome = glueTableService.deleteIfUnchanged(table);
+      DeleteOutcome outcome = glueTableService.deleteIfUnchanged(table);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
       metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, outcome.metricOutcome());
     } catch (Exception e) {
@@ -299,7 +300,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     long startTime = System.currentTimeMillis();
     glueTableService.create(newTable);
     gluePartitionService.copyPartitions(newTable, gluePartitionService.getPartitions(oldTable));
-    GlueTableService.DeleteOutcome outcome = glueTableService.deleteIfUnchanged(oldTable);
+    DeleteOutcome outcome = glueTableService.deleteIfUnchanged(oldTable);
     long duration = System.currentTimeMillis() - startTime;
     metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
     metricService.recordEvent(MetricConstants.RENAME_TABLE, MetricConstants.RESULT_SUCCESS, outcome.metricOutcome());
