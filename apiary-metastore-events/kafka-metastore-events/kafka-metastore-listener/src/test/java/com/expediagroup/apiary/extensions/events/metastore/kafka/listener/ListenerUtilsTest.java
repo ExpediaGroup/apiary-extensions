@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018-2019 Expedia, Inc.
+ * Copyright (C) 2018-2026 Expedia, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.expediagroup.apiary.extensions.events.metastore.kafka.listener;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
 import org.apache.hadoop.hive.common.metrics.metrics2.CodahaleMetrics;
@@ -63,7 +64,9 @@ public class ListenerUtilsTest {
       .counter(MetricsConstant.LISTENER_FAILURES);
     assertThat(counter.getCount()).isEqualTo(1L);
     // We want to make sure these keywords are logged
-    List<LoggingEvent> events = appender.getEvents();
+    List<LoggingEvent> events = appender.getEvents().stream()
+        .filter(event -> ListenerUtils.class.getName().equals(event.getLoggerName()))
+        .collect(Collectors.toList());
     assertThat(events).hasSize(1);
     assertThat(events).extracting("renderedMessage").containsExactly("Error in Kafka Listener");
   }
