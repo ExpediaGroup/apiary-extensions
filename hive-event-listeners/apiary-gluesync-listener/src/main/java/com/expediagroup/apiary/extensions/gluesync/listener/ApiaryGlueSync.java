@@ -45,6 +45,7 @@ import com.amazonaws.services.glue.model.EntityNotFoundException;
 
 import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricConstants;
 import com.expediagroup.apiary.extensions.gluesync.listener.metrics.MetricService;
+import com.expediagroup.apiary.extensions.gluesync.listener.service.DeleteOutcome;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueDatabaseService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GluePartitionService;
 import com.expediagroup.apiary.extensions.gluesync.listener.service.GlueTableService;
@@ -109,11 +110,20 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
    */
   public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService,
       boolean throwExceptions, Boolean defaultSkipArchive) {
+    this(config, glueClient, gluePrefix, metricService, throwExceptions, defaultSkipArchive, false);
+  }
+
+  /**
+   * Just for testing. Additionally allows injecting the {@code GLUE_SEND_VERSION_ID} flag that
+   * would otherwise be read from the environment.
+   */
+  public ApiaryGlueSync(Configuration config, AWSGlue glueClient, String gluePrefix, MetricService metricService,
+      boolean throwExceptions, Boolean defaultSkipArchive, boolean sendVersionId) {
     super(config);
     this.glueClient = glueClient;
     this.glueDatabaseService = new GlueDatabaseService(glueClient, gluePrefix);
     this.gluePartitionService = new GluePartitionService(glueClient, gluePrefix, defaultSkipArchive);
-    this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix);
+    this.glueTableService = new GlueTableService(glueClient, gluePartitionService, gluePrefix, sendVersionId);
     this.isIcebergPredicate = new IsIcebergTablePredicate();
     this.metricService = metricService;
     this.throwExceptions = throwExceptions;
@@ -191,7 +201,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     }
     Table table = event.getTable();
     try {
-      GlueTableService.DeleteOutcome outcome = glueTableService.deleteIfUnchanged(table);
+      DeleteOutcome outcome = glueTableService.deleteIfUnchanged(table);
       metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
       metricService.recordEvent(MetricConstants.DROP_TABLE, MetricConstants.RESULT_SUCCESS, outcome.metricOutcome());
     } catch (Exception e) {
@@ -249,15 +259,13 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
       return MetricConstants.OUTCOME_CREATED;
     } catch (AlreadyExistsException e) {
       log.info("{} table already exists in glue, updating....", table.getTableName());
-      glueTableService.update(table);
-      return MetricConstants.OUTCOME_UPDATED;
+      return glueTableService.update(table).metricOutcome();
     }
   }
 
   private String updateOrCreateTable(Table table) {
     try {
-      glueTableService.update(table);
-      return MetricConstants.OUTCOME_UPDATED;
+      return glueTableService.update(table).metricOutcome();
     } catch (EntityNotFoundException e) {
       log.info("{} table doesn't exist in glue, creating....", table.getTableName());
       glueTableService.create(table);
@@ -292,7 +300,7 @@ public class ApiaryGlueSync extends MetaStoreEventListener {
     long startTime = System.currentTimeMillis();
     glueTableService.create(newTable);
     gluePartitionService.copyPartitions(newTable, gluePartitionService.getPartitions(oldTable));
-    GlueTableService.DeleteOutcome outcome = glueTableService.deleteIfUnchanged(oldTable);
+    DeleteOutcome outcome = glueTableService.deleteIfUnchanged(oldTable);
     long duration = System.currentTimeMillis() - startTime;
     metricService.incrementCounter(MetricConstants.LISTENER_TABLE_SUCCESS);
     metricService.recordEvent(MetricConstants.RENAME_TABLE, MetricConstants.RESULT_SUCCESS, outcome.metricOutcome());

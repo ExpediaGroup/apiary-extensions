@@ -23,7 +23,9 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.glue.AWSGlue;
+import com.amazonaws.services.glue.model.ConcurrentModificationException;
 import com.amazonaws.services.glue.model.CreateTableRequest;
 import com.amazonaws.services.glue.model.DeleteTableRequest;
 import com.amazonaws.services.glue.model.EntityNotFoundException;
@@ -35,49 +37,53 @@ import com.amazonaws.services.glue.model.ValidationException;
 
 public class GlueTableService {
 
-  /**
-   * Outcome of a {@link #deleteIfUnchanged} call, used by callers to record the appropriate metric.
-   * <ul>
-   *   <li>{@code DELETED} — the Glue table was deleted.</li>
-   *   <li>{@code SKIPPED} — the delete was suppressed because identity params diverged, indicating
-   *       the Glue slot was overwritten by a concurrent operation.</li>
-   *   <li>{@code NOT_FOUND} — the table did not exist in Glue when checked; nothing to delete.</li>
-   *   <li>{@code DELETED_CONCURRENTLY} — the table existed at guard-check time but was deleted by a
-   *       concurrent operation before the delete call completed (TOCTOU race).</li>
-   * </ul>
-   */
-  public enum DeleteOutcome {
-    DELETED("deleted"),
-    SKIPPED("delete_skipped"),
-    NOT_FOUND("not_found"),
-    DELETED_CONCURRENTLY("concurrent_delete");
-
-    private final String metricOutcome;
-
-    DeleteOutcome(String metricOutcome) {
-      this.metricOutcome = metricOutcome;
-    }
-
-    public String metricOutcome() {
-      return metricOutcome;
-    }
-  }
-
   private static final Logger log = LoggerFactory.getLogger(GlueTableService.class);
   // HMS parameters checked before a delete to detect if the table slot was overwritten by a concurrent operation
   private static final String[] IDENTITY_PARAMS = { "transient_lastDdlTime", "metadata_location" };
   public static final String APIARY_GLUESYNC_SKIP_ARCHIVE_TABLE_PARAM = "apiary.gluesync.skipArchive";
+  public static final String GLUE_SEND_VERSION_ID_ENV = "GLUE_SEND_VERSION_ID";
 
   private final AWSGlue glueClient;
   private final HiveToGlueTransformer transformer;
   private final GlueMetadataStringCleaner cleaner = new GlueMetadataStringCleaner();
   private final GluePartitionService gluePartitionService;
+  private final boolean sendVersionId;
 
   public GlueTableService(AWSGlue glueClient, GluePartitionService gluePartitionService, String gluePrefix) {
+    this(glueClient, gluePartitionService, gluePrefix, parseSendVersionIdFromEnv());
+  }
+
+  public GlueTableService(AWSGlue glueClient, GluePartitionService gluePartitionService, String gluePrefix,
+      boolean sendVersionId) {
     this.glueClient = glueClient;
     this.transformer = new HiveToGlueTransformer(gluePrefix);
     this.gluePartitionService = gluePartitionService;
+    this.sendVersionId = sendVersionId;
     log.debug("ApiaryGlueSync created");
+  }
+
+  /**
+   * Reads the {@value #GLUE_SEND_VERSION_ID_ENV} environment variable and returns its boolean
+   * value. When unset or empty, {@code false} is returned (the feature is off by default). Any
+   * value other than {@code "true"}/{@code "false"} (case-insensitive) throws at startup.
+   */
+  static boolean parseSendVersionIdFromEnv() {
+    return parseSendVersionId(System.getenv(GLUE_SEND_VERSION_ID_ENV));
+  }
+
+  static boolean parseSendVersionId(String value) {
+    if (value == null || value.isEmpty()) {
+      return false;
+    }
+    if ("true".equalsIgnoreCase(value)) {
+      return true;
+    }
+    if ("false".equalsIgnoreCase(value)) {
+      return false;
+    }
+    throw new IllegalArgumentException(
+        "Invalid value for environment variable " + GLUE_SEND_VERSION_ID_ENV
+            + ": '" + value + "'. Expected 'true' or 'false'.");
   }
 
   public void create(Table table) {
@@ -95,13 +101,61 @@ public class GlueTableService {
     }
   }
 
-  public void update(Table table) {
-    boolean skipArchive = gluePartitionService.shouldSkipArchive(table);
-
+  public UpdateOutcome update(Table table) {
     UpdateTableRequest updateTableRequest = new UpdateTableRequest()
-        .withSkipArchive(skipArchive)
+        .withSkipArchive(gluePartitionService.shouldSkipArchive(table))
         .withTableInput(transformer.transformTable(table))
         .withDatabaseName(transformer.glueDbName(table));
+
+    if (!sendVersionId) {
+      doUpdate(updateTableRequest, table);
+      return UpdateOutcome.UPDATED;
+    }
+    return updateWithOptimisticLock(updateTableRequest, table);
+  }
+
+  /**
+   * Updates the table carrying Glue's optimistic-concurrency {@code versionId}, so AWS records
+   * {@code requestParameters.versionId} (the version immediately before this update) on the emitted
+   * CloudTrail event. The versionId is best-effort: if it cannot be read, or Glue rejects the write
+   * with {@code ConcurrentModificationException} because a concurrent writer bumped the version, the
+   * table is updated unconditionally (no {@code versionId}) so the sync still succeeds — matching
+   * the listener's last-write-wins behaviour when the feature is off. Only that write loses its
+   * {@code versionId}; the outcome records which fallback was taken.
+   */
+  private UpdateOutcome updateWithOptimisticLock(UpdateTableRequest updateTableRequest, Table table) {
+    String versionId = readVersionId(table);
+    if (versionId == null) {
+      doUpdate(updateTableRequest, table);
+      return UpdateOutcome.VERSION_UNAVAILABLE_FALLBACK;
+    }
+    updateTableRequest.setVersionId(versionId);
+    try {
+      doUpdate(updateTableRequest, table);
+      return UpdateOutcome.UPDATED;
+    } catch (ConcurrentModificationException e) {
+      log.warn("Concurrent modification updating {}.{} in glue; updating unconditionally without versionId",
+          table.getDbName(), table.getTableName());
+      updateTableRequest.setVersionId(null);
+      doUpdate(updateTableRequest, table);
+      return UpdateOutcome.VERSION_CONFLICT_FALLBACK;
+    }
+  }
+
+  /**
+   * Whether to set the optimistic-concurrency {@code versionId} on this table's Glue
+   * {@code UpdateTable}. Only non-Iceberg (Hive) tables need it: setting it makes AWS record
+   * {@code requestParameters.versionId} on the emitted CloudTrail {@code UpdateTable} event, which
+   * consumers of that event use to identify the pre-update table version. Iceberg tables are
+   * identified by {@code metadata_location}, so they skip the extra {@code GetTable} and the
+   * optimistic-locking overhead.
+   */
+  /**
+   * Issues the Glue UpdateTable, retrying once with cleaned-up comments if Glue rejects the input
+   * with {@link ValidationException}/{@link InvalidInputException}. Any {@code versionId} set on
+   * the request is preserved across the retry.
+   */
+  private void doUpdate(UpdateTableRequest updateTableRequest, Table table) {
     try {
       glueClient.updateTable(updateTableRequest);
       log.debug(table + " table updated in glue catalog");
@@ -110,6 +164,30 @@ public class GlueTableService {
       updateTableRequest.setTableInput(cleanUpTable(tableInput));
       glueClient.updateTable(updateTableRequest);
       log.debug(table + " table updated in glue catalog");
+    }
+  }
+
+  /**
+   * Reads the current Glue {@code VersionId} for the table. Returns {@code null} if it cannot be
+   * read (any AWS failure other than the table not existing), so the caller can degrade to an
+   * unconditional update rather than failing the sync for a best-effort versionId. An
+   * {@link EntityNotFoundException} is allowed to propagate so the caller can create the missing
+   * table.
+   */
+  private String readVersionId(Table table) {
+    try {
+      return glueClient
+          .getTable(new GetTableRequest()
+              .withDatabaseName(transformer.glueDbName(table))
+              .withName(table.getTableName()))
+          .getTable()
+          .getVersionId();
+    } catch (EntityNotFoundException e) {
+      throw e;
+    } catch (AmazonClientException e) {
+      log.warn("Could not read current Glue versionId for {}.{}; updating without it",
+          table.getDbName(), table.getTableName(), e);
+      return null;
     }
   }
 

@@ -617,6 +617,85 @@ public class ApiaryGlueSyncTest {
   }
 
   @Test
+  public void onAlterHiveTableThatDoesntExistInGlue_withVersionIdEnabled_createsTable() throws MetaException {
+    // With GLUE_SEND_VERSION_ID on, the missing-table EntityNotFoundException surfaces from the
+    // getTable version read rather than from updateTable, but must still drive a create.
+    ApiaryGlueSync versionIdSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, false, null, true);
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    Table table = simpleHiveTable(simpleSchema(), simplePartitioning());
+    when(event.getOldTable()).thenReturn(table);
+    when(event.getNewTable()).thenReturn(table);
+    when(glueClient.getTable(any())).thenThrow(new EntityNotFoundException(""));
+
+    versionIdSync.onAlterTable(event);
+
+    verify(glueClient).getTable(any());
+    verify(glueClient, never()).updateTable(any());
+    verify(glueClient).createTable(createTableRequestCaptor.capture());
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_CREATED);
+    assertThat(createTableRequestCaptor.getValue().getTableInput().getName(), is(tableName));
+  }
+
+  @Test
+  public void onAlterHiveTable_withVersionIdEnabled_sendsVersionId() throws MetaException {
+    ApiaryGlueSync versionIdSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, false, null, true);
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    Table table = simpleHiveTable(simpleSchema(), simplePartitioning());
+    when(event.getOldTable()).thenReturn(table);
+    when(event.getNewTable()).thenReturn(table);
+    when(glueClient.getTable(any()))
+        .thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table().withVersionId("5")));
+
+    versionIdSync.onAlterTable(event);
+
+    verify(glueClient).getTable(any());
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
+    assertThat(updateTableRequestCaptor.getValue().getVersionId(), is("5"));
+  }
+
+  @Test
+  public void onAlterIcebergTable_withVersionIdEnabled_alsoSendsVersionId() throws MetaException {
+    ApiaryGlueSync versionIdSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, false, null, true);
+    AlterTableEvent event = mock(AlterTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    Table table = simpleIcebergTable(dbName, tableName, simpleIcebergSchema(), simpleIcebergPartitionSpec(), null);
+    when(event.getOldTable()).thenReturn(table);
+    when(event.getNewTable()).thenReturn(table);
+    when(glueClient.getTable(any()))
+        .thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table().withVersionId("3")));
+
+    versionIdSync.onAlterTable(event);
+
+    // versionId is sent for all table types, Iceberg included.
+    verify(glueClient).getTable(any());
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    verify(metricService).recordEvent(MetricConstants.ALTER_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
+    assertThat(updateTableRequestCaptor.getValue().getVersionId(), is("3"));
+  }
+
+  @Test
+  public void onCreateHiveTableThatAlreadyExists_withVersionIdEnabled_sendsVersionId() throws MetaException {
+    ApiaryGlueSync versionIdSync = new ApiaryGlueSync(configuration, glueClient, gluePrefix, metricService, false, null, true);
+    CreateTableEvent event = mock(CreateTableEvent.class);
+    when(event.getStatus()).thenReturn(true);
+    when(event.getTable()).thenReturn(simpleHiveTable(simpleSchema(), simplePartitioning()));
+    when(glueClient.createTable(any())).thenThrow(new AlreadyExistsException(""));
+    when(glueClient.getTable(any()))
+        .thenReturn(new GetTableResult().withTable(new com.amazonaws.services.glue.model.Table().withVersionId("9")));
+
+    versionIdSync.onCreateTable(event);
+
+    verify(glueClient).createTable(any());
+    verify(glueClient).getTable(any());
+    verify(glueClient).updateTable(updateTableRequestCaptor.capture());
+    verify(metricService).recordEvent(MetricConstants.CREATE_TABLE, MetricConstants.RESULT_SUCCESS, MetricConstants.OUTCOME_UPDATED);
+    assertThat(updateTableRequestCaptor.getValue().getVersionId(), is("9"));
+  }
+
+  @Test
   public void onAlterPartition() throws MetaException {
     AlterPartitionEvent event = mock(AlterPartitionEvent.class);
     when(event.getStatus()).thenReturn(true);
