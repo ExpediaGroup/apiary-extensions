@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## 8.2.7 - 2026-10-08
 ### Added
 - `apiary-gluesync-listener`: new `GLUE_SEND_VERSION_ID` environment variable (default `false`). When `true`, the listener sends the current Glue `VersionId` on `UpdateTable` requests (all table types) so the emitted CloudTrail event carries `requestParameters.versionId`, which lets consumers of the Glue/CloudTrail event stream identify and fetch the pre-update table version for `ALTER_TABLE` events. Glue enforces the `VersionId` as an optimistic-concurrency token, so if a concurrent writer causes `ConcurrentModificationException`, or the current `VersionId` cannot be read (any Glue failure other than the table not existing), the listener falls back to a single unconditional update rather than failing the sync — matching its last-write-wins behaviour when the feature is off. The flag does not change archiving behaviour (`GLUE_SKIP_ARCHIVE` / `apiary.gluesync.skipArchive` still govern `SkipArchive`), but note the carried `versionId` only resolves downstream while the previous version is archived. New `version_conflict_fallback` and `version_unavailable_fallback` values can appear on the `glue_listener_event` counter's `outcome` tag.
+### Fixed
+- `kafka-metastore-listener`: flaky `ListenerUtilsTest.error` test, which failed intermittently when unrelated log events were captured by its root-logger appender. The test now only counts events logged by `ListenerUtils`.
 
 ## 8.2.6 - 2026-10-07
 DO NOT USE. Failed maven central publishing
